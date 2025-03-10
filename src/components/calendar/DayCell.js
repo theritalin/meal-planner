@@ -64,7 +64,7 @@ const DroppableMealSlot = ({ type, dayIndex, dayName, meals = [] }) => {
   };
 
   return (
-    <div className="meal-slot mb-2">
+    <div className="meal-slot flex-1 flex flex-col mb-1">
       <div className="flex items-center mb-1">
         <div className="text-xs font-medium text-gray-600">
           {mealTypeLabels[type] || type}
@@ -72,9 +72,7 @@ const DroppableMealSlot = ({ type, dayIndex, dayName, meals = [] }) => {
       </div>
       <div
         ref={drop}
-        className={`${
-          mealTypeColors[type] || ""
-        } p-2 rounded min-h-[60px] border ${
+        className={`${mealTypeColors[type] || ""} p-1 rounded flex-1 border ${
           isOver ? "border-blue-400 bg-blue-50" : "border-gray-200"
         }`}
       >
@@ -114,12 +112,12 @@ const DayCell = ({ day, index }) => {
   if (!day) return null;
 
   return (
-    <div className="border rounded p-2 bg-white">
+    <div className="border rounded p-2 bg-white h-full flex flex-col">
       <h3 className="text-sm font-bold text-center mb-2 bg-gray-50 py-1 rounded">
         {day}
       </h3>
 
-      <div>
+      <div className="flex flex-col flex-1">
         <DroppableMealSlot
           type="breakfast"
           dayIndex={index}

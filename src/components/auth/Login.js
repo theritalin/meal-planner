@@ -8,8 +8,6 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [initializeStatus, setInitializeStatus] = useState(null);
 
-
-
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);

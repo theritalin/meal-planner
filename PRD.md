@@ -34,6 +34,7 @@ A web-based meal planning application that allows users to plan their weekly mea
    - Pre-defined list of meals (stored in Firebase)
    - Basic meal information (name, type - breakfast/lunch/dinner)
    - Search and filter meals
+   - Personal meal creation and management
 
 3. **Export Functionality**
    - Export weekly meal plan to PDF
@@ -63,6 +64,7 @@ A web-based meal planning application that allows users to plan their weekly mea
    - User data persistence
    - Manual save functionality to reduce database operations
    - Environment variables for secure configuration
+   - Personal meal storage in user profile
 
 ## Technical Requirements
 
@@ -82,6 +84,7 @@ A web-based meal planning application that allows users to plan their weekly mea
   - Meal data
   - Recipe information
   - Weekly plans
+  - Personal meals
 
 ### Deployment
 
@@ -99,12 +102,16 @@ A web-based meal planning application that allows users to plan their weekly mea
    - Three slots per day (breakfast, lunch, dinner)
    - Each slots can contain up to 3 slot also
    - Drag and drop interface
+   - Mobile-friendly day navigation
 
 2. **Meal Selection Panel**
 
    - List/grid of available meals
    - Search and filter options
    - Quick meal preview
+   - Personal meal management
+   - Filter between default and personal meals
+   - Responsive layout for mobile devices
 
 3. **Recipe View** (Phase 2)
    - Detailed recipe information
@@ -138,8 +145,6 @@ A web-based meal planning application that allows users to plan their weekly mea
 
 ## TO-DO Section
 
-- Add personal meals
-- Different meals for each day in Random number
 - Recipe system implementation
 - Shopping list generation
 - Social sharing features
@@ -160,3 +165,6 @@ A web-based meal planning application that allows users to plan their weekly mea
 - Data migration from JSON
 - Manual save functionality
 - Environment variables for secure configuration
+- Add personal meals
+- Different meals for each day in Random number
+- Enhanced mobile UI with responsive design

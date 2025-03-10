@@ -66,15 +66,15 @@ const MealSlot = ({ meal, type, dayIndex, mealIndex, dayName }) => {
   return (
     <div
       ref={drag}
-      className={`bg-white p-2 mt-1 rounded border border-gray-200 cursor-move ${
+      className={`bg-white p-1 mt-1 rounded border border-gray-200 cursor-move ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
       <div className="flex justify-between items-center">
-        <span className="font-medium text-sm">{meal.name}</span>
+        <span className="font-medium text-xs">{meal.name}</span>
         <button
           onClick={handleRemove}
-          className="ml-1 text-gray-400 hover:text-red-500 text-sm"
+          className="ml-1 text-gray-400 hover:text-red-500 text-xs"
           aria-label="Yemeği kaldır"
         >
           ✕

@@ -236,7 +236,7 @@ const MealPlanDocument = ({ weekPlan }) => {
 
 // Export button component
 const PlanExport = () => {
-  const { weekPlan, saveMealPlanToFirebase, saveStatus, user } = useMeals();
+  const { weekPlan } = useMeals();
   const [error, setError] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -261,44 +261,6 @@ const PlanExport = () => {
       setError(err.message);
       setIsGenerating(false);
     }
-  };
-
-  // Kaydetme işlemi
-  const handleSave = async () => {
-    await saveMealPlanToFirebase();
-  };
-
-  // Kaydet butonu render fonksiyonu
-  const renderSaveButton = () => {
-    if (!user) return null;
-
-    let buttonClass = "bg-green-500 hover:bg-green-600";
-    let buttonText = "Planı Kaydet";
-    let isDisabled = false;
-
-    if (saveStatus === "saving") {
-      buttonClass = "bg-gray-400 cursor-wait";
-      buttonText = "Kaydediliyor...";
-      isDisabled = true;
-    } else if (saveStatus === "success") {
-      buttonClass = "bg-green-600";
-      buttonText = "Kaydedildi ✓";
-      isDisabled = true;
-    } else if (saveStatus === "error") {
-      buttonClass = "bg-red-500 hover:bg-red-600";
-      buttonText = "Kaydetme Hatası!";
-    }
-
-    return (
-      <button
-        onClick={handleSave}
-        disabled={isDisabled}
-        className={`${buttonClass} text-white px-4 py-2 rounded text-sm font-medium flex items-center justify-center w-full mb-2`}
-      >
-        <span className="mr-2">💾</span>
-        {buttonText}
-      </button>
-    );
   };
 
   // PDF oluşturma bileşeni
@@ -359,12 +321,7 @@ const PlanExport = () => {
     );
   }
 
-  return (
-    <div className="mt-4">
-      {renderSaveButton()}
-      {renderPDF()}
-    </div>
-  );
+  return <div className="mt-4">{renderPDF()}</div>;
 };
 
 export default PlanExport;

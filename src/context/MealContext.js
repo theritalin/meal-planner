@@ -7,6 +7,9 @@ import {
   getCurrentUser,
   checkAndAddUser,
   listenToAuthChanges,
+  getUserMeals,
+  addUserMeal,
+  deleteUserMeal,
 } from "../services/firebase";
 
 const MealContext = createContext();
@@ -24,11 +27,13 @@ const defaultWeekPlan = {
 
 export function MealProvider({ children }) {
   const [meals, setMeals] = useState([]);
+  const [userMeals, setUserMeals] = useState([]);
   const [weekPlan, setWeekPlan] = useState(defaultWeekPlan);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [saveStatus, setSaveStatus] = useState(null); // 'saving', 'success', 'error', null
+  const [mealFilter, setMealFilter] = useState("all"); // 'all', 'default', 'personal'
 
   // Firebase'den yemekleri yükle
   useEffect(() => {
@@ -61,6 +66,25 @@ export function MealProvider({ children }) {
 
     loadMeals();
   }, []);
+
+  // Kullanıcı değiştiğinde kişisel yemekleri yükle
+  useEffect(() => {
+    const loadUserMeals = async () => {
+      if (user) {
+        try {
+          const personalMeals = await getUserMeals(user.uid);
+          setUserMeals(personalMeals || []);
+        } catch (err) {
+          console.error("Kişisel yemekleri yüklerken hata oluştu:", err);
+          setUserMeals([]);
+        }
+      } else {
+        setUserMeals([]);
+      }
+    };
+
+    loadUserMeals();
+  }, [user]);
 
   // Kullanıcı değiştiğinde yemek planını yükle
   useEffect(() => {
@@ -107,6 +131,42 @@ export function MealProvider({ children }) {
     }
   };
 
+  // Kişisel yemek ekleme fonksiyonu
+  const addPersonalMeal = async (mealData) => {
+    if (!user) {
+      console.error("Kullanıcı giriş yapmamış, kişisel yemek eklenemez");
+      return null;
+    }
+
+    try {
+      const newMeal = await addUserMeal(user.uid, mealData);
+      setUserMeals((prev) => [...prev, newMeal]);
+      return newMeal;
+    } catch (err) {
+      console.error("Kişisel yemek eklerken hata oluştu:", err);
+      return null;
+    }
+  };
+
+  // Kişisel yemek silme fonksiyonu
+  const deletePersonalMeal = async (mealId) => {
+    if (!user) {
+      console.error("Kullanıcı giriş yapmamış, kişisel yemek silinemez");
+      return false;
+    }
+
+    try {
+      const result = await deleteUserMeal(user.uid, mealId);
+      if (result) {
+        setUserMeals((prev) => prev.filter((meal) => meal.id !== mealId));
+      }
+      return result;
+    } catch (err) {
+      console.error("Kişisel yemek silerken hata oluştu:", err);
+      return false;
+    }
+  };
+
   // Oturum durumunu dinle
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((currentUser) => {
@@ -124,6 +184,18 @@ export function MealProvider({ children }) {
       await checkAndAddUser(newUser);
     }
     setUser(newUser);
+  };
+
+  // Tüm yemekleri filtrele (varsayılan + kişisel)
+  const getAllMeals = () => {
+    if (mealFilter === "default") {
+      return meals;
+    } else if (mealFilter === "personal") {
+      return userMeals;
+    } else {
+      // 'all' filtresi veya diğer durumlar
+      return [...meals, ...userMeals];
+    }
   };
 
   // Updated to handle adding/removing meals from slots with safety checks
@@ -219,10 +291,10 @@ export function MealProvider({ children }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [mealTypeFilter, setMealTypeFilter] = useState("all");
 
-  const filteredMeals = meals.filter((meal) => {
+  const filteredMeals = getAllMeals().filter((meal) => {
     const matchesSearch =
       meal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      meal.description.toLowerCase().includes(searchTerm.toLowerCase());
+      meal.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType =
       mealTypeFilter === "all" || meal.type === mealTypeFilter;
 
@@ -253,22 +325,42 @@ export function MealProvider({ children }) {
       sunday: { breakfast: [], lunch: [], dinner: [] },
     };
 
+    // Tüm yemekleri al (varsayılan + kişisel)
+    const allMeals = [...meals, ...userMeals];
+
     // Yemekleri türlerine göre ayır
     const mealsByType = {
-      breakfast: meals.filter((meal) => meal.type === "breakfast"),
-      lunch: meals.filter((meal) => meal.type === "lunch"),
-      dinner: meals.filter((meal) => meal.type === "dinner"),
+      breakfast: allMeals.filter((meal) => meal.type === "breakfast"),
+      lunch: allMeals.filter((meal) => meal.type === "lunch"),
+      dinner: allMeals.filter((meal) => meal.type === "dinner"),
     };
 
-    // Her gün ve öğün için rastgele yemek seç
-    days.forEach((day) => {
-      mealTypes.forEach((type) => {
-        const availableMeals = mealsByType[type];
+    // Her öğün türü için yemekleri dağıt
+    mealTypes.forEach((type) => {
+      const availableMeals = [...mealsByType[type]]; // Kopyasını al
+
+      if (availableMeals.length === 0) return; // Bu türde yemek yoksa atla
+
+      // Her gün için farklı yemek seç
+      days.forEach((day) => {
+        // Eğer hala dağıtılacak yemek varsa
         if (availableMeals.length > 0) {
-          // Her öğün için sadece 1 yemek seç
+          // Rastgele bir yemek seç
           const randomIndex = Math.floor(Math.random() * availableMeals.length);
-          const meal = availableMeals[randomIndex];
-          newPlan[day][type] = [meal];
+          const selectedMeal = availableMeals[randomIndex];
+
+          // Seçilen yemeği plana ekle
+          newPlan[day][type] = [selectedMeal];
+
+          // Seçilen yemeği listeden çıkar (aynı yemeği tekrar seçmemek için)
+          availableMeals.splice(randomIndex, 1);
+        } else {
+          // Eğer tüm yemekler dağıtıldıysa, orijinal listeden tekrar seç
+          const originalList = mealsByType[type];
+          if (originalList.length > 0) {
+            const randomIndex = Math.floor(Math.random() * originalList.length);
+            newPlan[day][type] = [originalList[randomIndex]];
+          }
         }
       });
     });
@@ -293,11 +385,14 @@ export function MealProvider({ children }) {
 
   const value = {
     meals,
+    userMeals,
     filteredMeals,
     searchTerm,
     setSearchTerm,
     mealTypeFilter,
     setMealTypeFilter,
+    mealFilter,
+    setMealFilter,
     weekPlan,
     updateMealPlan,
     generateRandomMealPlan,
@@ -308,6 +403,8 @@ export function MealProvider({ children }) {
     setCurrentUser,
     saveMealPlanToFirebase,
     saveStatus,
+    addPersonalMeal,
+    deletePersonalMeal,
   };
 
   return <MealContext.Provider value={value}>{children}</MealContext.Provider>;

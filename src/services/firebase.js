@@ -182,4 +182,108 @@ export const checkAndAddUser = async (user) => {
   }
 };
 
+// Kullanıcının kişisel yemeklerini getiren fonksiyon
+export const getUserMeals = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("Kullanıcı kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists() && userSnap.data().personalMeals) {
+      return userSnap.data().personalMeals;
+    } else {
+      console.log("Kullanıcı için kişisel yemek bulunamadı");
+      return [];
+    }
+  } catch (error) {
+    console.error("Kişisel yemekleri getirirken hata oluştu:", error);
+    return [];
+  }
+};
+
+// Kullanıcının kişisel yemeğini ekleyen fonksiyon
+export const addUserMeal = async (userId, meal) => {
+  try {
+    if (!userId) {
+      throw new Error("Kullanıcı kimliği gerekli");
+    }
+
+    if (!meal || !meal.name || !meal.type) {
+      throw new Error("Geçerli bir yemek nesnesi gerekli");
+    }
+
+    // Yemek ID'si oluştur
+    const mealId = `user_meal_${Date.now()}_${Math.floor(
+      Math.random() * 1000
+    )}`;
+    const newMeal = {
+      ...meal,
+      id: mealId,
+      isPersonal: true,
+      createdAt: new Date(),
+    };
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    let personalMeals = [];
+    if (userSnap.exists() && userSnap.data().personalMeals) {
+      personalMeals = [...userSnap.data().personalMeals];
+    }
+
+    personalMeals.push(newMeal);
+
+    await setDoc(
+      userRef,
+      {
+        personalMeals,
+      },
+      { merge: true }
+    );
+
+    console.log("Kişisel yemek başarıyla eklendi");
+    return newMeal;
+  } catch (error) {
+    console.error("Kişisel yemek eklerken hata oluştu:", error);
+    throw error;
+  }
+};
+
+// Kullanıcının kişisel yemeğini silen fonksiyon
+export const deleteUserMeal = async (userId, mealId) => {
+  try {
+    if (!userId || !mealId) {
+      throw new Error("Kullanıcı kimliği ve yemek kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists() || !userSnap.data().personalMeals) {
+      throw new Error("Kullanıcı veya kişisel yemekler bulunamadı");
+    }
+
+    const personalMeals = userSnap
+      .data()
+      .personalMeals.filter((meal) => meal.id !== mealId);
+
+    await setDoc(
+      userRef,
+      {
+        personalMeals,
+      },
+      { merge: true }
+    );
+
+    console.log("Kişisel yemek başarıyla silindi");
+    return true;
+  } catch (error) {
+    console.error("Kişisel yemek silerken hata oluştu:", error);
+    return false;
+  }
+};
+
 export { db, auth };

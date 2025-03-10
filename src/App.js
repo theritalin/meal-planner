@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -36,7 +36,31 @@ const ProtectedRoute = ({ children }) => {
 
 // Ana uygulama içeriği
 const AppContent = () => {
-  const { user, loading } = useMeals();
+  const {
+    user,
+    loading,
+    generateRandomMealPlan,
+    clearMealPlan,
+    saveMealPlanToFirebase,
+    saveStatus,
+  } = useMeals();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Ekran boyutunu kontrol et
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    // İlk yükleme
+    checkScreenSize();
+
+    // Ekran boyutu değiştiğinde
+    window.addEventListener("resize", checkScreenSize);
+
+    // Temizleme
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   if (loading) {
     return (
@@ -46,6 +70,29 @@ const AppContent = () => {
     );
   }
 
+  // Buton durumları
+  const getSaveButtonClass = () => {
+    let baseClass =
+      "px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center";
+
+    if (saveStatus === "saving") {
+      return `${baseClass} bg-gray-400 cursor-wait`;
+    } else if (saveStatus === "success") {
+      return `${baseClass} bg-green-600`;
+    } else if (saveStatus === "error") {
+      return `${baseClass} bg-red-500 hover:bg-red-600`;
+    }
+
+    return `${baseClass} bg-blue-500 hover:bg-blue-600 text-white`;
+  };
+
+  const getSaveButtonText = () => {
+    if (saveStatus === "saving") return "Kaydediliyor...";
+    if (saveStatus === "success") return "Kaydedildi ✓";
+    if (saveStatus === "error") return "Hata!";
+    return "Kaydet";
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-100">
@@ -54,18 +101,32 @@ const AppContent = () => {
             <h1 className="text-2xl font-bold text-gray-900">
               Yemek Planlayıcı
             </h1>
-            <div className="flex items-center space-x-4">
-              <nav className="flex space-x-4">
-                <a href="/" className="text-gray-700 hover:text-gray-900">
-                  Ana Sayfa
-                </a>
-                <a
-                  href="/planner"
-                  className="text-gray-700 hover:text-gray-900"
+            <div className="flex items-center space-x-2">
+              <div className="flex gap-1 md:gap-2">
+                <button
+                  onClick={generateRandomMealPlan}
+                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center"
                 >
-                  Haftalık Plan
-                </a>
-              </nav>
+                  <span className="mr-1 md:mr-2">🎲</span>
+                  <span className="hidden md:inline">Rastgele</span>
+                </button>
+                <button
+                  onClick={clearMealPlan}
+                  className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center"
+                >
+                  <span className="mr-1 md:mr-2">🗑️</span>
+                  <span className="hidden md:inline">Temizle</span>
+                </button>
+                <button
+                  onClick={saveMealPlanToFirebase}
+                  className={getSaveButtonClass()}
+                >
+                  <span className="mr-1 md:mr-2">💾</span>
+                  <span className="hidden md:inline">
+                    {getSaveButtonText()}
+                  </span>
+                </button>
+              </div>
               <UserProfile />
             </div>
           </div>
@@ -80,17 +141,7 @@ const AppContent = () => {
               path="/"
               element={
                 <ProtectedRoute>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="lg:col-span-3">
-                      <WeekView />
-                      <div className="mt-4">
-                        <PlanExport />
-                      </div>
-                    </div>
-                    <div className="lg:col-span-1">
-                      <MealList />
-                    </div>
-                  </div>
+                  <MobileLayout isMobile={isMobile} />
                 </ProtectedRoute>
               }
             />
@@ -98,17 +149,7 @@ const AppContent = () => {
               path="/planner"
               element={
                 <ProtectedRoute>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="lg:col-span-3">
-                      <WeekView />
-                      <div className="mt-4">
-                        <PlanExport />
-                      </div>
-                    </div>
-                    <div className="lg:col-span-1">
-                      <MealList />
-                    </div>
-                  </div>
+                  <MobileLayout isMobile={isMobile} />
                 </ProtectedRoute>
               }
             />
@@ -123,6 +164,42 @@ const AppContent = () => {
         </footer>
       </div>
     </Router>
+  );
+};
+
+// Mobil ve masaüstü düzeni yönetimi
+const MobileLayout = ({ isMobile }) => {
+  if (isMobile) {
+    return (
+      <div className="flex flex-col">
+        <div className="mb-4">
+          <WeekView />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-[calc(100vh-350px)]">
+            <MealList compactMode={true} />
+          </div>
+          <div className="mt-4 md:mt-0">
+            <PlanExport />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Masaüstü düzeni
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="lg:col-span-3">
+        <WeekView />
+        <div className="mt-4">
+          <PlanExport />
+        </div>
+      </div>
+      <div className="lg:col-span-1 h-[calc(100vh-200px)]">
+        <MealList />
+      </div>
+    </div>
   );
 };
 
