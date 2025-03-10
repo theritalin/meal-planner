@@ -31,3 +31,7 @@ yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
 .firebase/
+
+
+.PRD
+.cursorrules
