@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  Link,
 } from "react-router-dom";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -43,13 +44,16 @@ const AppContent = () => {
     clearMealPlan,
     saveMealPlanToFirebase,
     saveStatus,
+    mealFilter,
   } = useMeals();
   const [isMobile, setIsMobile] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [message, setMessage] = useState("");
 
   // Ekran boyutunu kontrol et
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setIsMobile(window.innerWidth < 768);
     };
 
     // İlk yükleme
@@ -61,6 +65,42 @@ const AppContent = () => {
     // Temizleme
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
+
+  // Rastgele yemek planı oluştur
+  const handleGenerateRandomPlan = () => {
+    let filterMessage = "";
+    if (mealFilter === "personal") {
+      filterMessage =
+        "Sadece kişisel yemeklerden rastgele dağıtım yapılıyor...";
+    } else if (mealFilter === "default") {
+      filterMessage =
+        "Sadece varsayılan yemeklerden rastgele dağıtım yapılıyor...";
+    } else {
+      filterMessage = "Tüm yemeklerden rastgele dağıtım yapılıyor...";
+    }
+
+    setMessage(filterMessage);
+    setShowMessage(true);
+
+    // 3 saniye sonra mesajı kapat
+    setTimeout(() => {
+      setShowMessage(false);
+    }, 3000);
+
+    generateRandomMealPlan();
+  };
+
+  // Yemek planını temizle
+  const handleClearPlan = () => {
+    if (window.confirm("Yemek planını temizlemek istediğinize emin misiniz?")) {
+      clearMealPlan();
+    }
+  };
+
+  // Yemek planını kaydet
+  const handleSavePlan = async () => {
+    await saveMealPlanToFirebase();
+  };
 
   if (loading) {
     return (
@@ -104,28 +144,35 @@ const AppContent = () => {
             <div className="flex items-center space-x-2">
               <div className="flex gap-1 md:gap-2">
                 <button
-                  onClick={generateRandomMealPlan}
-                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center"
+                  onClick={handleGenerateRandomPlan}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center"
                 >
                   <span className="mr-1 md:mr-2">🎲</span>
                   <span className="hidden md:inline">Rastgele</span>
                 </button>
                 <button
-                  onClick={clearMealPlan}
+                  onClick={handleClearPlan}
                   className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center"
                 >
                   <span className="mr-1 md:mr-2">🗑️</span>
                   <span className="hidden md:inline">Temizle</span>
                 </button>
                 <button
-                  onClick={saveMealPlanToFirebase}
+                  onClick={handleSavePlan}
                   className={getSaveButtonClass()}
+                  disabled={saveStatus === "saving"}
                 >
                   <span className="mr-1 md:mr-2">💾</span>
                   <span className="hidden md:inline">
                     {getSaveButtonText()}
                   </span>
                 </button>
+                {/* <Link
+                  to="/profile"
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  Profil
+                </Link> */}
               </div>
               <UserProfile />
             </div>
@@ -162,6 +209,11 @@ const AppContent = () => {
             </p>
           </div>
         </footer>
+        {showMessage && (
+          <div className="bg-blue-100 border border-blue-300 text-blue-700 px-4 py-2 rounded mb-4 text-center">
+            {message}
+          </div>
+        )}
       </div>
     </Router>
   );
@@ -176,7 +228,7 @@ const MobileLayout = ({ isMobile }) => {
           <WeekView />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-[calc(100vh-350px)]">
+          <div className="h-[calc(100vh-300px)] overflow-y-auto">
             <MealList compactMode={true} />
           </div>
           <div className="mt-4 md:mt-0">

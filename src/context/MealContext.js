@@ -325,21 +325,53 @@ export function MealProvider({ children }) {
       sunday: { breakfast: [], lunch: [], dinner: [] },
     };
 
-    // Tüm yemekleri al (varsayılan + kişisel)
-    const allMeals = [...meals, ...userMeals];
+    // Seçili filtreye göre yemekleri belirle
+    let mealsToUse = [];
+
+    if (mealFilter === "personal") {
+      // Sadece kişisel yemekleri kullan
+      mealsToUse = [...userMeals];
+      console.log(
+        "Rastgele dağıtım: Sadece kişisel yemekler kullanılıyor",
+        mealsToUse.length
+      );
+    } else if (mealFilter === "default") {
+      // Sadece varsayılan yemekleri kullan
+      mealsToUse = [...meals];
+      console.log(
+        "Rastgele dağıtım: Sadece varsayılan yemekler kullanılıyor",
+        mealsToUse.length
+      );
+    } else {
+      // Tüm yemekleri kullan (varsayılan + kişisel)
+      mealsToUse = [...meals, ...userMeals];
+      console.log(
+        "Rastgele dağıtım: Tüm yemekler kullanılıyor",
+        mealsToUse.length
+      );
+    }
 
     // Yemekleri türlerine göre ayır
     const mealsByType = {
-      breakfast: allMeals.filter((meal) => meal.type === "breakfast"),
-      lunch: allMeals.filter((meal) => meal.type === "lunch"),
-      dinner: allMeals.filter((meal) => meal.type === "dinner"),
+      breakfast: mealsToUse.filter((meal) => meal.type === "breakfast"),
+      lunch: mealsToUse.filter((meal) => meal.type === "lunch"),
+      dinner: mealsToUse.filter((meal) => meal.type === "dinner"),
     };
+
+    console.log("Yemek türlerine göre dağılım:", {
+      breakfast: mealsByType.breakfast.length,
+      lunch: mealsByType.lunch.length,
+      dinner: mealsByType.dinner.length,
+    });
 
     // Her öğün türü için yemekleri dağıt
     mealTypes.forEach((type) => {
       const availableMeals = [...mealsByType[type]]; // Kopyasını al
 
-      if (availableMeals.length === 0) return; // Bu türde yemek yoksa atla
+      if (availableMeals.length === 0) {
+        console.log(`${type} türünde yemek bulunamadı`);
+        return; // Bu türde yemek yoksa atla
+      }
 
       // Her gün için farklı yemek seç
       days.forEach((day) => {

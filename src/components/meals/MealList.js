@@ -34,7 +34,7 @@ const DraggableMeal = ({ meal, index, onDelete, compactMode }) => {
           {meal.name}
         </span>
         <div className="flex items-center">
-          {meal.isPersonal && !compactMode && (
+          {meal.isPersonal && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -59,9 +59,15 @@ const DraggableMeal = ({ meal, index, onDelete, compactMode }) => {
           </span>
         </div>
       </div>
-      {meal.isPersonal && !compactMode && (
+      {meal.isPersonal && (
         <div className="mt-1">
-          <span className="text-xs text-blue-500">Kişisel</span>
+          <span
+            className={`text-xs text-blue-500 ${
+              compactMode ? "text-[10px]" : ""
+            }`}
+          >
+            Kişisel
+          </span>
         </div>
       )}
       {meal.calories && !compactMode && (
@@ -197,10 +203,12 @@ const MealList = ({ compactMode = false }) => {
             </button>
           </div>
 
-          {user && !compactMode && (
+          {user && (
             <div className="mb-2 flex flex-wrap gap-1">
               <button
-                className={`px-2 py-1 rounded text-xs ${
+                className={`${
+                  compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
+                } rounded ${
                   mealFilter === "all"
                     ? "bg-blue-500 text-white"
                     : "bg-gray-200 text-gray-700"
@@ -210,7 +218,9 @@ const MealList = ({ compactMode = false }) => {
                 Tüm Yemekler
               </button>
               <button
-                className={`px-2 py-1 rounded text-xs ${
+                className={`${
+                  compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
+                } rounded ${
                   mealFilter === "default"
                     ? "bg-blue-500 text-white"
                     : "bg-gray-200 text-gray-700"
@@ -220,7 +230,9 @@ const MealList = ({ compactMode = false }) => {
                 Varsayılan
               </button>
               <button
-                className={`px-2 py-1 rounded text-xs ${
+                className={`${
+                  compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
+                } rounded ${
                   mealFilter === "personal"
                     ? "bg-blue-500 text-white"
                     : "bg-gray-200 text-gray-700"
@@ -234,14 +246,16 @@ const MealList = ({ compactMode = false }) => {
         </div>
       )}
 
-      {user && !compactMode && (
+      {user && (
         <div className="mb-2 flex-shrink-0">
           {showAddForm ? (
             <AddMealForm onClose={() => setShowAddForm(false)} />
           ) : (
             <button
               onClick={() => setShowAddForm(true)}
-              className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded text-sm"
+              className={`w-full ${
+                compactMode ? "py-1 text-xs" : "py-2 text-sm"
+              } bg-green-500 hover:bg-green-600 text-white rounded`}
             >
               + Kişisel Yemek Ekle
             </button>
