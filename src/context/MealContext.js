@@ -12,6 +12,7 @@ import {
   deleteUserMeal,
 } from "../services/firebase";
 
+import default_meals from "../data/meals";
 const MealContext = createContext();
 
 // Varsayılan boş haftalık plan
@@ -66,6 +67,29 @@ export function MealProvider({ children }) {
 
     loadMeals();
   }, []);
+
+  //Sadece default meal eklenceği zaman kullan
+  // useEffect(() => {
+  //   const defaultMeals = async () => {
+  //     try {
+
+  //       // Firebase'den yemekleri getir
+  //       const defaultMeals = default_meals;
+  //       await addDefaultMealsToFirestore(defaultMeals);
+
+  //     } catch (err) {
+  //       console.error(" hata oluştu:", err);
+  //       setError(
+  //         " hata oluştu. Lütfen daha sonra tekrar deneyin."
+  //       );
+
+  //     } finally {
+
+  //     }
+  //   };
+
+  //   defaultMeals();
+  // }, []);
 
   // Kullanıcı değiştiğinde kişisel yemekleri yükle
   useEffect(() => {
