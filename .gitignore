@@ -33,5 +33,5 @@ firebase-debug.*.log*
 .firebase/
 
 
-.PRD
+PRD.md
 .cursorrules
