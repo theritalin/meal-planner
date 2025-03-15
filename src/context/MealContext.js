@@ -10,8 +10,10 @@ import {
   getUserMeals,
   addUserMeal,
   deleteUserMeal,
+  isUserAdmin,
 } from "../services/firebase";
 
+import { RecipeProvider } from "./recipes/RecipeContext";
 import default_meals from "../data/meals";
 const MealContext = createContext();
 
@@ -33,8 +35,10 @@ export function MealProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // 'saving', 'success', 'error', null
   const [mealFilter, setMealFilter] = useState("all"); // 'all', 'default', 'personal'
+  const [selectedMeal, setSelectedMeal] = useState(null); // Tarif detayları için seçilen yemek
 
   // Firebase'den yemekleri yükle
   useEffect(() => {
@@ -206,6 +210,12 @@ export function MealProvider({ children }) {
     if (newUser) {
       // Kullanıcıyı kontrol et ve gerekirse ekle
       await checkAndAddUser(newUser);
+
+      // Admin kontrolü
+      const adminStatus = await isUserAdmin(newUser.uid);
+      setIsAdmin(adminStatus);
+    } else {
+      setIsAdmin(false);
     }
     setUser(newUser);
   };
@@ -439,6 +449,11 @@ export function MealProvider({ children }) {
     setWeekPlan(emptyPlan);
   };
 
+  // Yemek seçme fonksiyonu (tarif detayları için)
+  const selectMeal = (meal) => {
+    setSelectedMeal(meal);
+  };
+
   const value = {
     meals,
     userMeals,
@@ -456,14 +471,21 @@ export function MealProvider({ children }) {
     loading,
     error,
     user,
+    isAdmin,
     setCurrentUser,
     saveMealPlanToFirebase,
     saveStatus,
     addPersonalMeal,
     deletePersonalMeal,
+    selectedMeal,
+    selectMeal,
   };
 
-  return <MealContext.Provider value={value}>{children}</MealContext.Provider>;
+  return (
+    <RecipeProvider>
+      <MealContext.Provider value={value}>{children}</MealContext.Provider>
+    </RecipeProvider>
+  );
 }
 
 export function useMeals() {

@@ -1,10 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { useMeals } from "../../context/MealContext";
+import { useRecipes } from "../../context/recipes/RecipeContext";
 import AddMealForm from "./AddMealForm";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Box,
+  Divider,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import CloseIcon from "@mui/icons-material/Close";
 
 // Sürüklenebilir yemek bileşeni
-const DraggableMeal = ({ meal, index, onDelete, compactMode }) => {
+const DraggableMeal = ({
+  meal,
+  index,
+  onDelete,
+  compactMode,
+  onShowRecipe,
+}) => {
   // Tam meal nesnesini item olarak geçirelim
   const [{ isDragging }, drag] = useDrag({
     type: "MEAL",
@@ -46,10 +71,20 @@ const DraggableMeal = ({ meal, index, onDelete, compactMode }) => {
               ✕
             </button>
           )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onShowRecipe) onShowRecipe(meal);
+            }}
+            className="text-blue-500 hover:text-blue-700 mr-1 text-xs"
+            title="Tarifi Göster"
+          >
+            <MenuBookIcon fontSize="small" />
+          </button>
           <span
             className={`${
-              compactMode ? "text-xs px-1 py-0.5" : "text-xs px-2 py-1"
-            } rounded-full ${typeColors[meal.type]}`}
+              typeColors[meal.type]
+            } text-xs px-2 py-0.5 rounded-full`}
           >
             {meal.type === "breakfast"
               ? "Kahvaltı"
@@ -79,8 +114,119 @@ const DraggableMeal = ({ meal, index, onDelete, compactMode }) => {
   );
 };
 
+// RecipeDialog bileşeni
+const RecipeDialog = ({ open, onClose, meal, recipes }) => {
+  const { getAllRecipes } = useRecipes();
+  const allRecipes = getAllRecipes();
+
+  // Yemeğe ait tarifi bul
+  const recipe = meal
+    ? allRecipes.find((r) => r.name.toLowerCase() === meal.name.toLowerCase())
+    : null;
+
+  // Malzeme formatını kontrol eden yardımcı fonksiyon
+  const formatIngredient = (ingredient) => {
+    if (typeof ingredient === "string") {
+      return ingredient;
+    } else if (typeof ingredient === "object" && ingredient !== null) {
+      // Obje formatındaysa (name, amount, unit)
+      return `${ingredient.name}: ${ingredient.amount} ${ingredient.unit}`;
+    }
+    return "";
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">{meal ? meal.name : ""} Tarifi</Typography>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers>
+        {recipe ? (
+          <>
+            <Box display="flex" gap={2} mb={2}>
+              <Chip
+                icon={<AccessTimeIcon />}
+                label={`Hazırlık: ${recipe.prepTime} dk`}
+                color="primary"
+                variant="outlined"
+              />
+              <Chip
+                icon={<AccessTimeIcon />}
+                label={`Pişirme: ${recipe.cookTime} dk`}
+                color="secondary"
+                variant="outlined"
+              />
+              <Chip
+                icon={<RestaurantIcon />}
+                label={`${recipe.servings} Porsiyon`}
+                color="success"
+                variant="outlined"
+              />
+            </Box>
+
+            <Typography variant="h6" gutterBottom>
+              Malzemeler
+            </Typography>
+            <List dense>
+              {recipe.ingredients &&
+                recipe.ingredients.map((ingredient, index) => (
+                  <ListItem key={index}>
+                    <ListItemText primary={formatIngredient(ingredient)} />
+                  </ListItem>
+                ))}
+            </List>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="h6" gutterBottom>
+              Hazırlanışı
+            </Typography>
+            <List dense>
+              {recipe.instructions &&
+                recipe.instructions.map((instruction, index) => (
+                  <ListItem key={index} alignItems="flex-start">
+                    <ListItemText primary={`${index + 1}. ${instruction}`} />
+                  </ListItem>
+                ))}
+            </List>
+          </>
+        ) : (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            py={4}
+          >
+            <MenuBookIcon
+              sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
+            />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Bu yemek için tarif bulunamadı
+            </Typography>
+            <Typography variant="body2" color="text.secondary" align="center">
+              Bu yemeğin tarifi henüz eklenmemiş. Tarifler bölümünden yeni bir
+              tarif ekleyebilirsiniz.
+            </Typography>
+          </Box>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const MealList = ({ compactMode = false }) => {
   const {
+    meals,
+    userMeals,
+    loading,
+    error,
+    deletePersonalMeal,
     filteredMeals,
     searchTerm,
     setSearchTerm,
@@ -89,12 +235,19 @@ const MealList = ({ compactMode = false }) => {
     mealFilter,
     setMealFilter,
     user,
-    deletePersonalMeal,
   } = useMeals();
-
+  const { getAllRecipes } = useRecipes();
+  const [recipes, setRecipes] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [openRecipeDialog, setOpenRecipeDialog] = useState(false);
+
+  useEffect(() => {
+    // Tüm tarifleri al
+    setRecipes(getAllRecipes());
+  }, [getAllRecipes]);
 
   // Ekran boyutunu kontrol et
   useEffect(() => {
@@ -117,6 +270,20 @@ const MealList = ({ compactMode = false }) => {
       await deletePersonalMeal(mealId);
     }
   };
+
+  const handleShowRecipe = (meal) => {
+    setSelectedMeal(meal);
+    setOpenRecipeDialog(true);
+  };
+
+  const handleCloseRecipeDialog = () => {
+    setOpenRecipeDialog(false);
+    setSelectedMeal(null);
+  };
+
+  if (loading) return <div className="text-center py-4">Yükleniyor...</div>;
+  if (error)
+    return <div className="text-center py-4 text-red-500">{error}</div>;
 
   return (
     <div
@@ -263,23 +430,26 @@ const MealList = ({ compactMode = false }) => {
         </div>
       )}
 
-      <div className="flex-grow overflow-y-auto space-y-1">
-        {filteredMeals.length > 0 ? (
-          filteredMeals.map((meal, index) => (
-            <DraggableMeal
-              key={meal.id}
-              meal={meal}
-              index={index}
-              onDelete={meal.isPersonal ? handleDeleteMeal : null}
-              compactMode={compactMode}
-            />
-          ))
-        ) : (
-          <div className="text-center py-4 text-gray-500 text-sm">
-            Sonuç bulunamadı
-          </div>
-        )}
+      <div className="grid grid-cols-1 gap-2 overflow-y-auto flex-grow">
+        {filteredMeals.map((meal, index) => (
+          <DraggableMeal
+            key={meal.id}
+            meal={meal}
+            index={index}
+            onDelete={user ? handleDeleteMeal : null}
+            compactMode={compactMode}
+            onShowRecipe={handleShowRecipe}
+          />
+        ))}
       </div>
+
+      {/* Tarif Dialog */}
+      <RecipeDialog
+        open={openRecipeDialog}
+        onClose={handleCloseRecipeDialog}
+        meal={selectedMeal}
+        recipes={recipes}
+      />
     </div>
   );
 };
