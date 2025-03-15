@@ -299,11 +299,7 @@ const AppContent = () => {
       </nav>
 
       {/* Mobile menu - Sadece ana sayfada göster */}
-      {isMobile && location.pathname === "/" && (
-        <div className="flex flex-col p-4">
-          <MobileLayout />
-        </div>
-      )}
+      {/* Mobil görünümde MobileLayout bileşenini burada göstermeyi kaldırıyoruz */}
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {showMessage && (
