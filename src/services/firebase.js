@@ -533,4 +533,196 @@ export const addDefaultRecipesToFirestore = async (recipes) => {
   }
 };
 
+// Kullanıcı profilini getiren fonksiyon
+export const getUserProfile = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("Kullanıcı kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      return { uid: userId, ...userSnap.data() };
+    } else {
+      console.log("Kullanıcı profili bulunamadı");
+      return null;
+    }
+  } catch (error) {
+    console.error("Kullanıcı profili getirilirken hata oluştu:", error);
+    return null;
+  }
+};
+
+// Kullanıcı profilini güncelleyen fonksiyon
+export const updateUserProfile = async (userId, profileData) => {
+  try {
+    if (!userId) {
+      throw new Error("Kullanıcı kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    await setDoc(userRef, profileData, { merge: true });
+
+    console.log("Kullanıcı profili başarıyla güncellendi");
+    return true;
+  } catch (error) {
+    console.error("Kullanıcı profili güncellenirken hata oluştu:", error);
+    throw error;
+  }
+};
+
+// Kullanıcının tarifi kaydetmesi için fonksiyon
+export const saveRecipeForUser = async (userId, recipe) => {
+  try {
+    if (!userId || !recipe) {
+      throw new Error("Kullanıcı kimliği ve tarif gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    let savedRecipes = [];
+    if (userSnap.exists() && userSnap.data().savedRecipes) {
+      savedRecipes = [...userSnap.data().savedRecipes];
+
+      // Tarif zaten kaydedilmiş mi kontrol et
+      const isAlreadySaved = savedRecipes.some((r) => r.id === recipe.id);
+      if (isAlreadySaved) {
+        console.log("Bu tarif zaten kaydedilmiş");
+        return savedRecipes;
+      }
+    }
+
+    // Tarifi kaydet
+    savedRecipes.push(recipe);
+
+    await setDoc(
+      userRef,
+      {
+        savedRecipes,
+      },
+      { merge: true }
+    );
+
+    console.log("Tarif başarıyla kaydedildi");
+    return savedRecipes;
+  } catch (error) {
+    console.error("Tarif kaydedilirken hata oluştu:", error);
+    throw error;
+  }
+};
+
+// Kullanıcının kaydettiği tarifi kaldırması için fonksiyon
+export const unsaveRecipeForUser = async (userId, recipeId) => {
+  try {
+    if (!userId || !recipeId) {
+      throw new Error("Kullanıcı kimliği ve tarif kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists() || !userSnap.data().savedRecipes) {
+      console.log("Kaydedilmiş tarif bulunamadı");
+      return [];
+    }
+
+    // Tarifi kaldır
+    const savedRecipes = userSnap
+      .data()
+      .savedRecipes.filter((recipe) => recipe.id !== recipeId);
+
+    await setDoc(
+      userRef,
+      {
+        savedRecipes,
+      },
+      { merge: true }
+    );
+
+    console.log("Tarif başarıyla kaldırıldı");
+    return savedRecipes;
+  } catch (error) {
+    console.error("Tarif kaldırılırken hata oluştu:", error);
+    throw error;
+  }
+};
+
+// Kullanıcının takip ettiği kullanıcıları getiren fonksiyon
+export const getUserFollowing = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("Kullanıcı kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists() && userSnap.data().following) {
+      return userSnap.data().following;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error("Takip edilen kullanıcılar getirilirken hata oluştu:", error);
+    return [];
+  }
+};
+
+// Kullanıcının takipçilerini getiren fonksiyon
+export const getUserFollowers = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("Kullanıcı kimliği gerekli");
+    }
+
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists() && userSnap.data().followers) {
+      return userSnap.data().followers;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error("Takipçiler getirilirken hata oluştu:", error);
+    return [];
+  }
+};
+
+// Kullanıcı arama fonksiyonu
+export const searchUsers = async (searchTerm) => {
+  try {
+    if (!searchTerm || searchTerm.length < 2) {
+      return [];
+    }
+
+    const usersCollectionRef = collection(db, "users");
+    const usersSnapshot = await getDocs(usersCollectionRef);
+
+    // Kullanıcıları filtrele
+    const filteredUsers = usersSnapshot.docs
+      .map((doc) => ({ uid: doc.id, ...doc.data() }))
+      .filter((user) => {
+        // İsim veya email içinde arama yap (büyük/küçük harf duyarsız)
+        const displayNameMatch =
+          user.displayName &&
+          user.displayName.toLowerCase().includes(searchTerm.toLowerCase());
+        const emailMatch =
+          user.email &&
+          user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+        return displayNameMatch || emailMatch;
+      })
+      .slice(0, 10); // Maksimum 10 sonuç döndür
+
+    return filteredUsers;
+  } catch (error) {
+    console.error("Kullanıcı arama sırasında hata oluştu:", error);
+    return [];
+  }
+};
+
 export { db, auth };

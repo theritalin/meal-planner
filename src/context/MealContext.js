@@ -13,7 +13,8 @@ import {
   isUserAdmin,
 } from "../services/firebase";
 
-import { RecipeProvider } from "./recipes/RecipeContext";
+// RecipeProvider'ı kaldırıyoruz
+// import { RecipeProvider } from "./recipes/RecipeContext";
 import default_meals from "../data/meals";
 const MealContext = createContext();
 
@@ -481,11 +482,7 @@ export function MealProvider({ children }) {
     selectMeal,
   };
 
-  return (
-    <RecipeProvider>
-      <MealContext.Provider value={value}>{children}</MealContext.Provider>
-    </RecipeProvider>
-  );
+  return <MealContext.Provider value={value}>{children}</MealContext.Provider>;
 }
 
 export function useMeals() {

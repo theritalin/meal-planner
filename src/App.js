@@ -10,16 +10,45 @@ import {
 } from "react-router-dom";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { MealProvider } from "./context/MealContext";
-import { useMeals } from "./context/MealContext";
-import WeekView from "./components/calendar/WeekView";
-import MealList from "./components/meals/MealList";
-import PlanExport from "./components/pdf/PlanExport";
-import Login from "./components/auth/Login";
+import { MealProvider, useMeals } from "./context/MealContext";
+import { RecipeProvider } from "./context/recipes/RecipeContext";
+import MealPlannerPage from "./components/MealPlannerPage";
+import ExportPage from "./components/pdf/PlanExport";
 import UserProfile from "./components/auth/UserProfile";
-import RecipePage from "./components/recipes/RecipePage";
+import UserSearch from "./components/auth/UserSearch";
+import Login from "./components/auth/Login";
+import {
+  Drawer,
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Avatar,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  useMediaQuery,
+  createTheme,
+} from "@mui/material";
+import {
+  Close as CloseIcon,
+  Home as HomeIcon,
+  Search as SearchIcon,
+  PictureAsPdf as PictureAsPdfIcon,
+} from "@mui/icons-material";
+import { ThemeProvider } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
+import { Menu as MenuIcon } from "@mui/icons-material";
 
-// Korumalı Route bileşeni
+// Tema oluştur
+const theme = createTheme();
+
+// Korumalı Route bileşeni - MealProvider içinde kullanılacak
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useMeals();
 
@@ -38,453 +67,244 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Mobil Menü Bileşeni
-const MobileMenu = () => {
-  const { user } = useMeals();
+// Mobil Menü Bileşeni - MealProvider içinde kullanılacak
+const MobileMenu = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const { user } = useMeals();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const handleNavigation = (path) => {
+    navigate(path);
+    onClose();
+  };
 
   return (
-    <div className="flex items-center">
-      <div className="flex space-x-2">
-        <button
-          onClick={() => navigate("/")}
-          className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
-        >
-          Ana Sayfa
-        </button>
-        <button
-          onClick={() => navigate("/recipes")}
-          className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
-        >
-          Tarifler
-        </button>
-        <button
-          onClick={() => navigate("/export")}
-          className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
-        >
-          Dışa Aktar
-        </button>
-      </div>
-      {user && (
-        <button onClick={() => navigate("/profile")} className="ml-2">
-          {user.photoURL ? (
-            <img
-              className="h-6 w-6 rounded-full"
-              src={user.photoURL}
-              alt={user.displayName || "Kullanıcı"}
-            />
-          ) : (
-            <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-              {user.displayName
-                ? user.displayName.charAt(0).toUpperCase()
-                : "K"}
-            </div>
+    <Drawer anchor="left" open={isOpen} onClose={onClose}>
+      <Box sx={{ width: 250, p: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+          <IconButton onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigation("/")}>
+              <ListItemIcon>
+                <HomeIcon />
+              </ListItemIcon>
+              <ListItemText primary="Ana Sayfa" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setSearchOpen(!searchOpen)}>
+              <ListItemIcon>
+                <SearchIcon />
+              </ListItemIcon>
+              <ListItemText primary="Kullanıcı Ara" />
+            </ListItemButton>
+          </ListItem>
+
+          {searchOpen && (
+            <ListItem sx={{ pl: 4, pr: 2 }}>
+              <UserSearch />
+            </ListItem>
           )}
-        </button>
-      )}
-    </div>
+
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigation("/export")}>
+              <ListItemIcon>
+                <PictureAsPdfIcon />
+              </ListItemIcon>
+              <ListItemText primary="Dışa Aktar" />
+            </ListItemButton>
+          </ListItem>
+
+          {user && (
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleNavigation(`/profile/${user.uid}`)}
+              >
+                <ListItemIcon>
+                  {user.photoURL ? (
+                    <Avatar
+                      src={user.photoURL}
+                      alt={user.displayName || "Kullanıcı"}
+                      sx={{ width: 24, height: 24 }}
+                    />
+                  ) : (
+                    <Avatar
+                      sx={{ width: 24, height: 24, bgcolor: "primary.main" }}
+                    >
+                      {user.displayName
+                        ? user.displayName.charAt(0).toUpperCase()
+                        : "K"}
+                    </Avatar>
+                  )}
+                </ListItemIcon>
+                <ListItemText primary="Profilim" />
+              </ListItemButton>
+            </ListItem>
+          )}
+        </List>
+      </Box>
+    </Drawer>
   );
 };
 
-// Ana uygulama içeriği
+// Ana içerik bileşeni - MealProvider içinde kullanılacak
 const AppContent = () => {
-  const {
-    user,
-    loading,
-    generateRandomMealPlan,
-    clearMealPlan,
-    saveMealPlanToFirebase,
-    saveStatus,
-    mealFilter,
-  } = useMeals();
-  const [isMobile, setIsMobile] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
-  const [message, setMessage] = useState("");
-  const location = useLocation();
+  const { user } = useMeals();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Ekran boyutunu kontrol et
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // İlk yükleme
-    checkScreenSize();
-
-    // Ekran boyutu değiştiğinde
-    window.addEventListener("resize", checkScreenSize);
-
-    // Temizleme
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  // Rastgele yemek planı oluştur
-  const handleGenerateRandomPlan = () => {
-    let filterMessage = "";
-    if (mealFilter === "personal") {
-      filterMessage =
-        "Sadece kişisel yemeklerden rastgele dağıtım yapılıyor...";
-    } else if (mealFilter === "default") {
-      filterMessage =
-        "Sadece varsayılan yemeklerden rastgele dağıtım yapılıyor...";
-    } else {
-      filterMessage = "Tüm yemeklerden rastgele dağıtım yapılıyor...";
-    }
-
-    setMessage(filterMessage);
-    setShowMessage(true);
-
-    // 3 saniye sonra mesajı kapat
-    setTimeout(() => {
-      setShowMessage(false);
-    }, 3000);
-
-    generateRandomMealPlan();
-  };
-
-  // Yemek planını temizle
-  const handleClearPlan = () => {
-    if (window.confirm("Yemek planını temizlemek istediğinize emin misiniz?")) {
-      clearMealPlan();
-    }
-  };
-
-  // Yemek planını kaydet
-  const handleSavePlan = async () => {
-    await saveMealPlanToFirebase();
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // Buton durumları
-  const getSaveButtonClass = () => {
-    let baseClass =
-      "px-2 py-1 md:px-3 md:py-2 rounded text-xs md:text-sm font-medium flex items-center";
-
-    if (saveStatus === "saving") {
-      return `${baseClass} bg-gray-400 cursor-wait`;
-    } else if (saveStatus === "success") {
-      return `${baseClass} bg-green-600`;
-    } else if (saveStatus === "error") {
-      return `${baseClass} bg-red-500 hover:bg-red-600`;
-    }
-
-    return `${baseClass} bg-blue-500 hover:bg-blue-600 text-white`;
-  };
-
-  const getSaveButtonText = () => {
-    if (saveStatus === "saving") return "Kaydediliyor...";
-    if (saveStatus === "success") return "Kaydedildi ✓";
-    if (saveStatus === "error") return "Hata!";
-    return "Kaydet";
+  const handleLogin = () => {
+    // Giriş işlemi burada yapılacak
+    console.log("Giriş yapılıyor...");
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold text-blue-600">
-                  Meal Planner
-                </span>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  to="/"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+        }}
+      >
+        {/* Üst Menü */}
+        <AppBar position="static" color="default" elevation={0}>
+          <Toolbar>
+            {isMobile && (
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                onClick={() => setMobileOpen(true)}
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
+
+            <Typography
+              variant="h6"
+              component={Link}
+              to="/"
+              sx={{
+                flexGrow: 1,
+                textDecoration: "none",
+                color: "primary.main",
+                fontWeight: "bold",
+              }}
+            >
+              Meal Planner
+            </Typography>
+
+            {!isMobile && (
+              <>
+                <Button component={Link} to="/" color="inherit" sx={{ mx: 1 }}>
                   Ana Sayfa
-                </Link>
-                <Link
-                  to="/recipes"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Tarifler
-                </Link>
-                <Link
+                </Button>
+                <Box sx={{ width: 250, mx: 2 }}>
+                  <UserSearch />
+                </Box>
+                <Button
+                  component={Link}
                   to="/export"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  color="inherit"
+                  sx={{ mx: 1 }}
                 >
                   Dışa Aktar
-                </Link>
-              </div>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:items-center">
-              {user ? (
-                <Link
-                  to="/profile"
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <div className="flex items-center">
-                    {user.photoURL ? (
-                      <img
-                        className="h-8 w-8 rounded-full"
-                        src={user.photoURL}
-                        alt={user.displayName || "Kullanıcı"}
-                      />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                        {user.displayName
-                          ? user.displayName.charAt(0).toUpperCase()
-                          : "K"}
-                      </div>
-                    )}
-                    <span className="ml-2">
-                      {user.displayName || user.email}
-                    </span>
-                  </div>
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Giriş Yap
-                </Link>
-              )}
-            </div>
-
-            {/* Mobil menü */}
-            {isMobile && (
-              <div className="flex items-center">
-                <div className="flex space-x-2">
-                  <Link
-                    to="/"
-                    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
-                  >
-                    Ana Sayfa
-                  </Link>
-                  <Link
-                    to="/recipes"
-                    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
-                  >
-                    Tarifler
-                  </Link>
-                  <Link
-                    to="/export"
-                    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
-                  >
-                    Dışa Aktar
-                  </Link>
-                </div>
-                {user && (
-                  <Link to="/profile" className="ml-2">
-                    {user.photoURL ? (
-                      <img
-                        className="h-6 w-6 rounded-full"
-                        src={user.photoURL}
-                        alt={user.displayName || "Kullanıcı"}
-                      />
-                    ) : (
-                      <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                        {user.displayName
-                          ? user.displayName.charAt(0).toUpperCase()
-                          : "K"}
-                      </div>
-                    )}
-                  </Link>
-                )}
-              </div>
+                </Button>
+              </>
             )}
-          </div>
-        </div>
-      </nav>
 
-      {/* Mobile menu - Sadece ana sayfada göster */}
-      {/* Mobil görünümde MobileLayout bileşenini burada göstermeyi kaldırıyoruz */}
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {showMessage && (
-          <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-            <span className="block sm:inline">
-              {message || "Yemek planınız başarıyla kaydedildi!"}
-            </span>
-            <span
-              className="absolute top-0 bottom-0 right-0 px-4 py-3"
-              onClick={() => setShowMessage(false)}
-            >
-              <svg
-                className="fill-current h-6 w-6 text-green-500"
-                role="button"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-              >
-                <title>Kapat</title>
-                <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
-              </svg>
-            </span>
-          </div>
-        )}
-
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                {isMobile ? (
-                  <MobileLayout />
-                ) : (
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex flex-wrap gap-2 justify-between items-center">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={handleGenerateRandomPlan}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-                        >
-                          Rastgele Plan Oluştur
-                        </button>
-                        <button
-                          onClick={handleClearPlan}
-                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-                        >
-                          Planı Temizle
-                        </button>
-                      </div>
-                      <button
-                        onClick={handleSavePlan}
-                        className={getSaveButtonClass()}
-                        disabled={saveStatus === "saving"}
+            {user ? (
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Button
+                  component={Link}
+                  to={`/profile/${user.uid}`}
+                  color="inherit"
+                  startIcon={
+                    user.photoURL ? (
+                      <Avatar
+                        src={user.photoURL}
+                        alt={user.displayName || "Kullanıcı"}
+                        sx={{ width: 24, height: 24 }}
+                      />
+                    ) : (
+                      <Avatar
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          bgcolor: "primary.main",
+                        }}
                       >
-                        {getSaveButtonText()}
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
-                        <WeekView />
-                      </div>
-                      <div className="lg:col-span-1 h-[calc(100vh-200px)]">
-                        <MealList />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/recipes"
-            element={
-              <ProtectedRoute>
-                <RecipePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/export"
-            element={
-              <ProtectedRoute>
-                <PlanExport />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={user ? <Navigate to="/" replace /> : <Login />}
-          />
-        </Routes>
-      </main>
-    </div>
-  );
-};
+                        {user.displayName
+                          ? user.displayName.charAt(0).toUpperCase()
+                          : "K"}
+                      </Avatar>
+                    )
+                  }
+                >
+                  {isMobile ? "" : "Kullanıcı"}
+                </Button>
+              </Box>
+            ) : (
+              <Button color="primary" variant="contained" onClick={handleLogin}>
+                Giriş Yap
+              </Button>
+            )}
+          </Toolbar>
+        </AppBar>
 
-// Mobil ve masaüstü düzeni yönetimi
-const MobileLayout = () => {
-  const {
-    generateRandomMealPlan,
-    clearMealPlan,
-    saveMealPlanToFirebase,
-    saveStatus,
-  } = useMeals();
+        {/* Mobil Menü */}
+        <MobileMenu isOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-  // Rastgele yemek planı oluştur
-  const handleGenerateRandomPlan = () => {
-    generateRandomMealPlan();
-  };
-
-  // Yemek planını temizle
-  const handleClearPlan = () => {
-    if (window.confirm("Yemek planını temizlemek istediğinize emin misiniz?")) {
-      clearMealPlan();
-    }
-  };
-
-  // Yemek planını kaydet
-  const handleSavePlan = async () => {
-    await saveMealPlanToFirebase();
-  };
-
-  // Buton durumları
-  const getSaveButtonClass = () => {
-    let baseClass = "px-2 py-1 rounded text-xs font-medium flex items-center";
-
-    if (saveStatus === "saving") {
-      return `${baseClass} bg-gray-400 cursor-wait`;
-    } else if (saveStatus === "success") {
-      return `${baseClass} bg-green-600`;
-    } else if (saveStatus === "error") {
-      return `${baseClass} bg-red-500 hover:bg-red-600`;
-    }
-
-    return `${baseClass} bg-blue-500 hover:bg-blue-600 text-white`;
-  };
-
-  const getSaveButtonText = () => {
-    if (saveStatus === "saving") return "Kaydediliyor...";
-    if (saveStatus === "success") return "Kaydedildi ✓";
-    if (saveStatus === "error") return "Hata!";
-    return "Kaydet";
-  };
-
-  return (
-    <div className="flex flex-col">
-      <div className="flex flex-wrap gap-2 justify-between items-center mb-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleGenerateRandomPlan}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-medium"
-          >
-            Rastgele Plan
-          </button>
-          <button
-            onClick={handleClearPlan}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs font-medium"
-          >
-            Planı Temizle
-          </button>
-        </div>
-        <button
-          onClick={handleSavePlan}
-          className={getSaveButtonClass()}
-          disabled={saveStatus === "saving"}
+        {/* Ana İçerik */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            bgcolor: "background.default",
+            p: { xs: 1, sm: 3 },
+          }}
         >
-          {getSaveButtonText()}
-        </button>
-      </div>
-      <div className="mb-4">
-        <WeekView />
-      </div>
-      <div className="grid grid-cols-1 gap-4">
-        <div className="h-[calc(100vh-300px)] overflow-y-auto">
-          <MealList compactMode={true} />
-        </div>
-      </div>
-    </div>
+          <Routes>
+            <Route path="/" element={<MealPlannerPage />} />
+            <Route path="/export" element={<ExportPage />} />
+            <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route
+              path="/login"
+              element={user ? <Navigate to="/" replace /> : <Login />}
+            />
+          </Routes>
+        </Box>
+
+        {/* Alt Bilgi */}
+        <Box
+          component="footer"
+          sx={{
+            py: 3,
+            px: 2,
+            mt: "auto",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "light"
+                ? theme.palette.grey[200]
+                : theme.palette.grey[800],
+          }}
+        >
+          <Container maxWidth="sm">
+            <Typography variant="body2" color="text.secondary" align="center">
+              © {new Date().getFullYear()} Meal Planner
+            </Typography>
+          </Container>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
@@ -492,9 +312,11 @@ function App() {
   return (
     <Router>
       <MealProvider>
-        <DndProvider backend={HTML5Backend}>
-          <AppContent />
-        </DndProvider>
+        <RecipeProvider>
+          <DndProvider backend={HTML5Backend}>
+            <AppContent />
+          </DndProvider>
+        </RecipeProvider>
       </MealProvider>
     </Router>
   );

@@ -15,21 +15,40 @@ import {
   addRecipeToDefaultMeal,
   deleteRecipeFromDefaultMeal,
   getMealsFromFirestore,
+  saveRecipeForUser,
+  unsaveRecipeForUser,
+  db,
 } from "../../services/firebase";
-
+import { getDoc, doc } from "firebase/firestore";
+import { useMeals } from "../MealContext";
 import default_recipes from "../../data/recipes";
 
 const RecipeContext = createContext();
 
 export function RecipeProvider({ children }) {
+  // Bunun yerine doğrudan auth'dan user bilgisini alacağız
+  const [user, setUser] = useState(null);
   const [recipes, setRecipes] = useState([]); // Varsayılan tarifler
   const [userRecipes, setUserRecipes] = useState([]); // Kullanıcı tarifleri
+  const [savedRecipes, setSavedRecipes] = useState([]); // Kaydedilen tarifler
   const [defaultMeals, setDefaultMeals] = useState([]); // Varsayılan yemekler
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recipeFilter, setRecipeFilter] = useState("all"); // 'all', 'default', 'personal'
   const [selectedMealId, setSelectedMealId] = useState(null); // Seçilen yemeğin ID'si
   const [lastFetchTime, setLastFetchTime] = useState(0); // Son sorgu zamanı
+
+  // Firebase'den auth durumunu dinle
+  useEffect(() => {
+    import("firebase/auth").then(({ getAuth, onAuthStateChanged }) => {
+      const auth = getAuth();
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+      });
+
+      return () => unsubscribe();
+    });
+  }, []);
 
   // Firebase'den tarifleri ve yemekleri yükle - sadece bir kez
   useEffect(() => {
@@ -236,6 +255,82 @@ export function RecipeProvider({ children }) {
     });
   }, [getAllRecipes, searchTerm, difficultyFilter, selectedMealId]);
 
+  // Kullanıcı tariflerini yükle
+  useEffect(() => {
+    if (user) {
+      loadUserRecipes(user.uid);
+    }
+  }, [user, loadUserRecipes, lastFetchTime]);
+
+  // Kaydedilen tarifleri yükle
+  const loadSavedRecipes = useCallback(async (userId) => {
+    if (!userId) {
+      setSavedRecipes([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists() && userSnap.data().savedRecipes) {
+        setSavedRecipes(userSnap.data().savedRecipes);
+      } else {
+        setSavedRecipes([]);
+      }
+    } catch (err) {
+      console.error("Kaydedilen tarifleri yüklerken hata oluştu:", err);
+      setError("Kaydedilen tarifleri yüklerken bir hata oluştu");
+      setSavedRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Kullanıcı giriş yaptığında kaydedilen tarifleri yükle
+  useEffect(() => {
+    if (user) {
+      loadSavedRecipes(user.uid);
+    } else {
+      setSavedRecipes([]);
+    }
+  }, [user, loadSavedRecipes, lastFetchTime]);
+
+  // Tarif kaydetme fonksiyonu
+  const saveRecipe = async (userId, recipe) => {
+    if (!userId) {
+      console.error("Kullanıcı giriş yapmamış, tarif kaydedilemez");
+      return null;
+    }
+
+    try {
+      const updatedSavedRecipes = await saveRecipeForUser(userId, recipe);
+      setSavedRecipes(updatedSavedRecipes);
+      return updatedSavedRecipes;
+    } catch (err) {
+      console.error("Tarif kaydedilirken hata oluştu:", err);
+      return null;
+    }
+  };
+
+  // Kaydedilen tarifi kaldırma fonksiyonu
+  const unsaveRecipe = async (userId, recipeId) => {
+    if (!userId) {
+      console.error("Kullanıcı giriş yapmamış, tarif kaldırılamaz");
+      return false;
+    }
+
+    try {
+      const updatedSavedRecipes = await unsaveRecipeForUser(userId, recipeId);
+      setSavedRecipes(updatedSavedRecipes);
+      return true;
+    } catch (err) {
+      console.error("Tarif kaldırılırken hata oluştu:", err);
+      return false;
+    }
+  };
+
   const value = {
     recipes,
     userRecipes,
@@ -259,6 +354,11 @@ export function RecipeProvider({ children }) {
     getAllRecipes,
     addRecipeToFirestoreDb,
     refreshData,
+    savedRecipes,
+    saveRecipe,
+    unsaveRecipe,
+    loadSavedRecipes,
+    getUserRecipes,
   };
 
   return (

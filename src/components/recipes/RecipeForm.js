@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import { useMeals } from "../../context/MealContext";
 import {
@@ -18,6 +18,11 @@ import {
   Tabs,
   Tab,
   Alert,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -42,9 +47,12 @@ const RecipeForm = ({ onClose }) => {
   });
   const [errors, setErrors] = useState({});
   const [availableMeals, setAvailableMeals] = useState([]);
-  const [mealType, setMealType] = useState(isAdmin ? "default" : "personal");
+  const [mealType, setMealType] = useState("personal");
   const [existingRecipe, setExistingRecipe] = useState(null);
   const [showExistingRecipeAlert, setShowExistingRecipeAlert] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
     console.log("Admin durumu:", isAdmin);
@@ -55,13 +63,8 @@ const RecipeForm = ({ onClose }) => {
       userMeals.filter((m) => m.isPersonal).length
     );
 
-    if (isAdmin && mealType === "default") {
-      // Admin için varsayılan yemekleri göster
-      setAvailableMeals(meals);
-    } else {
-      // Normal kullanıcılar için sadece kişisel yemekleri göster
-      setAvailableMeals(userMeals.filter((meal) => meal.isPersonal));
-    }
+    // Sadece kişisel yemekleri göster
+    setAvailableMeals(userMeals.filter((meal) => meal.isPersonal));
   }, [userMeals, meals, isAdmin, mealType]);
 
   // Yemek seçildiğinde mevcut tarifi kontrol et
@@ -81,6 +84,17 @@ const RecipeForm = ({ onClose }) => {
     }
   }, [formData.mealId, getRecipesForMeal]);
 
+  // Yemek seçeneklerini hazırla
+  const mealOptions = useMemo(() => {
+    // Sadece kişisel yemekler
+    return userMeals
+      .filter((meal) => meal.isPersonal)
+      .map((meal) => ({
+        id: meal.id,
+        name: meal.name,
+      }));
+  }, [userMeals]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -96,34 +110,23 @@ const RecipeForm = ({ onClose }) => {
     }
   };
 
-  const handleMealTypeChange = (event, newValue) => {
-    setMealType(newValue);
-    // Yemek seçimini sıfırla
+  const handleAddIngredient = () => {
     setFormData({
       ...formData,
-      mealId: "",
+      ingredients: [
+        ...formData.ingredients,
+        { name: "", amount: "", unit: "" },
+      ],
     });
-    setExistingRecipe(null);
-    setShowExistingRecipeAlert(false);
   };
 
-  // Mevcut tarifi forma yükle
-  const loadExistingRecipe = () => {
-    if (existingRecipe) {
-      setFormData({
-        ...existingRecipe,
-        // Eğer bazı alanlar eksikse varsayılan değerlerle doldur
-        ingredients: existingRecipe.ingredients || [
-          { name: "", amount: "", unit: "" },
-        ],
-        instructions: existingRecipe.instructions || [""],
-        prepTime: existingRecipe.prepTime || "",
-        cookTime: existingRecipe.cookTime || "",
-        difficulty: existingRecipe.difficulty || "medium",
-        servings: existingRecipe.servings || "1",
-      });
-      setShowExistingRecipeAlert(false);
-    }
+  const handleRemoveIngredient = (index) => {
+    const newIngredients = [...formData.ingredients];
+    newIngredients.splice(index, 1);
+    setFormData({
+      ...formData,
+      ingredients: newIngredients,
+    });
   };
 
   const handleIngredientChange = (index, field, value) => {
@@ -132,6 +135,22 @@ const RecipeForm = ({ onClose }) => {
     setFormData({
       ...formData,
       ingredients: newIngredients,
+    });
+  };
+
+  const handleAddInstruction = () => {
+    setFormData({
+      ...formData,
+      instructions: [...formData.instructions, ""],
+    });
+  };
+
+  const handleRemoveInstruction = (index) => {
+    const newInstructions = [...formData.instructions];
+    newInstructions.splice(index, 1);
+    setFormData({
+      ...formData,
+      instructions: newInstructions,
     });
   };
 
@@ -144,90 +163,39 @@ const RecipeForm = ({ onClose }) => {
     });
   };
 
-  const addIngredient = () => {
-    setFormData({
-      ...formData,
-      ingredients: [
-        ...formData.ingredients,
-        { name: "", amount: "", unit: "" },
-      ],
-    });
-  };
-
-  const removeIngredient = (index) => {
-    if (formData.ingredients.length > 1) {
-      const newIngredients = [...formData.ingredients];
-      newIngredients.splice(index, 1);
-      setFormData({
-        ...formData,
-        ingredients: newIngredients,
-      });
-    }
-  };
-
-  const addInstruction = () => {
-    setFormData({
-      ...formData,
-      instructions: [...formData.instructions, ""],
-    });
-  };
-
-  const removeInstruction = (index) => {
-    if (formData.instructions.length > 1) {
-      const newInstructions = [...formData.instructions];
-      newInstructions.splice(index, 1);
-      setFormData({
-        ...formData,
-        instructions: newInstructions,
-      });
-    }
-  };
-
   const validateForm = () => {
     const newErrors = {};
+
     if (!formData.name.trim()) {
       newErrors.name = "Tarif adı gerekli";
     }
+
     if (!formData.mealId) {
       newErrors.mealId = "Yemek seçimi gerekli";
     }
-    if (!formData.prepTime || isNaN(formData.prepTime)) {
-      newErrors.prepTime = "Geçerli bir hazırlık süresi girin";
-    }
-    if (!formData.cookTime || isNaN(formData.cookTime)) {
-      newErrors.cookTime = "Geçerli bir pişirme süresi girin";
-    }
 
     // Malzemeleri kontrol et
-    const ingredientErrors = [];
-    formData.ingredients.forEach((ingredient, index) => {
-      const error = {};
-      if (!ingredient.name.trim()) {
-        error.name = "Malzeme adı gerekli";
-      }
-      if (!ingredient.amount) {
-        error.amount = "Miktar gerekli";
-      }
-      if (!ingredient.unit.trim()) {
-        error.unit = "Birim gerekli";
-      }
-      if (Object.keys(error).length > 0) {
-        ingredientErrors[index] = error;
-      }
-    });
-    if (ingredientErrors.length > 0) {
-      newErrors.ingredients = ingredientErrors;
+    const hasEmptyIngredient = formData.ingredients.some(
+      (ing) => !ing.name.trim()
+    );
+    if (hasEmptyIngredient) {
+      newErrors.ingredients = "Tüm malzemelerin adı girilmelidir";
     }
 
     // Talimatları kontrol et
-    const instructionErrors = [];
-    formData.instructions.forEach((instruction, index) => {
-      if (!instruction.trim()) {
-        instructionErrors[index] = "Talimat gerekli";
-      }
-    });
-    if (instructionErrors.length > 0) {
-      newErrors.instructions = instructionErrors;
+    const hasEmptyInstruction = formData.instructions.some(
+      (inst) => !inst.trim()
+    );
+    if (hasEmptyInstruction) {
+      newErrors.instructions = "Tüm talimatlar girilmelidir";
+    }
+
+    if (!formData.prepTime) {
+      newErrors.prepTime = "Hazırlık süresi gerekli";
+    }
+
+    if (!formData.cookTime) {
+      newErrors.cookTime = "Pişirme süresi gerekli";
     }
 
     setErrors(newErrors);
@@ -236,9 +204,14 @@ const RecipeForm = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) {
       return;
     }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
     try {
       // Sayısal değerleri dönüştür
@@ -247,124 +220,106 @@ const RecipeForm = ({ onClose }) => {
         prepTime: parseInt(formData.prepTime, 10),
         cookTime: parseInt(formData.cookTime, 10),
         servings: parseInt(formData.servings, 10),
-        ingredients: formData.ingredients.map((ing) => ({
-          ...ing,
-          amount: parseFloat(ing.amount),
-        })),
+        isPersonal: true, // Kişisel tarif olarak işaretle
+        createdAt: new Date().toISOString(),
+        createdBy: user.displayName,
+        createdById: user.uid,
+        createdByPhoto: user.photoURL || null,
+        createdByEmail: user.email || null,
       };
 
-      if (isAdmin && mealType === "default") {
-        // Admin kullanıcı varsayılan tarif ekliyor
-        await addRecipeToFirestoreDb(recipeData);
-      } else {
-        // Normal kullanıcı kişisel tarif ekliyor
-        await addPersonalRecipe(user.uid, recipeData);
-      }
+      // Sadece kişisel tarif eklenebilir
+      const result = await addPersonalRecipe(user.uid, recipeData);
 
-      onClose && onClose();
-    } catch (error) {
-      console.error("Tarif eklenirken hata oluştu:", error);
-      setErrors({
-        submit: "Tarif eklenirken bir hata oluştu. Lütfen tekrar deneyin.",
-      });
+      if (result) {
+        setSuccess("Tarif başarıyla eklendi");
+        // Formu sıfırla
+        setFormData({
+          name: "",
+          mealId: "",
+          ingredients: [{ name: "", amount: "", unit: "" }],
+          instructions: [""],
+          prepTime: "",
+          cookTime: "",
+          difficulty: "medium",
+          servings: "1",
+        });
+        // Başarılı olduğunda kapat
+        setTimeout(() => {
+          onClose && onClose();
+        }, 1500);
+      } else {
+        setError("Tarif eklenirken bir hata oluştu");
+      }
+    } catch (err) {
+      console.error("Tarif eklenirken hata:", err);
+      setError("Tarif eklenirken bir hata oluştu: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-      <Typography variant="h6" gutterBottom>
-        Yeni Tarif Ekle
-      </Typography>
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      {/* Yemek tipi seçimi - Sadece kişisel yemekler için tarif eklenebilir */}
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Sadece kişisel yemekleriniz için tarif ekleyebilirsiniz.
+      </Alert>
 
-      {isAdmin && (
-        <Box sx={{ mb: 2 }}>
-          <Tabs
-            value={mealType}
-            onChange={handleMealTypeChange}
-            aria-label="meal type tabs"
-          >
-            <Tab value="default" label="Varsayılan Yemekler" />
-            <Tab value="personal" label="Kişisel Yemekler" />
-          </Tabs>
-        </Box>
+      {showExistingRecipeAlert && existingRecipe && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Bu yemek için zaten bir tarif mevcut. Yeni tarif eklerseniz, mevcut
+          tarif güncellenecektir.
+        </Alert>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {success}
+        </Alert>
       )}
 
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid item xs={12} sm={6}>
           <TextField
-            required
             fullWidth
-            id="name"
             label="Tarif Adı"
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={!!errors.name}
             helperText={errors.name}
+            required
           />
         </Grid>
-
-        <Grid item xs={12}>
-          <FormControl fullWidth required error={!!errors.mealId}>
-            <InputLabel id="meal-select-label">Yemek</InputLabel>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth error={!!errors.mealId} required>
+            <InputLabel>Yemek</InputLabel>
             <Select
-              labelId="meal-select-label"
-              id="mealId"
               name="mealId"
               value={formData.mealId}
-              label="Yemek"
               onChange={handleChange}
+              label="Yemek"
             >
-              {availableMeals.length > 0 ? (
-                availableMeals.map((meal) => (
-                  <MenuItem key={meal.id} value={meal.id}>
-                    {meal.name}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled value="">
-                  {isAdmin && mealType === "default"
-                    ? "Varsayılan yemek bulunamadı"
-                    : "Önce kişisel yemek eklemelisiniz"}
+              {mealOptions.map((meal) => (
+                <MenuItem key={meal.id} value={meal.id}>
+                  {meal.name}
                 </MenuItem>
-              )}
+              ))}
             </Select>
             {errors.mealId && <FormHelperText>{errors.mealId}</FormHelperText>}
-            {availableMeals.length === 0 && (
-              <FormHelperText>
-                {isAdmin && mealType === "default"
-                  ? "Varsayılan yemek bulunamadı"
-                  : "Tarif eklemek için önce kişisel yemek eklemelisiniz"}
-              </FormHelperText>
-            )}
           </FormControl>
         </Grid>
 
-        {showExistingRecipeAlert && (
-          <Grid item xs={12}>
-            <Alert
-              severity="info"
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={loadExistingRecipe}
-                >
-                  Yükle
-                </Button>
-              }
-            >
-              Bu yemek için zaten bir tarif var. Mevcut tarifi düzenlemek için
-              "Yükle" butonuna tıklayın.
-            </Alert>
-          </Grid>
-        )}
-
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={4}>
           <TextField
-            required
             fullWidth
-            id="prepTime"
             label="Hazırlık Süresi (dk)"
             name="prepTime"
             type="number"
@@ -372,14 +327,13 @@ const RecipeForm = ({ onClose }) => {
             onChange={handleChange}
             error={!!errors.prepTime}
             helperText={errors.prepTime}
+            required
+            inputProps={{ min: 1 }}
           />
         </Grid>
-
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={4}>
           <TextField
-            required
             fullWidth
-            id="cookTime"
             label="Pişirme Süresi (dk)"
             name="cookTime"
             type="number"
@@ -387,150 +341,174 @@ const RecipeForm = ({ onClose }) => {
             onChange={handleChange}
             error={!!errors.cookTime}
             helperText={errors.cookTime}
+            required
+            inputProps={{ min: 1 }}
           />
         </Grid>
-
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={4}>
           <TextField
-            required
             fullWidth
-            id="servings"
-            label="Porsiyon"
+            label="Porsiyon Sayısı"
             name="servings"
             type="number"
             value={formData.servings}
             onChange={handleChange}
-            error={!!errors.servings}
-            helperText={errors.servings}
+            inputProps={{ min: 1 }}
           />
         </Grid>
-      </Grid>
 
-      <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-        Malzemeler
-      </Typography>
-      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-        {formData.ingredients.map((ingredient, index) => (
-          <Grid container spacing={2} key={index} sx={{ mb: 1 }}>
-            <Grid item xs={5}>
+        <Grid item xs={12}>
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Zorluk Derecesi</FormLabel>
+            <RadioGroup
+              row
+              name="difficulty"
+              value={formData.difficulty}
+              onChange={handleChange}
+            >
+              <FormControlLabel
+                value="easy"
+                control={<Radio />}
+                label="Kolay"
+              />
+              <FormControlLabel
+                value="medium"
+                control={<Radio />}
+                label="Orta"
+              />
+              <FormControlLabel value="hard" control={<Radio />} label="Zor" />
+            </RadioGroup>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom>
+            Malzemeler
+          </Typography>
+          {errors.ingredients && (
+            <FormHelperText error>{errors.ingredients}</FormHelperText>
+          )}
+          {formData.ingredients.map((ingredient, index) => (
+            <Box
+              key={index}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
               <TextField
-                required
-                fullWidth
                 label="Malzeme"
                 value={ingredient.name}
                 onChange={(e) =>
                   handleIngredientChange(index, "name", e.target.value)
                 }
-                error={errors.ingredients && errors.ingredients[index]?.name}
-                helperText={
-                  errors.ingredients && errors.ingredients[index]?.name
-                }
+                sx={{ flexGrow: 2 }}
               />
-            </Grid>
-            <Grid item xs={3}>
               <TextField
-                required
-                fullWidth
                 label="Miktar"
-                type="number"
                 value={ingredient.amount}
                 onChange={(e) =>
                   handleIngredientChange(index, "amount", e.target.value)
                 }
-                error={errors.ingredients && errors.ingredients[index]?.amount}
-                helperText={
-                  errors.ingredients && errors.ingredients[index]?.amount
-                }
+                sx={{ flexGrow: 1 }}
               />
-            </Grid>
-            <Grid item xs={3}>
               <TextField
-                required
-                fullWidth
                 label="Birim"
                 value={ingredient.unit}
                 onChange={(e) =>
                   handleIngredientChange(index, "unit", e.target.value)
                 }
-                error={errors.ingredients && errors.ingredients[index]?.unit}
-                helperText={
-                  errors.ingredients && errors.ingredients[index]?.unit
-                }
+                sx={{ flexGrow: 1 }}
               />
-            </Grid>
-            <Grid item xs={1} sx={{ display: "flex", alignItems: "center" }}>
               <IconButton
                 color="error"
-                onClick={() => removeIngredient(index)}
+                onClick={() => handleRemoveIngredient(index)}
                 disabled={formData.ingredients.length <= 1}
               >
                 <DeleteIcon />
               </IconButton>
-            </Grid>
-          </Grid>
-        ))}
-        <Button
-          startIcon={<AddIcon />}
-          onClick={addIngredient}
-          variant="outlined"
-          sx={{ mt: 1 }}
-        >
-          Malzeme Ekle
-        </Button>
-      </Paper>
+            </Box>
+          ))}
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAddIngredient}
+            sx={{ mt: 1 }}
+          >
+            Malzeme Ekle
+          </Button>
+        </Grid>
 
-      <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-        Hazırlanışı
-      </Typography>
-      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-        {formData.instructions.map((instruction, index) => (
-          <Grid container spacing={2} key={index} sx={{ mb: 1 }}>
-            <Grid item xs={11}>
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom>
+            Hazırlanışı
+          </Typography>
+          {errors.instructions && (
+            <FormHelperText error>{errors.instructions}</FormHelperText>
+          )}
+          {formData.instructions.map((instruction, index) => (
+            <Box
+              key={index}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <Typography sx={{ minWidth: "30px" }}>{index + 1}.</Typography>
               <TextField
-                required
                 fullWidth
-                label={`Adım ${index + 1}`}
+                multiline
+                rows={2}
                 value={instruction}
                 onChange={(e) => handleInstructionChange(index, e.target.value)}
-                error={errors.instructions && !!errors.instructions[index]}
-                helperText={errors.instructions && errors.instructions[index]}
               />
-            </Grid>
-            <Grid item xs={1} sx={{ display: "flex", alignItems: "center" }}>
               <IconButton
                 color="error"
-                onClick={() => removeInstruction(index)}
+                onClick={() => handleRemoveInstruction(index)}
                 disabled={formData.instructions.length <= 1}
               >
                 <DeleteIcon />
               </IconButton>
-            </Grid>
-          </Grid>
-        ))}
-        <Button
-          startIcon={<AddIcon />}
-          onClick={addInstruction}
-          variant="outlined"
-          sx={{ mt: 1 }}
+            </Box>
+          ))}
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAddInstruction}
+            sx={{ mt: 1 }}
+          >
+            Adım Ekle
+          </Button>
+        </Grid>
+
+        <Grid
+          item
+          xs={12}
+          sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
         >
-          Adım Ekle
-        </Button>
-      </Paper>
-
-      {errors.submit && (
-        <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-          {errors.submit}
-        </Typography>
-      )}
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-        <Button onClick={onClose} sx={{ mr: 1 }}>
-          İptal
-        </Button>
-        <Button type="submit" variant="contained" color="primary">
-          Tarifi Kaydet
-        </Button>
-      </Box>
+          <Button
+            variant="outlined"
+            onClick={onClose}
+            sx={{ mr: 1 }}
+            disabled={loading}
+          >
+            İptal
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            startIcon={
+              loading ? <CircularProgress size={20} color="inherit" /> : null
+            }
+          >
+            {loading ? "Kaydediliyor..." : "Tarifi Kaydet"}
+          </Button>
+        </Grid>
+      </Grid>
     </Box>
   );
 };
