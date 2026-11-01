@@ -17,7 +17,7 @@ import {
   FONT_SANS,
   FONT_SERIF,
   PDF_COLORS as C,
-  registerPdfFonts,
+  ensurePdfFonts,
   upperTr,
 } from "./pdfFonts";
 import {
@@ -29,8 +29,6 @@ import {
   computeRecipeLayout,
 } from "./fitRecipe";
 import { DIFFICULTY_LABELS, MEAL_TYPE_LABELS } from "../../constants";
-
-registerPdfFonts();
 
 const MEAL_KICKER = {
   breakfast: "Kahvaltı",
@@ -329,7 +327,7 @@ const scaledStyles = (scale) => {
       padding: m.leftPad,
       borderRadius: 3,
     },
-    right: { width: m.rightWidth, marginLeft: m.gutter },
+    right: { width: m.rightWidth, marginLeft: m.gutter, paddingTop: m.leftPad },
     sectionTitle: {
       fontFamily: FONT_SERIF,
       fontWeight: 700,
@@ -652,6 +650,7 @@ const CookbookDocument = ({
   cover = true,
   toc = true,
 }) => {
+  ensurePdfFonts();
   const bookTitle = title || "Tarif Kitabım";
   const plan = planCookbook(recipes, { cover, toc });
   const entries = plan.entries.map((e, i) => ({

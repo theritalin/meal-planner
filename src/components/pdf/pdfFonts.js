@@ -15,13 +15,13 @@ const defaultBase = () => `${process.env.PUBLIC_URL || ""}/fonts`;
 let registeredBase = null;
 
 /**
- * Yazı tiplerini kaydeder. Aynı temel yol için tekrar çağrılırsa bir şey
- * yapmaz, böylece her PDF üretiminden önce güvenle çağrılabilir.
+ * Yazı tiplerini kaydeder. Bir kez çağrılması yeterlidir; react-pdf aynı aile
+ * için kaynakları biriktirdiğinden sonraki çağrılar yok sayılır.
  * @param {string} [basePath] yazı tipi klasörü (sonunda "/" olmadan)
  */
 export const registerPdfFonts = (basePath) => {
   const base = (basePath || defaultBase()).replace(/\/$/, "");
-  if (registeredBase === base) return;
+  if (registeredBase) return;
   registeredBase = base;
 
   Font.register({
@@ -51,6 +51,15 @@ export const registerPdfFonts = (basePath) => {
   // Türkçe heceleme sözlüğü yok; İngilizce kurallarıyla yanlış tirelemeyi
   // önlemek için kelimeleri bölmeden bırak.
   Font.registerHyphenationCallback((word) => [word]);
+};
+
+/**
+ * Henüz kayıt yapılmadıysa varsayılan (PUBLIC_URL) yoluyla kaydeder.
+ * PDF bileşenleri render sırasında bunu çağırır; Node/Jest'te önceden
+ * registerPdfFonts(yerelYol) çağrılmışsa ona dokunmaz.
+ */
+export const ensurePdfFonts = () => {
+  if (!registeredBase) registerPdfFonts();
 };
 
 /** Türkçe'ye uygun büyük harf (i → İ). */

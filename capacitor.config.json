@@ -1,0 +1,8 @@
+{
+  "appId": "com.mealplanner.tarifkitabi",
+  "appName": "Tarif Kitabım",
+  "webDir": "build",
+  "android": {
+    "allowMixedContent": false
+  }
+}

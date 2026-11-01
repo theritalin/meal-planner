@@ -25,8 +25,9 @@ export const SCALE_PRESETS = [1, 0.92, 0.85, 0.78, 0.72, 0.66];
 export const MIN_SCALE = SCALE_PRESETS[SCALE_PRESETS.length - 1];
 
 // Ortalama karakter genişliği (em cinsinden). Inter görece geniş bir yazı
-// tipidir; Türkçe metinde ~0.5em ölçülür, güvenlik payıyla yukarı yuvarlanır.
-const CHAR_W = { sans: 0.53, sansBold: 0.56, serif: 0.52, serifItalic: 0.47 };
+// tipidir; Türkçe metinde ~0.47em ölçülür (Playfair ~0.45), güvenlik payıyla
+// yukarı yuvarlanır.
+const CHAR_W = { sans: 0.5, serif: 0.49, serifItalic: 0.46 };
 
 // İki sütunlu düzende sol (malzemeler) sütunun payı.
 export const LEFT_COLUMN_RATIO = 0.36;
@@ -201,7 +202,8 @@ export const estimateTwoColumnHeight = (recipe, scale) => {
     m.leftPad * 2 +
     sectionTitleHeight(m) +
     ingredientsHeight(ings, m.leftWidth - m.leftPad * 2, m);
-  const right = sectionTitleHeight(m) + stepsHeight(steps, m.rightWidth, m);
+  const right =
+    m.leftPad + sectionTitleHeight(m) + stepsHeight(steps, m.rightWidth, m);
   return (
     headerHeight(recipe, m) +
     m.ruleGap +
