@@ -25,11 +25,9 @@ import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import PrivacyTipOutlinedIcon from "@mui/icons-material/PrivacyTipOutlined";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import { signOut } from "firebase/auth";
-import { auth } from "../../services/firebase";
 import { useMeals } from "../../context/MealContext";
 import UserSearch from "../auth/UserSearch";
+import SignOutButton from "../auth/SignOut";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
@@ -95,12 +93,6 @@ const UserMenu = ({ user }) => {
     navigate(path);
   };
 
-  const handleSignOut = async () => {
-    close();
-    await signOut(auth);
-    navigate("/login");
-  };
-
   return (
     <>
       <Tooltip title="Hesabım">
@@ -142,12 +134,7 @@ const UserMenu = ({ user }) => {
           Gizlilik Politikası
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleSignOut}>
-          <ListItemIcon>
-            <LogoutRoundedIcon fontSize="small" />
-          </ListItemIcon>
-          Çıkış Yap
-        </MenuItem>
+        <SignOutButton variant="menuItem" onDone={close} />
       </Menu>
     </>
   );
