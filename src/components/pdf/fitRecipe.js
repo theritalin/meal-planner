@@ -24,10 +24,47 @@ export const CONTENT_HEIGHT = PAGE.height - PAGE.marginTop - PAGE.marginBottom;
 export const SCALE_PRESETS = [1, 0.92, 0.85, 0.78, 0.72, 0.66];
 export const MIN_SCALE = SCALE_PRESETS[SCALE_PRESETS.length - 1];
 
-// Ortalama karakter genişliği (em cinsinden). Inter görece geniş bir yazı
-// tipidir; Türkçe metinde ~0.47em ölçülür (Playfair ~0.45), güvenlik payıyla
-// yukarı yuvarlanır.
-const CHAR_W = { sans: 0.45, serif: 0.46, serifItalic: 0.43 };
+// Karakter genişlikleri (em). Inter Regular'ın gerçek ilerleme değerlerinden
+// 0.05'lik kovalara yuvarlanarak çıkarıldı. Playfair için oran katsayısı
+// kullanılır. Tanımsız karakterler için orta-geniş bir değer varsayılır.
+const WIDTH_BUCKETS = [
+  [0.25, "IijlİıîÎ’'"],
+  [0.3, " !,.:;`"],
+  [0.35, "()/[\\]ft|"],
+  [0.4, "1r"],
+  [0.45, '"-^_{}“”°'],
+  [0.5, "*?–"],
+  [0.55, "7JLacksvxyzçşâ•"],
+  [0.6, "235689EFbdeghnopquğöüû"],
+  [0.65, "#$&+04<=>BKPRSTZ~Ş×"],
+  [0.7, "ADVXYÂ"],
+  [0.75, "CGHNOQUÇĞÖÜÛ"],
+  [0.8, "w"],
+  [0.85, "…½"],
+  [0.9, "Mm"],
+  [1, "%W—@"],
+];
+const CHAR_WIDTHS = new Map();
+WIDTH_BUCKETS.forEach(([w, chars]) =>
+  [...chars].forEach((c) => CHAR_WIDTHS.set(c, w))
+);
+const DEFAULT_CHAR = 0.62;
+const SPACE = 0.3;
+
+
+/** Yazı tipi aileleri için genişlik katsayıları (Inter = 1). */
+export const FONT_FACTOR = {
+  sans: 1,
+  sansBold: 1.01,
+  serif: 1,
+  serifItalic: 0.94,
+};
+
+const wordWidth = (word) => {
+  let w = 0;
+  for (const ch of word) w += CHAR_WIDTHS.get(ch) ?? DEFAULT_CHAR;
+  return w;
+};
 
 // İki sütunlu düzende sol (malzemeler) sütunun payı.
 export const LEFT_COLUMN_RATIO = 0.36;
@@ -54,7 +91,8 @@ export const metricsFor = (scale = 1) => {
     descSize: 11 * s,
     descLineHeight: 1.5,
     descGap: 14 * s,
-    ruleGap: 16 * s,
+    bodyGap: 4 * s, // meta/açıklama ile gövde arası
+    stepsGap: 14 * s, // tek sütunda malzemeler ile adımlar arası (çizgi dahil)
     sectionTitleSize: 14 * s,
     sectionTitleGap: 10 * s,
     ingSize: 9.5 * s,
@@ -81,13 +119,13 @@ export const metricsFor = (scale = 1) => {
  * @param {string} text
  * @param {number} width  kullanılabilir genişlik (pt)
  * @param {number} fontSize
- * @param {number} charEm ortalama karakter genişliği (em)
+ * @param {number} factor yazı tipi genişlik katsayısı (FONT_FACTOR)
  */
-export const estimateLines = (text, width, fontSize, charEm = CHAR_W.sans) => {
+export const estimateLines = (text, width, fontSize, factor = 1) => {
   const str = (text ?? "").toString().trim();
   if (!str) return 0;
-  const cw = fontSize * charEm;
-  const maxChars = Math.max(1, Math.floor(width / cw));
+  // Satır genişliği em cinsinden.
+  const max = Math.max(1, width / (fontSize * factor));
   let lines = 0;
   str.split(/\n+/).forEach((para) => {
     const words = para.split(/\s+/).filter(Boolean);
@@ -95,19 +133,19 @@ export const estimateLines = (text, width, fontSize, charEm = CHAR_W.sans) => {
     let current = 0;
     lines += 1;
     words.forEach((word) => {
-      const len = word.length;
+      const w = wordWidth(word);
       // Satırdan uzun kelime: kırılarak birden fazla satır kaplar.
-      if (len > maxChars) {
+      if (w > max) {
         if (current > 0) lines += 1;
-        const chunks = Math.ceil(len / maxChars);
+        const chunks = Math.ceil(w / max);
         lines += chunks - 1;
-        current = len - (chunks - 1) * maxChars;
+        current = w - (chunks - 1) * max;
         return;
       }
-      const needed = current === 0 ? len : current + 1 + len;
-      if (needed > maxChars) {
+      const needed = current === 0 ? w : current + SPACE + w;
+      if (needed > max) {
         lines += 1;
-        current = len;
+        current = w;
       } else {
         current = needed;
       }
@@ -116,8 +154,8 @@ export const estimateLines = (text, width, fontSize, charEm = CHAR_W.sans) => {
   return lines;
 };
 
-const textHeight = (text, width, size, lineHeight, charEm) =>
-  estimateLines(text, width, size, charEm) * size * lineHeight;
+const textHeight = (text, width, size, lineHeight, factor) =>
+  estimateLines(text, width, size, factor) * size * lineHeight;
 
 const ingredientsOf = (recipe) =>
   (recipe?.ingredients || []).map(formatIngredient).filter(Boolean);
@@ -129,14 +167,15 @@ const stepsOf = (recipe) =>
 
 /** Başlık + meta + açıklama bölümünün yüksekliği. */
 const headerHeight = (recipe, m) => {
-  let h = m.kickerSize * 1.3 + m.kickerGap;
+  const hasKicker = Boolean(recipe?.mealType || recipe?.category);
+  let h = hasKicker ? m.kickerSize * 1.3 + m.kickerGap : 0;
   h +=
     textHeight(
       recipe?.name || "İsimsiz tarif",
       CONTENT_WIDTH,
       m.titleSize,
       m.titleLineHeight,
-      CHAR_W.serif
+      FONT_FACTOR.serif
     ) + m.titleGap;
   // meta satırı: etiket + değer + üst/alt çizgi boşlukları
   h += m.metaLabelSize * 1.3 + 3 + m.metaValueSize * 1.25 + m.metaPadY * 2;
@@ -148,7 +187,7 @@ const headerHeight = (recipe, m) => {
         CONTENT_WIDTH,
         m.descSize,
         m.descLineHeight,
-        CHAR_W.serifItalic
+        FONT_FACTOR.serifItalic
       ) + m.descGap;
   }
   return h;
@@ -160,7 +199,13 @@ const ingredientsHeight = (items, width, m) =>
   items.reduce(
     (sum, text) =>
       sum +
-      textHeight(text, width - m.ingBullet, m.ingSize, m.ingLineHeight) +
+      textHeight(
+        text,
+        width - m.ingBullet,
+        m.ingSize,
+        m.ingLineHeight,
+        FONT_FACTOR.sansBold
+      ) +
       m.ingGap,
     0
   );
@@ -206,7 +251,7 @@ export const estimateTwoColumnHeight = (recipe, scale) => {
     m.leftPad + sectionTitleHeight(m) + stepsHeight(steps, m.rightWidth, m);
   return (
     headerHeight(recipe, m) +
-    m.ruleGap +
+    m.bodyGap +
     Math.max(left, right) +
     notesHeight(recipe, m)
   );
@@ -226,10 +271,11 @@ export const estimateSingleColumnHeight = (recipe, scale) => {
   const colB = ingredientsHeight(ings.slice(mid), half, m);
   return (
     headerHeight(recipe, m) +
-    m.ruleGap +
+    m.bodyGap +
     sectionTitleHeight(m) +
     Math.max(colA, colB) +
-    m.ruleGap +
+    m.stepsGap * 2 +
+    0.5 +
     sectionTitleHeight(m) +
     stepsHeight(steps, CONTENT_WIDTH, m) +
     notesHeight(recipe, m)
@@ -237,7 +283,7 @@ export const estimateSingleColumnHeight = (recipe, scale) => {
 };
 
 // Tahmin hatasına karşı güvenlik payı.
-const SAFETY = 1;
+const SAFETY = 0.98;
 const AVAILABLE = CONTENT_HEIGHT * SAFETY;
 
 /**
@@ -261,7 +307,9 @@ export const computeRecipeLayout = (recipe) => {
   return {
     scale: MIN_SCALE,
     layout: "single-column",
-    estimatedPages: Math.max(1, Math.ceil(h / AVAILABLE)),
+    // Tek sütun tahmini ölçümlerde ~%5 fazla çıkıyor; sayfa sayısında bunu
+    // telafi et (yalnızca İçindekiler numaraları için; yaklaşık olabilir).
+    estimatedPages: Math.max(1, Math.ceil(h / (CONTENT_HEIGHT * 1.05))),
     estimatedHeight: h,
   };
 };

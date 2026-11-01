@@ -320,7 +320,7 @@ const scaledStyles = (scale) => {
       color: C.body,
       marginBottom: m.descGap,
     },
-    columns: { flexDirection: "row", marginTop: 4 * scale },
+    columns: { flexDirection: "row", marginTop: m.bodyGap },
     left: {
       width: m.leftWidth,
       backgroundColor: C.cream,
@@ -377,12 +377,12 @@ const scaledStyles = (scale) => {
     ingGrid: { flexDirection: "row" },
     ingHalf: { width: (CONTENT_WIDTH - m.gutter) / 2 },
     ingHalfRight: { marginLeft: m.gutter },
-    singleSection: { marginTop: 4 * scale },
+    singleSection: { marginTop: m.bodyGap },
     stepsSection: {
-      marginTop: m.ruleGap,
+      marginTop: m.stepsGap,
+      paddingTop: m.stepsGap,
       borderTopWidth: 0.5,
       borderTopColor: C.rule,
-      paddingTop: 0,
     },
     notes: {
       marginTop: m.notesGap,
@@ -517,7 +517,6 @@ export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
             </View>
           </View>
           <View style={s.stepsSection}>
-            <View style={{ height: metricsFor(fit.scale).ruleGap - 0.5 }} />
             <SectionTitle s={s}>Hazırlanışı</SectionTitle>
             <StepList steps={steps} s={s} />
           </View>
