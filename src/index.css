@@ -2,11 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  background: #fbf7f2;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-} 
+}
+
+/* Yazdırma: yalnızca .print-area içeriği basılır (tarif detay sayfası) */
+@media print {
+  .no-print,
+  header,
+  nav,
+  footer {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

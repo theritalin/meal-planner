@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Firestore güvenlik kuralları — Firebase Console > Firestore > Rules
+// bölümüne yapıştırın veya `firebase deploy --only firestore:rules` ile yükleyin.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Hazır yemekler ve tarifleri: herkes okur, yalnızca yönetici yazar.
+    match /default_meals/{mealId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /recipes/{recipeId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Kullanıcı belgeleri: profiller (arama/profil sayfası için) giriş yapmış
+    // herkes tarafından okunabilir. Sahibi her şeyi yazabilir; diğer
+    // kullanıcılar yalnızca takipçi listesini (followers) değiştirebilir.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.get('isAdmin', false) == false;
+      allow update: if signedIn() && (
+        (request.auth.uid == userId
+          && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false))
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers'])
+      );
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+  }
+}

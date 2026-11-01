@@ -37,18 +37,22 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Aynı kullanıcı için kullanıcı belgesi kontrolünü tek seferde yap
+// (birden fazla dinleyici aynı anda tetiklenebilir).
+const userCheckCache = new Map();
+const ensureUserDoc = (user) => {
+  if (!userCheckCache.has(user.uid)) {
+    userCheckCache.set(user.uid, checkAndAddUser(user));
+  }
+  return userCheckCache.get(user.uid);
+};
+
 // Oturum durumu değişikliklerini dinle
 export const listenToAuthChanges = (callback) => {
   return onAuthStateChanged(auth, (user) => {
     if (user) {
-      // Kullanıcı giriş yapmış
-      console.log("Kullanıcı oturumu aktif:", user.email);
-      checkAndAddUser(user).then(() => {
-        callback(user);
-      });
+      ensureUserDoc(user).finally(() => callback(user));
     } else {
-      // Kullanıcı çıkış yapmış
-      console.log("Kullanıcı oturumu kapalı");
       callback(null);
     }
   });
@@ -63,8 +67,6 @@ export const addDefaultMealsToFirestore = async (meals) => {
     for (const meal of meals) {
       await setDoc(doc(mealsCollectionRef, meal.id), meal);
     }
-
-    console.log("Varsayılan yemekler Firestore'a eklendi");
     return true;
   } catch (error) {
     console.error("Yemekleri eklerken hata oluştu:", error);
@@ -103,8 +105,6 @@ export const saveMealPlanToFirestore = async (userId, mealPlan) => {
       },
       { merge: true }
     ); // merge: true ile mevcut belgeyi koruyup sadece belirtilen alanları güncelle
-
-    console.log("Yemek planı başarıyla kaydedildi");
     return true;
   } catch (error) {
     console.error("Yemek planını kaydederken hata oluştu:", error);
@@ -125,7 +125,6 @@ export const getMealPlanFromFirestore = async (userId) => {
     if (userSnap.exists() && userSnap.data().mealPlan) {
       return userSnap.data().mealPlan;
     } else {
-      console.log("Kullanıcı için yemek planı bulunamadı");
       return null;
     }
   } catch (error) {
@@ -168,11 +167,10 @@ export const checkAndAddUser = async (user) => {
         displayName: user.displayName || "",
         photoURL: user.photoURL || "",
         createdAt: new Date(),
-        isAdmin: user.email === process.env.REACT_APP_ADMIN_EMAIL, // Admin kontrolü
+        // Yönetici yetkisi güvenlik nedeniyle istemciden verilmez;
+        // Firebase Console üzerinden isAdmin: true olarak ayarlanır.
+        isAdmin: false,
       });
-      console.log("Yeni kullanıcı eklendi:", user.email);
-    } else {
-      console.log("Kullanıcı zaten var:", user.email);
     }
 
     return true;
@@ -214,7 +212,6 @@ export const getUserMeals = async (userId) => {
     if (userSnap.exists() && userSnap.data().personalMeals) {
       return userSnap.data().personalMeals;
     } else {
-      console.log("Kullanıcı için kişisel yemek bulunamadı");
       return [];
     }
   } catch (error) {
@@ -262,8 +259,6 @@ export const addUserMeal = async (userId, meal) => {
       },
       { merge: true }
     );
-
-    console.log("Kişisel yemek başarıyla eklendi");
     return newMeal;
   } catch (error) {
     console.error("Kişisel yemek eklerken hata oluştu:", error);
@@ -296,8 +291,6 @@ export const deleteUserMeal = async (userId, mealId) => {
       },
       { merge: true }
     );
-
-    console.log("Kişisel yemek başarıyla silindi");
     return true;
   } catch (error) {
     console.error("Kişisel yemek silerken hata oluştu:", error);
@@ -352,8 +345,6 @@ export const addRecipeToDefaultMeal = async (mealId, recipe) => {
 
     // Yemeği güncelle
     await setDoc(mealRef, { ...mealData, recipes }, { merge: true });
-
-    console.log("Tarif başarıyla yemeğe eklendi");
     return newRecipe;
   } catch (error) {
     console.error("Tarif eklerken hata oluştu:", error);
@@ -399,8 +390,6 @@ export const deleteRecipeFromDefaultMeal = async (mealId, recipeId) => {
       { ...mealData, recipes: updatedRecipes },
       { merge: true }
     );
-
-    console.log("Tarif başarıyla yemekten silindi");
     return true;
   } catch (error) {
     console.error("Tarif silerken hata oluştu:", error);
@@ -421,7 +410,6 @@ export const getUserRecipes = async (userId) => {
     if (userSnap.exists() && userSnap.data().personalRecipes) {
       return userSnap.data().personalRecipes;
     } else {
-      console.log("Kullanıcı için kişisel tarif bulunamadı");
       return [];
     }
   } catch (error) {
@@ -473,8 +461,6 @@ export const addUserRecipe = async (userId, recipe) => {
       },
       { merge: true }
     );
-
-    console.log("Kişisel tarif başarıyla eklendi");
     return newRecipe;
   } catch (error) {
     console.error("Kişisel tarif eklerken hata oluştu:", error);
@@ -507,8 +493,6 @@ export const deleteUserRecipe = async (userId, recipeId) => {
       },
       { merge: true }
     );
-
-    console.log("Kişisel tarif başarıyla silindi");
     return true;
   } catch (error) {
     console.error("Kişisel tarif silerken hata oluştu:", error);
@@ -548,8 +532,6 @@ export const addDefaultRecipesToFirestore = async (recipes) => {
     for (const recipe of recipes) {
       await setDoc(doc(db, "recipes", recipe.id), recipe);
     }
-
-    console.log("Varsayılan tarifler Firestore'a eklendi");
     return true;
   } catch (error) {
     console.error("Tarifleri eklerken hata oluştu:", error);
@@ -570,7 +552,6 @@ export const getUserProfile = async (userId) => {
     if (userSnap.exists()) {
       return { uid: userId, ...userSnap.data() };
     } else {
-      console.log("Kullanıcı profili bulunamadı");
       return null;
     }
   } catch (error) {
@@ -588,8 +569,6 @@ export const updateUserProfile = async (userId, profileData) => {
 
     const userRef = doc(db, "users", userId);
     await setDoc(userRef, profileData, { merge: true });
-
-    console.log("Kullanıcı profili başarıyla güncellendi");
     return true;
   } catch (error) {
     console.error("Kullanıcı profili güncellenirken hata oluştu:", error);
@@ -614,7 +593,6 @@ export const saveRecipeForUser = async (userId, recipe) => {
       // Tarif zaten kaydedilmiş mi kontrol et
       const isAlreadySaved = savedRecipes.some((r) => r.id === recipe.id);
       if (isAlreadySaved) {
-        console.log("Bu tarif zaten kaydedilmiş");
         return savedRecipes;
       }
     }
@@ -629,8 +607,6 @@ export const saveRecipeForUser = async (userId, recipe) => {
       },
       { merge: true }
     );
-
-    console.log("Tarif başarıyla kaydedildi");
     return savedRecipes;
   } catch (error) {
     console.error("Tarif kaydedilirken hata oluştu:", error);
@@ -649,7 +625,6 @@ export const unsaveRecipeForUser = async (userId, recipeId) => {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists() || !userSnap.data().savedRecipes) {
-      console.log("Kaydedilmiş tarif bulunamadı");
       return [];
     }
 
@@ -665,8 +640,6 @@ export const unsaveRecipeForUser = async (userId, recipeId) => {
       },
       { merge: true }
     );
-
-    console.log("Tarif başarıyla kaldırıldı");
     return savedRecipes;
   } catch (error) {
     console.error("Tarif kaldırılırken hata oluştu:", error);
