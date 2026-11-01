@@ -74,8 +74,18 @@ const errorMessage = (err) => {
       return "Tarayıcınız giriş penceresini engelledi. Açılır pencerelere izin verip tekrar deneyin.";
     case "auth/network-request-failed":
       return "İnternet bağlantısı kurulamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+    case "auth/unauthorized-domain":
+      return `Bu alan adı (${window.location.hostname}) Firebase'de yetkili değil. Firebase Console > Authentication > Settings > Authorized domains listesine ekleyin.`;
+    case "auth/invalid-api-key":
+    case "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
+      return "Firebase API anahtarı eksik veya hatalı. Ortam değişkenlerini (REACT_APP_FIREBASE_*) kontrol edin.";
+    case "auth/configuration-not-found":
+    case "auth/operation-not-allowed":
+      return "Google ile giriş Firebase'de etkin değil. Firebase Console > Authentication > Sign-in method bölümünden Google'ı etkinleştirin.";
     default:
-      return "Google ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.";
+      return `Google ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.${
+        err?.code ? ` (${err.code})` : ""
+      }`;
   }
 };
 
