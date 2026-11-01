@@ -27,7 +27,7 @@ hiçbir betik yüklenmez, hiçbir şey çizilmez. Reklam hataları uygulamayı a
 | `REACT_APP_ADMOB_BANNER_ID` | — | Uyarlanabilir banner birimi |
 | `REACT_APP_ADMOB_INTERSTITIAL_ID` | — | Geçiş reklamı birimi |
 | `REACT_APP_ADMOB_TEST_DEVICE_IDS` | — | Virgülle ayrılmış test cihazı kimlikleri (UMP formunu "AB'deymiş gibi" test etmek için) |
-| `REACT_APP_CONTACT_EMAIL` | `iletisim@ornek.com` | Gizlilik politikasındaki iletişim adresi |
+| `REACT_APP_CONTACT_EMAIL` | `bsckbilgi@gmail.com` | Gizlilik politikasındaki iletişim adresi |
 
 > CRA ortam değişkenlerini **derleme anında** gömer. Değişiklikten sonra yeniden derleyin.
 

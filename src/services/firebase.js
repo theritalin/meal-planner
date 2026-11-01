@@ -10,9 +10,12 @@ import {
 import {
   getAuth,
   signInWithPopup,
+  signInWithCredential,
+  signOut,
   GoogleAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
+import { isNativeApp } from "./platform";
 
 // Firebase yapılandırması - .env dosyasından alınıyor
 const firebaseConfig = {
@@ -133,16 +136,46 @@ export const getMealPlanFromFirestore = async (userId) => {
   }
 };
 
-// Google ile giriş yapma fonksiyonu
+// Google ile giriş yapma fonksiyonu.
+// Web: açılır pencere. Android (Capacitor): WebView'da açılır pencere
+// çalışmadığı için yerel Google girişi yapılır, dönen kimlik bilgisiyle
+// Firebase JS SDK'da oturum açılır (capacitor.config.json: skipNativeAuth).
 export const signInWithGoogle = async () => {
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
-  } catch (error) {
-    console.error("Google ile giriş yaparken hata oluştu:", error);
-    throw error;
+  if (isNativeApp()) {
+    const { FirebaseAuthentication } = await import(
+      "@capacitor-firebase/authentication"
+    );
+    const result = await FirebaseAuthentication.signInWithGoogle();
+    const idToken = result?.credential?.idToken;
+    if (!idToken) {
+      const err = new Error("Google kimlik bilgisi alınamadı");
+      err.code = "auth/popup-closed-by-user";
+      throw err;
+    }
+    const credential = GoogleAuthProvider.credential(idToken);
+    const userCredential = await signInWithCredential(auth, credential);
+    return userCredential.user;
   }
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  const result = await signInWithPopup(auth, provider);
+  return result.user;
+};
+
+// Oturumu kapat (Android'de yerel Google oturumu da kapatılır)
+export const signOutUser = async () => {
+  if (isNativeApp()) {
+    try {
+      const { FirebaseAuthentication } = await import(
+        "@capacitor-firebase/authentication"
+      );
+      await FirebaseAuthentication.signOut();
+    } catch (err) {
+      console.error("Yerel oturum kapatılamadı:", err);
+    }
+  }
+  await signOut(auth);
 };
 
 // Mevcut kullanıcıyı getir

@@ -11,4 +11,4 @@ export const getInitials = (name) => {
 };
 
 export const CONTACT_EMAIL =
-  process.env.REACT_APP_CONTACT_EMAIL || "iletisim@ornek.com";
+  process.env.REACT_APP_CONTACT_EMAIL || "bsckbilgi@gmail.com";

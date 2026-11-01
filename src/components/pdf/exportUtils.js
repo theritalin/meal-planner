@@ -5,6 +5,7 @@
 // yalnızca kullanıcı bir PDF istediğinde indirilir.
 
 import React from "react";
+import { isNativeApp } from "../../services/platform";
 
 /** Türkçe karakterleri sadeleştirerek güvenli dosya adı üretir. */
 export const slugify = (text, fallback = "tarif") => {
@@ -23,27 +24,54 @@ export const slugify = (text, fallback = "tarif") => {
 
 const loadRenderer = () => import("@react-pdf/renderer");
 
+/** Blob'u base64 (data: öneki olmadan) metne çevirir. */
+const blobToBase64 = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
 /**
- * Blob'u dosya olarak kaydeder.
- *
- * TODO(android): Capacitor WebView'da <a download> ile blob indirme çalışmaz.
- * Android sürümünde burada @capacitor/filesystem ile dosyayı
- * (Directory.Documents / Cache) yazıp @capacitor/share ile paylaşım sayfası
- * açılmalı. Örn:
- *   if (Capacitor.isNativePlatform()) {
- *     const data = await blobToBase64(blob);
- *     const { uri } = await Filesystem.writeFile({ path: filename, data,
- *       directory: Directory.Cache });
- *     await Share.share({ title: filename, url: uri });
- *     return;
- *   }
- * Tüm PDF indirmeleri bu tek fonksiyondan geçer.
+ * Android (Capacitor): PDF'i uygulama önbelleğine yazar ve sistem paylaşım
+ * sayfasını açar (Drive'a kaydet, WhatsApp, Dosyalar vb.).
+ */
+const saveBlobNative = async (blob, filename) => {
+  const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+    import("@capacitor/filesystem"),
+    import("@capacitor/share"),
+  ]);
+  const data = await blobToBase64(blob);
+  const { uri } = await Filesystem.writeFile({
+    path: filename,
+    data,
+    directory: Directory.Cache,
+    recursive: true,
+  });
+  try {
+    await Share.share({ title: filename, files: [uri], dialogTitle: "PDF'i paylaş" });
+  } catch (err) {
+    // Kullanıcı paylaşımı iptal ettiyse sessizce geç.
+    if (!/cancel/i.test(err?.message || "")) throw err;
+  }
+};
+
+/**
+ * Blob'u dosya olarak kaydeder. Tüm PDF indirmeleri bu tek fonksiyondan geçer.
+ * Web: <a download>. Android: Filesystem + Share.
  *
  * @param {Blob} blob
  * @param {string} filename
  * @returns {Promise<void>}
  */
 export const saveBlob = async (blob, filename) => {
+  if (isNativeApp()) {
+    await saveBlobNative(blob, filename);
+    showInterstitialAfterExport();
+    return;
+  }
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -56,7 +84,11 @@ export const saveBlob = async (blob, filename) => {
   // Tarayıcının indirmeyi başlatmasına zaman tanı.
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 
-  // Dışa aktarma sonrası (sıklık sınırlı) geçiş reklamı — yalnızca Android.
+  showInterstitialAfterExport();
+};
+
+/** Dışa aktarma sonrası (sıklık sınırlı) geçiş reklamı — yalnızca Android. */
+const showInterstitialAfterExport = () => {
   import("../../services/ads")
     .then(({ maybeShowInterstitial }) =>
       maybeShowInterstitial({ reason: "pdf-export" })
@@ -72,7 +104,13 @@ export const saveBlob = async (blob, filename) => {
  * @param {() => Promise<Blob>} makeBlob
  * @returns {Promise<void>}
  */
-export const previewPdf = async (makeBlob) => {
+export const previewPdf = async (makeBlob, filename = "onizleme.pdf") => {
+  if (isNativeApp()) {
+    // WebView'da yeni sekme yok: PDF'i paylaşım sayfasıyla bir PDF
+    // görüntüleyicide açtır.
+    await saveBlobNative(await makeBlob(), filename);
+    return;
+  }
   const win = window.open("", "_blank");
   try {
     const blob = await makeBlob();

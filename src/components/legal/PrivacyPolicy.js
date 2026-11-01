@@ -4,7 +4,7 @@ import { adsEnabled, openConsentPreferences } from '../../services/ads';
 
 const APP_NAME = 'Tarif Kitabım';
 const LAST_UPDATED = '1 Kasım 2026';
-const CONTACT_EMAIL = (process.env.REACT_APP_CONTACT_EMAIL || '').trim() || 'iletisim@ornek.com';
+const CONTACT_EMAIL = (process.env.REACT_APP_CONTACT_EMAIL || '').trim() || 'bsckbilgi@gmail.com';
 
 const Section = ({ id, title, children }) => (
   <Box component="section" aria-labelledby={id} sx={{ mt: 4 }}>

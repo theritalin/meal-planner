@@ -10,7 +10,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Logout as LogoutIcon } from "@mui/icons-material";
-import { auth } from "../../services/firebase";
+import { signOutUser } from "../../services/firebase";
 
 /**
  * Yeniden kullanılabilir çıkış butonu.
@@ -30,7 +30,7 @@ const SignOutButton = ({ variant = "button", onDone, ...rest }) => {
   const handleSignOut = async () => {
     setBusy(true);
     try {
-      await auth.signOut();
+      await signOutUser();
       onDone?.();
       navigate("/login", { replace: true });
     } catch (error) {

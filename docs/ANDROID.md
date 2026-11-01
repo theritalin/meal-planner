@@ -103,48 +103,12 @@ AdMob, reklam envanterini doğrulamak için **geliştirici web sitenizde** `app-
 **Sorun:** `signInWithPopup` Android WebView'da çalışmaz (açılır pencere yok); Google ayrıca
 gömülü WebView içinde OAuth girişini engeller (`disallowed_useragent`).
 
-**Önerilen çözüm: `@capacitor-firebase/authentication`** (yerel Google Sign-In / Credential Manager)
-
-```bash
-npm install @capacitor-firebase/authentication
-npx cap sync android
-```
-
-> Uyumluluk: eklentinin 8.x sürümü `firebase@^12` ister; proje şu an `firebase@10`
-> kullanıyor. Önce Firebase JS SDK'yı 12'ye yükseltin (API'ler modüler ve büyük ölçüde
-> aynıdır) ya da eklentinin dokümantasyonundaki uyumluluk tablosuna bakın.
-
-`capacitor.config.json`'a ekleyin:
-
-```json
-"plugins": {
-  "FirebaseAuthentication": {
-    "skipNativeAuth": true,
-    "providers": ["google.com"]
-  }
-}
-```
-
-Giriş kodu (platforma göre):
-
-```js
-import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
-import { isNativeApp } from './services/platform';
-
-export async function signInWithGoogle(auth) {
-  if (isNativeApp()) {
-    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-    const result = await FirebaseAuthentication.signInWithGoogle();
-    const credential = GoogleAuthProvider.credential(result.credential?.idToken);
-    return signInWithCredential(auth, credential); // web SDK oturumu → Firestore çalışır
-  }
-  return signInWithPopup(auth, new GoogleAuthProvider());
-}
-// Çıkış: native'de FirebaseAuthentication.signOut() + auth.signOut()
-```
-
-Alternatif (daha zayıf): `signInWithRedirect` — WebView'da Google tarafından
-engellenebildiği için önerilmez.
+**Çözüm (uygulandı):** `@capacitor-firebase/authentication` ile yerel Google girişi.
+Firebase JS SDK 12'ye yükseltildi, eklenti `package.json`'da, `capacitor.config.json`'da
+`skipNativeAuth: true` ayarlı. `src/services/firebase.js` içindeki `signInWithGoogle()`
+Android'de yerel girişi yapıp dönen kimlik bilgisiyle web SDK'da oturum açar;
+`signOutUser()` her iki oturumu da kapatır. Sizin yapmanız gereken yalnızca aşağıdaki
+Firebase / SHA-1 kurulumu ve `npx cap sync android`.
 
 **Firebase / SHA-1 kurulumu:**
 
@@ -166,51 +130,12 @@ engellenebildiği için önerilmez.
 
 ## 6. PDF kaydetme / paylaşma (Android)
 
-WebView'da `<a download>` ile blob indirme çalışmaz. `src/components/pdf/exportUtils.js`
-içindeki `saveBlob(blob, filename)` fonksiyonu bu iş için ayrılmış kancadır (TODO).
-Native'de dosyayı önbelleğe yazıp sistem paylaşım menüsünü açın:
-
-```bash
-npm install @capacitor/filesystem @capacitor/share
-npx cap sync android
-```
-
-```js
-import { isNativeApp } from '../../services/platform';
-
-const blobToBase64 = (blob) =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onloadend = () => resolve(String(r.result).split(',')[1]);
-    r.onerror = reject;
-    r.readAsDataURL(blob);
-  });
-
-export async function saveBlob(blob, filename) {
-  if (isNativeApp()) {
-    const { Filesystem, Directory } = await import('@capacitor/filesystem');
-    const { Share } = await import('@capacitor/share');
-    const { uri } = await Filesystem.writeFile({
-      path: filename,
-      data: await blobToBase64(blob),
-      directory: Directory.Cache,
-    });
-    await Share.share({ title: filename, url: uri, dialogTitle: 'PDF’i kaydet veya paylaş' });
-    return;
-  }
-  // Web: mevcut indirme davranışı
-  const url = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-```
-
-`Directory.Cache` depolama izni gerektirmez. Paylaşım menüsünden kullanıcı "Dosyalar'a
-kaydet", Drive, WhatsApp vb. seçebilir. Dışa aktarma bittikten **sonra**
-`maybeShowInterstitial({ reason: 'pdf-export' })` çağrılabilir.
+**Uygulandı.** WebView'da `<a download>` çalışmadığı için
+`src/components/pdf/exportUtils.js` içindeki `saveBlob()` Android'de PDF'i
+`@capacitor/filesystem` ile önbelleğe yazar ve `@capacitor/share` ile sistem paylaşım
+menüsünü açar (Dosyalar'a kaydet, Drive, WhatsApp…). "Önizle" de aynı yolla bir PDF
+görüntüleyicide açılır. Depolama izni gerekmez. Dışa aktarma sonrası sıklık sınırlı
+geçiş reklamı otomatik denenir. Yalnızca `npx cap sync android` çalıştırmanız yeterli.
 
 ## 7. İkonlar ve açılış ekranı
 
@@ -384,4 +309,4 @@ Konum (yaklaşık konum, IP'den) için AdMob'un güncel veri beyanı rehberine b
 | Play'den indirilen sürümde Google girişi `DEVELOPER_ERROR` / 10 | Play App Signing SHA-1'i Firebase'e eklenmemiş (Adım 5) |
 | Beyaz ekran | `npm run build` yapılmadan `cap sync` çalıştırılmış; `webDir` = `build` olmalı |
 | Banner gelmiyor | Yeni reklam birimleri birkaç saat "no fill" verebilir; önce test modunda deneyin |
-| PDF indirilmiyor | `saveBlob` native dalı (Adım 6) eklenmemiş |
+| PDF indirilmiyor | `npx cap sync android` çalıştırılmamış (Filesystem/Share eklentileri yüklenmemiş) |

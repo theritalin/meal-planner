@@ -8,6 +8,9 @@ import {
   Box,
   Button,
   Container,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   ListItemIcon,
@@ -23,6 +26,8 @@ import { useTheme } from "@mui/material/styles";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import PrivacyTipOutlinedIcon from "@mui/icons-material/PrivacyTipOutlined";
 import { useMeals } from "../../context/MealContext";
@@ -86,6 +91,44 @@ const UserAvatar = ({ user, size = 32 }) => (
     {(user?.displayName || "K").charAt(0).toUpperCase()}
   </Avatar>
 );
+
+/** Küçük ekranlarda kullanıcı arama: üst çubuktaki ikon + tam ekran arama. */
+const MobileSearch = () => {
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  return (
+    <>
+      <IconButton aria-label="Kullanıcı ara" onClick={() => setOpen(true)}>
+        <SearchRoundedIcon />
+      </IconButton>
+      <Dialog
+        open={open}
+        onClose={close}
+        fullScreen
+        PaperProps={{ sx: { borderRadius: 0 } }}
+      >
+        <DialogTitle
+          sx={{ display: "flex", alignItems: "center", gap: 1, pr: 1 }}
+        >
+          <Box sx={{ flexGrow: 1 }}>Kullanıcı Ara</Box>
+          <IconButton aria-label="Kapat" onClick={close}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: "8px !important" }}>
+          <UserSearch size="medium" onNavigate={close} />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 2, textAlign: "center" }}
+          >
+            İsim ya da e-posta ile arayın (en az 2 harf).
+          </Typography>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
 const UserMenu = ({ user }) => {
   const navigate = useNavigate();
@@ -206,7 +249,9 @@ const AppShell = ({ children }) => {
               </Box>
             )}
             <Box sx={{ flexGrow: 1 }} />
-            {!isMobile && (
+            {isMobile ? (
+              <MobileSearch />
+            ) : (
               <Box sx={{ width: 260 }}>
                 <UserSearch />
               </Box>
