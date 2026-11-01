@@ -36,3 +36,8 @@ firebase-debug.*.log*
 PRD.md
 .cursorrules
 .qodo
+
+# Android imzalama anahtarları
+*.jks
+*.keystore
+android/keystore.properties

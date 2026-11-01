@@ -624,7 +624,7 @@ const RecipeDetailView = ({ recipe }) => {
       </Paper>
 
       <Box className="no-print" sx={{ mt: 3 }}>
-        <AdBanner placement="recipe-detail" />
+        <AdBanner placement="recipeDetail" />
       </Box>
 
       {own && (

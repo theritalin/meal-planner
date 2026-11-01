@@ -88,9 +88,8 @@ Bu yüzden:
 2. Sayfa kapsayıcısına `pb: \`${72 + bannerHeight}px\`` verin.
 3. `bannerHeight` banner yüklenene kadar `0`'dır, yüklenince (`bannerAdSizeChanged`
    olayıyla) gerçek yüksekliği alır (tipik 50–60 dp ≈ CSS px).
-4. Banner ile navigasyon butonları arasında yanlışlıkla tıklamayı önlemek için
-   isterseniz `showBanner({ margin })` yerine navigasyona 4–8 px üst/alt kenarlık
-   (divider) ekleyin.
+4. Yanlışlıkla tıklamayı önlemek için navigasyonun altına 1 px kenarlık (divider) ve
+   birkaç piksel boşluk bırakın; banner ile butonlar bitişik görünmesin.
 
 ## Geçiş reklamı (interstitial)
 

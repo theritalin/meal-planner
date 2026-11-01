@@ -27,7 +27,7 @@ export const MIN_SCALE = SCALE_PRESETS[SCALE_PRESETS.length - 1];
 // Ortalama karakter genişliği (em cinsinden). Inter görece geniş bir yazı
 // tipidir; Türkçe metinde ~0.47em ölçülür (Playfair ~0.45), güvenlik payıyla
 // yukarı yuvarlanır.
-const CHAR_W = { sans: 0.5, serif: 0.49, serifItalic: 0.46 };
+const CHAR_W = { sans: 0.45, serif: 0.46, serifItalic: 0.43 };
 
 // İki sütunlu düzende sol (malzemeler) sütunun payı.
 export const LEFT_COLUMN_RATIO = 0.36;
@@ -237,7 +237,7 @@ export const estimateSingleColumnHeight = (recipe, scale) => {
 };
 
 // Tahmin hatasına karşı güvenlik payı.
-const SAFETY = 0.96;
+const SAFETY = 1;
 const AVAILABLE = CONTENT_HEIGHT * SAFETY;
 
 /**

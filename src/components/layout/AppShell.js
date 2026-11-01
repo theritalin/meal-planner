@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -28,6 +28,9 @@ import PrivacyTipOutlinedIcon from "@mui/icons-material/PrivacyTipOutlined";
 import { useMeals } from "../../context/MealContext";
 import UserSearch from "../auth/UserSearch";
 import SignOutButton from "../auth/SignOut";
+import ConsentBanner from "../ads/ConsentBanner";
+import { useNativeBanner } from "../ads/AdBanner";
+import { initAds } from "../../services/ads";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
@@ -142,9 +145,9 @@ const UserMenu = ({ user }) => {
 
 /**
  * Uygulama kabuğu: masaüstünde üst menü, mobilde alt gezinme çubuğu.
- * `bottomOffset`: native reklam bandı gibi alttaki ek yükseklik (px).
+ * Android'de (Capacitor) alttaki AdMob bandı için yer açar.
  */
-const AppShell = ({ children, bottomOffset = 0 }) => {
+const AppShell = ({ children }) => {
   const { user } = useMeals();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -153,10 +156,20 @@ const AppShell = ({ children, bottomOffset = 0 }) => {
   const current = activeIndex(location.pathname);
   const showChrome = Boolean(user) && location.pathname !== "/login";
 
+  useEffect(() => {
+    initAds();
+  }, []);
+
+  const { bannerHeight } = useNativeBanner({
+    enabled: showChrome && location.pathname !== "/privacy",
+  });
+  const bottomOffset = bannerHeight || 0;
+
   if (!showChrome) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
         {children}
+        <ConsentBanner bottomOffset={{ xs: 16, md: 16 }} />
       </Box>
     );
   }
@@ -278,6 +291,9 @@ const AppShell = ({ children, bottomOffset = 0 }) => {
           </Container>
         </Box>
       )}
+      <ConsentBanner
+        bottomOffset={{ xs: BOTTOM_NAV_HEIGHT + 24 + bottomOffset, md: 16 }}
+      />
     </Box>
   );
 };

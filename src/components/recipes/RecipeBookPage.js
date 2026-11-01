@@ -441,7 +441,7 @@ const RecipeBookPage = () => {
         )}
       </Stack>
 
-      <AdBanner placement="recipes-list" />
+      <AdBanner placement="recipes" />
 
       <Box sx={{ mt: 2 }}>
         {loading ? (
