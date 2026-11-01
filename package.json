@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@capacitor-community/admob": "^8.3.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^5.16.14",
@@ -43,6 +46,7 @@
     ]
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "react-scripts": "5.0.1"
   }
 }

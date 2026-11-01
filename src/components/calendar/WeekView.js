@@ -1,98 +1,109 @@
-import React, { useState, useEffect } from "react";
-import DayCell from "./DayCell";
+import React from "react";
+import { Box, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { palette } from "../../theme";
+import {
+  DAYS,
+  DAY_LABELS,
+  MEAL_TYPES,
+  MEAL_TYPE_LABELS,
+} from "../../constants";
 import { useMeals } from "../../context/MealContext";
+import DayCell from "./DayCell";
+import { getTodayKey, slotMeals } from "./planUtils";
 
-const DAYS = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
+const LABEL_COL = 84;
 
-const DAY_NAMES = {
-  monday: "Pazartesi",
-  tuesday: "Salı",
-  wednesday: "Çarşamba",
-  thursday: "Perşembe",
-  friday: "Cuma",
-  saturday: "Cumartesi",
-  sunday: "Pazar",
+const DayHeader = ({ day, isToday }) => (
+  <Box
+    sx={{
+      textAlign: "center",
+      py: 1,
+      borderRadius: 2.5,
+      bgcolor: isToday ? "primary.main" : "transparent",
+      color: isToday ? "primary.contrastText" : "text.primary",
+    }}
+  >
+    <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+      {DAY_LABELS[day]}
+    </Typography>
+    <Typography
+      variant="caption"
+      sx={{ opacity: isToday ? 0.9 : 0.6, fontSize: 11 }}
+    >
+      {isToday ? "Bugün" : " "}
+    </Typography>
+  </Box>
+);
+
+const MealTypeLabel = ({ type }) => {
+  const accent = palette[type];
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        pr: 1,
+        borderRadius: 2.5,
+        bgcolor: alpha(accent, 0.08),
+        borderLeft: `4px solid ${accent}`,
+        pl: 1,
+      }}
+    >
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: accent }}>
+        {MEAL_TYPE_LABELS[type]}
+      </Typography>
+    </Box>
+  );
 };
 
-const WeekView = () => {
-  const [selectedDay, setSelectedDay] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Ekran boyutunu kontrol et
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // İlk yükleme
-    checkScreenSize();
-
-    // Ekran boyutu değiştiğinde
-    window.addEventListener("resize", checkScreenSize);
-
-    // Temizleme
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  // Önceki güne geç
-  const goToPreviousDay = () => {
-    setSelectedDay((prev) => (prev > 0 ? prev - 1 : 6));
-  };
-
-  // Sonraki güne geç
-  const goToNextDay = () => {
-    setSelectedDay((prev) => (prev < 6 ? prev + 1 : 0));
-  };
+/**
+ * Masaüstü haftalık plan tablosu: sütunlar günler, satırlar öğünler.
+ * Dar ekranlarda yatay kaydırılabilir.
+ */
+const WeekView = ({ onAddClick, onMealClick }) => {
+  const { weekPlan, updateMealPlan } = useMeals();
+  const todayKey = getTodayKey();
+  const handleRemove = (day, type, meal) =>
+    updateMealPlan(day, type, meal, "remove");
 
   return (
-    <div className="bg-white rounded shadow p-3">
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-bold text-center">Haftalık Yemek Planı</h2>
-      </div>
+    <Box sx={{ overflowX: "auto", pb: 0.5 }}>
+      <Box
+        role="region"
+        aria-label="Haftalık yemek planı"
+        sx={{
+          display: "grid",
+          gridTemplateColumns: `${LABEL_COL}px repeat(${DAYS.length}, minmax(112px, 1fr))`,
+          gap: 1,
+          minWidth: LABEL_COL + DAYS.length * 120,
+        }}
+      >
+        <Box />
+        {DAYS.map((day) => (
+          <DayHeader key={day} day={day} isToday={day === todayKey} />
+        ))}
 
-      {isMobile ? (
-        // Mobil görünüm - Tek gün gösterimi
-        <div>
-          <div className="flex justify-between items-center mb-3 bg-gray-100 p-2 rounded">
-            <button
-              onClick={goToPreviousDay}
-              className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center"
-            >
-              ←
-            </button>
-            <h3 className="text-md font-bold">
-              {DAY_NAMES[DAYS[selectedDay]]}
-            </h3>
-            <button
-              onClick={goToNextDay}
-              className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center"
-            >
-              →
-            </button>
-          </div>
-          <DayCell
-            key={DAYS[selectedDay]}
-            day={DAY_NAMES[DAYS[selectedDay]]}
-            index={selectedDay}
-          />
-        </div>
-      ) : (
-        // Masaüstü görünüm - Tüm hafta gösterimi
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-2 h-[calc(100vh-250px)] overflow-y-auto">
-          {DAYS.map((day, index) => (
-            <DayCell key={day} day={DAY_NAMES[day]} index={index} />
-          ))}
-        </div>
-      )}
-    </div>
+        {MEAL_TYPES.map((type) => (
+          <React.Fragment key={type}>
+            <MealTypeLabel type={type} />
+            {DAYS.map((day) => (
+              <DayCell
+                key={`${day}-${type}`}
+                day={day}
+                type={type}
+                meals={slotMeals(weekPlan, day, type)}
+                isToday={day === todayKey}
+                onAdd={onAddClick}
+                onRemove={handleRemove}
+                onMealClick={onMealClick}
+              />
+            ))}
+          </React.Fragment>
+        ))}
+      </Box>
+    </Box>
   );
 };
 

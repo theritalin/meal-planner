@@ -1,514 +1,669 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useRecipes } from "../../context/recipes/RecipeContext";
-import { useMeals } from "../../context/MealContext";
+import React, { useMemo, useRef, useState } from "react";
 import {
+  Alert,
+  Autocomplete,
   Box,
   Button,
-  TextField,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
-  Grid,
-  Paper,
-  Divider,
-  FormHelperText,
-  Tabs,
-  Tab,
-  Alert,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   CircularProgress,
+  Collapse,
+  Divider,
+  IconButton,
+  ListSubheader,
+  MenuItem,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import { useRecipes } from "../../context/recipes/RecipeContext";
+import { useMeals } from "../../context/MealContext";
+import { DIFFICULTY_LABELS, MEAL_TYPE_LABELS } from "../../constants";
+import { COMMON_UNITS, parseIngredientLines } from "./ingredientParsing";
+import { recipeTextLength } from "./recipeHelpers";
 
-const RecipeForm = ({ onClose }) => {
-  const {
-    addPersonalRecipe,
-    addRecipeToFirestoreDb,
-    getRecipesForMeal,
-    defaultMeals,
-  } = useRecipes();
-  const { user, meals, userMeals, isAdmin } = useMeals();
-  const [formData, setFormData] = useState({
-    name: "",
-    mealId: "",
-    ingredients: [{ name: "", amount: "", unit: "" }],
-    instructions: [""],
-    prepTime: "",
-    cookTime: "",
-    difficulty: "medium",
-    servings: "1",
-  });
-  const [errors, setErrors] = useState({});
-  const [availableMeals, setAvailableMeals] = useState([]);
-  const [mealType, setMealType] = useState("personal");
-  const [existingRecipe, setExistingRecipe] = useState(null);
-  const [showExistingRecipeAlert, setShowExistingRecipeAlert] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+const LONG_RECIPE_CHARS = 2500;
 
-  useEffect(() => {
-    console.log("Admin durumu:", isAdmin);
-    console.log("Seçili yemek tipi:", mealType);
-    console.log("Varsayılan yemekler:", meals.length);
-    console.log(
-      "Kişisel yemekler:",
-      userMeals.filter((m) => m.isPersonal).length
-    );
+let keySeq = 0;
+const nextKey = () => `row_${Date.now().toString(36)}_${keySeq++}`;
 
-    // Sadece kişisel yemekleri göster
-    setAvailableMeals(userMeals.filter((meal) => meal.isPersonal));
-  }, [userMeals, meals, isAdmin, mealType]);
+const emptyIngredient = () => ({ _key: nextKey(), amount: "", unit: "", name: "" });
+const emptyInstruction = () => ({ _key: nextKey(), text: "" });
 
-  // Yemek seçildiğinde mevcut tarifi kontrol et
-  useEffect(() => {
-    if (formData.mealId) {
-      // Seçilen yemeğin tariflerini getir
-      const recipes = getRecipesForMeal(formData.mealId);
+const toFormState = (recipe) => {
+  const ingredients = (recipe?.ingredients || []).map((ing) =>
+    typeof ing === "string"
+      ? { _key: nextKey(), amount: "", unit: "", name: ing }
+      : {
+          _key: nextKey(),
+          amount: ing?.amount != null ? String(ing.amount) : "",
+          unit: ing?.unit || "",
+          name: ing?.name || "",
+        }
+  );
+  const instructions = (recipe?.instructions || []).map((text) => ({
+    _key: nextKey(),
+    text: String(text || ""),
+  }));
+  return {
+    name: recipe?.name || "",
+    description: recipe?.description || "",
+    mealId: recipe?.mealId || "",
+    prepTime: recipe?.prepTime != null ? String(recipe.prepTime) : "",
+    cookTime: recipe?.cookTime != null ? String(recipe.cookTime) : "",
+    servings: recipe?.servings != null ? String(recipe.servings) : "2",
+    difficulty: recipe?.difficulty || "medium",
+    notes: recipe?.notes || "",
+    ingredients: ingredients.length ? ingredients : [emptyIngredient()],
+    instructions: instructions.length ? instructions : [emptyInstruction()],
+  };
+};
 
-      if (recipes && recipes.length > 0) {
-        // Mevcut tarif varsa kaydet
-        setExistingRecipe(recipes[0]);
-        setShowExistingRecipeAlert(true);
-      } else {
-        setExistingRecipe(null);
-        setShowExistingRecipeAlert(false);
-      }
+const isBlankIngredient = (i) => !i.name.trim() && !i.amount.trim() && !i.unit.trim();
+
+const validate = (form) => {
+  const errors = {};
+  if (!form.name.trim()) errors.name = "Tarif adı gerekli";
+  else if (form.name.trim().length > 120) errors.name = "Tarif adı çok uzun";
+
+  ["prepTime", "cookTime"].forEach((field) => {
+    const v = form[field].trim();
+    if (v && (!/^\d+$/.test(v) || Number(v) > 1440)) {
+      errors[field] = "0–1440 arası dakika girin";
     }
-  }, [formData.mealId, getRecipesForMeal]);
+  });
+  const s = form.servings.trim();
+  if (s && (!/^\d+$/.test(s) || Number(s) < 1 || Number(s) > 100)) {
+    errors.servings = "1–100 arası bir sayı girin";
+  }
 
-  // Yemek seçeneklerini hazırla
-  const mealOptions = useMemo(() => {
-    // Sadece kişisel yemekler
-    return userMeals
-      .filter((meal) => meal.isPersonal)
-      .map((meal) => ({
-        id: meal.id,
-        name: meal.name,
-      }));
-  }, [userMeals]);
+  const filled = form.ingredients.filter((i) => !isBlankIngredient(i));
+  const rowErrors = {};
+  form.ingredients.forEach((i) => {
+    if (!isBlankIngredient(i) && !i.name.trim()) {
+      rowErrors[i._key] = "Malzeme adı gerekli";
+    }
+  });
+  if (Object.keys(rowErrors).length) errors.ingredientRows = rowErrors;
+  if (!filled.length) errors.ingredients = "En az bir malzeme ekleyin";
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
+  if (!form.instructions.some((i) => i.text.trim())) {
+    errors.instructions = "En az bir adım ekleyin";
+  }
+  return errors;
+};
+
+const toRecipeData = (form) => ({
+  name: form.name.trim(),
+  description: form.description.trim(),
+  mealId: form.mealId || null,
+  prepTime: Number(form.prepTime) || 0,
+  cookTime: Number(form.cookTime) || 0,
+  servings: Number(form.servings) || 1,
+  difficulty: form.difficulty,
+  notes: form.notes.trim(),
+  ingredients: form.ingredients
+    .filter((i) => i.name.trim())
+    .map(({ amount, unit, name }) => ({
+      amount: amount.trim(),
+      unit: unit.trim(),
+      name: name.trim(),
+    })),
+  instructions: form.instructions.map((i) => i.text.trim()).filter(Boolean),
+});
+
+const SectionTitle = ({ children, action }) => (
+  <Stack
+    direction="row"
+    alignItems="center"
+    justifyContent="space-between"
+    sx={{ mt: 3, mb: 1.5 }}
+  >
+    <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700 }}>
+      {children}
+    </Typography>
+    {action}
+  </Stack>
+);
+
+/**
+ * Tarif oluşturma / düzenleme formu.
+ * Props:
+ *  - onClose: () => void — iptal / kayıt sonrası kapatma
+ *  - initialRecipe?: Recipe — verilirse düzenleme modu (updatePersonalRecipe)
+ *  - onSaved?: (recipe) => void — başarılı kayıttan sonra çağrılır
+ */
+const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
+  const { addPersonalRecipe, updatePersonalRecipe, defaultMeals = [] } =
+    useRecipes();
+  const { user, meals = [], userMeals = [] } = useMeals();
+  const isEdit = Boolean(initialRecipe?.id);
+
+  const [form, setForm] = useState(() => toFormState(initialRecipe));
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const instructionRefs = useRef({});
+
+  const mealGroups = useMemo(() => {
+    const personal = userMeals.filter((m) => m?.id);
+    const personalIds = new Set(personal.map((m) => m.id));
+    const seen = new Set(personalIds);
+    const defaults = [...meals, ...defaultMeals].filter((m) => {
+      if (!m?.id || seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
     });
-    // Hata varsa temizle
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: null,
+    const byName = (a, b) => (a.name || "").localeCompare(b.name || "", "tr");
+    return { personal: personal.sort(byName), defaults: defaults.sort(byName) };
+  }, [meals, userMeals, defaultMeals]);
+
+  const knownMealIds = useMemo(
+    () => new Set([...mealGroups.personal, ...mealGroups.defaults].map((m) => m.id)),
+    [mealGroups]
+  );
+
+  const isLong = useMemo(
+    () => recipeTextLength(toRecipeData(form)) > LONG_RECIPE_CHARS,
+    [form]
+  );
+
+  const clearError = (key) => {
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  const setField = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    clearError(field);
+  };
+
+  // ---- Malzemeler ----
+  const updateIngredient = (key, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      ingredients: prev.ingredients.map((i) =>
+        i._key === key ? { ...i, [field]: value } : i
+      ),
+    }));
+    if (errors.ingredientRows?.[key] && field === "name") {
+      setErrors((prev) => {
+        const rows = { ...prev.ingredientRows };
+        delete rows[key];
+        return { ...prev, ingredientRows: rows };
       });
     }
+    clearError("ingredients");
   };
 
-  const handleAddIngredient = () => {
-    setFormData({
-      ...formData,
+  const addIngredient = () =>
+    setForm((prev) => ({
+      ...prev,
+      ingredients: [...prev.ingredients, emptyIngredient()],
+    }));
+
+  const removeIngredient = (key) =>
+    setForm((prev) => {
+      const next = prev.ingredients.filter((i) => i._key !== key);
+      return { ...prev, ingredients: next.length ? next : [emptyIngredient()] };
+    });
+
+  const applyPaste = () => {
+    const parsed = parseIngredientLines(pasteText).map((i) => ({
+      ...i,
+      _key: nextKey(),
+    }));
+    if (!parsed.length) return;
+    setForm((prev) => ({
+      ...prev,
       ingredients: [
-        ...formData.ingredients,
-        { name: "", amount: "", unit: "" },
+        ...prev.ingredients.filter((i) => !isBlankIngredient(i)),
+        ...parsed,
       ],
+    }));
+    clearError("ingredients");
+    setPasteText("");
+    setPasteOpen(false);
+  };
+
+  // ---- Adımlar ----
+  const updateInstruction = (key, text) => {
+    setForm((prev) => ({
+      ...prev,
+      instructions: prev.instructions.map((i) =>
+        i._key === key ? { ...i, text } : i
+      ),
+    }));
+    clearError("instructions");
+  };
+
+  const addInstruction = () => {
+    const row = emptyInstruction();
+    setForm((prev) => ({ ...prev, instructions: [...prev.instructions, row] }));
+    setTimeout(() => instructionRefs.current[row._key]?.focus(), 0);
+  };
+
+  const removeInstruction = (key) =>
+    setForm((prev) => {
+      const next = prev.instructions.filter((i) => i._key !== key);
+      return { ...prev, instructions: next.length ? next : [emptyInstruction()] };
     });
-  };
 
-  const handleRemoveIngredient = (index) => {
-    const newIngredients = [...formData.ingredients];
-    newIngredients.splice(index, 1);
-    setFormData({
-      ...formData,
-      ingredients: newIngredients,
+  const moveInstruction = (index, delta) =>
+    setForm((prev) => {
+      const target = index + delta;
+      if (target < 0 || target >= prev.instructions.length) return prev;
+      const next = [...prev.instructions];
+      [next[index], next[target]] = [next[target], next[index]];
+      return { ...prev, instructions: next };
     });
-  };
 
-  const handleIngredientChange = (index, field, value) => {
-    const newIngredients = [...formData.ingredients];
-    newIngredients[index][field] = value;
-    setFormData({
-      ...formData,
-      ingredients: newIngredients,
-    });
-  };
-
-  const handleAddInstruction = () => {
-    setFormData({
-      ...formData,
-      instructions: [...formData.instructions, ""],
-    });
-  };
-
-  const handleRemoveInstruction = (index) => {
-    const newInstructions = [...formData.instructions];
-    newInstructions.splice(index, 1);
-    setFormData({
-      ...formData,
-      instructions: newInstructions,
-    });
-  };
-
-  const handleInstructionChange = (index, value) => {
-    const newInstructions = [...formData.instructions];
-    newInstructions[index] = value;
-    setFormData({
-      ...formData,
-      instructions: newInstructions,
-    });
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Tarif adı gerekli";
-    }
-
-    if (!formData.mealId) {
-      newErrors.mealId = "Yemek seçimi gerekli";
-    }
-
-    // Malzemeleri kontrol et
-    const hasEmptyIngredient = formData.ingredients.some(
-      (ing) => !ing.name.trim()
-    );
-    if (hasEmptyIngredient) {
-      newErrors.ingredients = "Tüm malzemelerin adı girilmelidir";
-    }
-
-    // Talimatları kontrol et
-    const hasEmptyInstruction = formData.instructions.some(
-      (inst) => !inst.trim()
-    );
-    if (hasEmptyInstruction) {
-      newErrors.instructions = "Tüm talimatlar girilmelidir";
-    }
-
-    if (!formData.prepTime) {
-      newErrors.prepTime = "Hazırlık süresi gerekli";
-    }
-
-    if (!formData.cookTime) {
-      newErrors.cookTime = "Pişirme süresi gerekli";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
+  // ---- Kaydet ----
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
+    setSubmitError(null);
+    const found = validate(form);
+    const hasErrors = Object.values(found).some(Boolean);
+    setErrors(found);
+    if (hasErrors) {
+      setSubmitError("Lütfen işaretli alanları kontrol edin.");
+      return;
+    }
+    if (!user?.uid) {
+      setSubmitError("Tarif kaydetmek için giriş yapmalısınız.");
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
+    setSaving(true);
     try {
-      // Sayısal değerleri dönüştür
-      const recipeData = {
-        ...formData,
-        prepTime: parseInt(formData.prepTime, 10),
-        cookTime: parseInt(formData.cookTime, 10),
-        servings: parseInt(formData.servings, 10),
-        isPersonal: true, // Kişisel tarif olarak işaretle
-        createdAt: new Date().toISOString(),
-        createdBy: user.displayName,
-        createdById: user.uid,
-        createdByPhoto: user.photoURL || null,
-        createdByEmail: user.email || null,
-      };
-
-      // Sadece kişisel tarif eklenebilir
-      const result = await addPersonalRecipe(user.uid, recipeData);
-
-      if (result) {
-        setSuccess("Tarif başarıyla eklendi");
-        // Formu sıfırla
-        setFormData({
-          name: "",
-          mealId: "",
-          ingredients: [{ name: "", amount: "", unit: "" }],
-          instructions: [""],
-          prepTime: "",
-          cookTime: "",
-          difficulty: "medium",
-          servings: "1",
-        });
-        // Başarılı olduğunda kapat
-        setTimeout(() => {
-          onClose && onClose();
-        }, 1500);
-      } else {
-        setError("Tarif eklenirken bir hata oluştu");
-      }
+      const data = toRecipeData(form);
+      const saved = isEdit
+        ? await updatePersonalRecipe(user.uid, initialRecipe.id, data)
+        : await addPersonalRecipe(user.uid, data);
+      if (!saved) throw new Error("Kayıt başarısız");
+      onSaved?.(saved);
+      onClose?.();
     } catch (err) {
-      console.error("Tarif eklenirken hata:", err);
-      setError("Tarif eklenirken bir hata oluştu: " + err.message);
+      console.error("Tarif kaydedilemedi:", err);
+      setSubmitError("Tarif kaydedilemedi. Lütfen tekrar deneyin.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  const renderMealOption = (meal) => (
+    <MenuItem key={meal.id} value={meal.id}>
+      <Box component="span" sx={{ flexGrow: 1 }}>
+        {meal.name}
+      </Box>
+      {meal.type && (
+        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+          {MEAL_TYPE_LABELS[meal.type]}
+        </Typography>
+      )}
+    </MenuItem>
+  );
+
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-      {/* Yemek tipi seçimi - Sadece kişisel yemekler için tarif eklenebilir */}
-      <Alert severity="info" sx={{ mb: 2 }}>
-        Sadece kişisel yemekleriniz için tarif ekleyebilirsiniz.
-      </Alert>
-
-      {showExistingRecipeAlert && existingRecipe && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          Bu yemek için zaten bir tarif mevcut. Yeni tarif eklerseniz, mevcut
-          tarif güncellenecektir.
+    <Box component="form" noValidate onSubmit={handleSubmit} sx={{ pt: 1 }}>
+      {!user && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Tarif kitabınıza tarif eklemek için giriş yapmanız gerekiyor.
         </Alert>
       )}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Tarif Adı"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            error={!!errors.name}
-            helperText={errors.name}
-            required
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth error={!!errors.mealId} required>
-            <InputLabel>Yemek</InputLabel>
-            <Select
-              name="mealId"
-              value={formData.mealId}
-              onChange={handleChange}
-              label="Yemek"
-            >
-              {mealOptions.map((meal) => (
-                <MenuItem key={meal.id} value={meal.id}>
-                  {meal.name}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.mealId && <FormHelperText>{errors.mealId}</FormHelperText>}
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <TextField
-            fullWidth
-            label="Hazırlık Süresi (dk)"
-            name="prepTime"
-            type="number"
-            value={formData.prepTime}
-            onChange={handleChange}
-            error={!!errors.prepTime}
-            helperText={errors.prepTime}
-            required
-            inputProps={{ min: 1 }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            fullWidth
-            label="Pişirme Süresi (dk)"
-            name="cookTime"
-            type="number"
-            value={formData.cookTime}
-            onChange={handleChange}
-            error={!!errors.cookTime}
-            helperText={errors.cookTime}
-            required
-            inputProps={{ min: 1 }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            fullWidth
-            label="Porsiyon Sayısı"
-            name="servings"
-            type="number"
-            value={formData.servings}
-            onChange={handleChange}
-            inputProps={{ min: 1 }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <FormControl component="fieldset">
-            <FormLabel component="legend">Zorluk Derecesi</FormLabel>
-            <RadioGroup
-              row
-              name="difficulty"
-              value={formData.difficulty}
-              onChange={handleChange}
-            >
-              <FormControlLabel
-                value="easy"
-                control={<Radio />}
-                label="Kolay"
-              />
-              <FormControlLabel
-                value="medium"
-                control={<Radio />}
-                label="Orta"
-              />
-              <FormControlLabel value="hard" control={<Radio />} label="Zor" />
-            </RadioGroup>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            Malzemeler
-          </Typography>
-          {errors.ingredients && (
-            <FormHelperText error>{errors.ingredients}</FormHelperText>
+      <Stack spacing={2}>
+        <TextField
+          label="Tarif adı"
+          value={form.name}
+          onChange={setField("name")}
+          required
+          fullWidth
+          autoFocus={!isEdit}
+          error={Boolean(errors.name)}
+          helperText={errors.name}
+          inputProps={{ maxLength: 140 }}
+        />
+        <TextField
+          label="Kısa açıklama"
+          value={form.description}
+          onChange={setField("description")}
+          fullWidth
+          multiline
+          minRows={2}
+          placeholder="Bu tarifi özel kılan ne?"
+        />
+        <TextField
+          select
+          label="Bağlı yemek (isteğe bağlı)"
+          value={form.mealId && knownMealIds.has(form.mealId) ? form.mealId : form.mealId ? "__current" : ""}
+          onChange={(e) => {
+            if (e.target.value === "__current") return;
+            setForm((prev) => ({ ...prev, mealId: e.target.value }));
+          }}
+          fullWidth
+          helperText="Planlayıcıda bu yemeğe tıklandığında tarif gösterilir."
+        >
+          <MenuItem value="">
+            <em>Yemeğe bağlama</em>
+          </MenuItem>
+          {form.mealId && !knownMealIds.has(form.mealId) && (
+            <MenuItem value="__current">Mevcut bağlantı</MenuItem>
           )}
-          {formData.ingredients.map((ingredient, index) => (
-            <Box
-              key={index}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                mb: 1,
-                gap: 1,
-              }}
+          {mealGroups.personal.length > 0 && (
+            <ListSubheader>Benim Yemeklerim</ListSubheader>
+          )}
+          {mealGroups.personal.map(renderMealOption)}
+          {mealGroups.defaults.length > 0 && (
+            <ListSubheader>Hazır Yemekler</ListSubheader>
+          )}
+          {mealGroups.defaults.map(renderMealOption)}
+        </TextField>
+
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <TextField
+            label="Hazırlık (dk)"
+            value={form.prepTime}
+            onChange={setField("prepTime")}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+            error={Boolean(errors.prepTime)}
+            helperText={errors.prepTime}
+            fullWidth
+          />
+          <TextField
+            label="Pişirme (dk)"
+            value={form.cookTime}
+            onChange={setField("cookTime")}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+            error={Boolean(errors.cookTime)}
+            helperText={errors.cookTime}
+            fullWidth
+          />
+          <TextField
+            label="Porsiyon"
+            value={form.servings}
+            onChange={setField("servings")}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+            error={Boolean(errors.servings)}
+            helperText={errors.servings}
+            fullWidth
+          />
+        </Stack>
+
+        <Box>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 0.75 }}
+            id="recipe-difficulty-label"
+          >
+            Zorluk
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            color="primary"
+            value={form.difficulty}
+            onChange={(_, v) => v && setForm((prev) => ({ ...prev, difficulty: v }))}
+            aria-labelledby="recipe-difficulty-label"
+          >
+            {Object.entries(DIFFICULTY_LABELS).map(([value, label]) => (
+              <ToggleButton key={value} value={value} sx={{ px: 2.5 }}>
+                {label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
+      </Stack>
+
+      {/* Malzemeler */}
+      <SectionTitle
+        action={
+          <Button
+            size="small"
+            startIcon={<ContentPasteIcon />}
+            onClick={() => setPasteOpen((o) => !o)}
+            aria-expanded={pasteOpen}
+          >
+            Toplu yapıştır
+          </Button>
+        }
+      >
+        Malzemeler
+      </SectionTitle>
+
+      <Collapse in={pasteOpen} unmountOnExit>
+        <Box
+          sx={{
+            p: 2,
+            mb: 2,
+            borderRadius: 2,
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "background.default",
+          }}
+        >
+          <TextField
+            label="Her satıra bir malzeme"
+            placeholder={"2 su bardağı un\n1 tatlı kaşığı tuz\n3 adet yumurta"}
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            multiline
+            minRows={4}
+            fullWidth
+            helperText="Miktar ve birim otomatik ayrılır; boş satırlar atlanır."
+          />
+          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1.5 }}>
+            <Button onClick={() => setPasteOpen(false)}>Vazgeç</Button>
+            <Button
+              variant="contained"
+              onClick={applyPaste}
+              disabled={!pasteText.trim()}
             >
-              <TextField
-                label="Malzeme"
-                value={ingredient.name}
-                onChange={(e) =>
-                  handleIngredientChange(index, "name", e.target.value)
-                }
-                sx={{ flexGrow: 2 }}
-              />
+              Ekle
+            </Button>
+          </Stack>
+        </Box>
+      </Collapse>
+
+      {errors.ingredients && (
+        <Alert severity="error" sx={{ mb: 1.5 }}>
+          {errors.ingredients}
+        </Alert>
+      )}
+
+      <Stack spacing={1.5}>
+        {form.ingredients.map((ing, index) => {
+          const rowError = errors.ingredientRows?.[ing._key];
+          return (
+            <Stack
+              key={ing._key}
+              direction="row"
+              spacing={1}
+              alignItems="flex-start"
+              flexWrap={{ xs: "wrap", sm: "nowrap" }}
+              useFlexGap
+            >
               <TextField
                 label="Miktar"
-                value={ingredient.amount}
-                onChange={(e) =>
-                  handleIngredientChange(index, "amount", e.target.value)
-                }
-                sx={{ flexGrow: 1 }}
+                value={ing.amount}
+                onChange={(e) => updateIngredient(ing._key, "amount", e.target.value)}
+                sx={{ width: { xs: "calc(40% - 4px)", sm: 96 }, flexShrink: 0 }}
+                inputProps={{ "aria-label": `Malzeme ${index + 1} miktar` }}
+              />
+              <Autocomplete
+                freeSolo
+                options={COMMON_UNITS}
+                value={ing.unit}
+                onChange={(_, v) => updateIngredient(ing._key, "unit", v || "")}
+                onInputChange={(_, v) => updateIngredient(ing._key, "unit", v || "")}
+                sx={{ width: { xs: "calc(60% - 4px)", sm: 170 }, flexShrink: 0 }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Birim"
+                    inputProps={{
+                      ...params.inputProps,
+                      "aria-label": `Malzeme ${index + 1} birim`,
+                    }}
+                  />
+                )}
               />
               <TextField
-                label="Birim"
-                value={ingredient.unit}
-                onChange={(e) =>
-                  handleIngredientChange(index, "unit", e.target.value)
-                }
-                sx={{ flexGrow: 1 }}
+                label="Malzeme"
+                value={ing.name}
+                onChange={(e) => updateIngredient(ing._key, "name", e.target.value)}
+                error={Boolean(rowError)}
+                helperText={rowError}
+                sx={{ flexGrow: 1, minWidth: { xs: "calc(100% - 48px)", sm: 0 } }}
               />
               <IconButton
-                color="error"
-                onClick={() => handleRemoveIngredient(index)}
-                disabled={formData.ingredients.length <= 1}
+                onClick={() => removeIngredient(ing._key)}
+                aria-label={`Malzeme ${index + 1} sil`}
+                size="small"
+                sx={{ mt: 0.5 }}
               >
-                <DeleteIcon />
+                <DeleteOutlineIcon />
               </IconButton>
-            </Box>
-          ))}
-          <Button
-            startIcon={<AddIcon />}
-            onClick={handleAddIngredient}
-            sx={{ mt: 1 }}
-          >
-            Malzeme Ekle
-          </Button>
-        </Grid>
+            </Stack>
+          );
+        })}
+      </Stack>
+      <Button startIcon={<AddIcon />} onClick={addIngredient} sx={{ mt: 1.5 }}>
+        Malzeme ekle
+      </Button>
 
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            Hazırlanışı
-          </Typography>
-          {errors.instructions && (
-            <FormHelperText error>{errors.instructions}</FormHelperText>
-          )}
-          {formData.instructions.map((instruction, index) => (
+      {/* Adımlar */}
+      <SectionTitle>Hazırlanışı</SectionTitle>
+      {errors.instructions && (
+        <Alert severity="error" sx={{ mb: 1.5 }}>
+          {errors.instructions}
+        </Alert>
+      )}
+      <Stack spacing={1.5}>
+        {form.instructions.map((step, index) => (
+          <Stack key={step._key} direction="row" spacing={1} alignItems="flex-start">
             <Box
-              key={index}
+              aria-hidden
               sx={{
-                display: "flex",
-                alignItems: "center",
-                mb: 1,
-                gap: 1,
+                width: 30,
+                height: 30,
+                mt: 0.5,
+                flexShrink: 0,
+                borderRadius: "50%",
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                display: "grid",
+                placeItems: "center",
+                fontWeight: 700,
+                fontSize: 14,
               }}
             >
-              <Typography sx={{ minWidth: "30px" }}>{index + 1}.</Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={2}
-                value={instruction}
-                onChange={(e) => handleInstructionChange(index, e.target.value)}
-              />
-              <IconButton
-                color="error"
-                onClick={() => handleRemoveInstruction(index)}
-                disabled={formData.instructions.length <= 1}
-              >
-                <DeleteIcon />
-              </IconButton>
+              {index + 1}
             </Box>
-          ))}
-          <Button
-            startIcon={<AddIcon />}
-            onClick={handleAddInstruction}
-            sx={{ mt: 1 }}
-          >
-            Adım Ekle
-          </Button>
-        </Grid>
+            <TextField
+              value={step.text}
+              onChange={(e) => updateInstruction(step._key, e.target.value)}
+              placeholder={`${index + 1}. adımı yazın`}
+              multiline
+              minRows={2}
+              fullWidth
+              inputRef={(el) => {
+                instructionRefs.current[step._key] = el;
+              }}
+              inputProps={{ "aria-label": `Adım ${index + 1}` }}
+            />
+            <Stack spacing={0.25}>
+              <IconButton
+                size="small"
+                onClick={() => moveInstruction(index, -1)}
+                disabled={index === 0}
+                aria-label={`Adım ${index + 1} yukarı taşı`}
+              >
+                <ArrowUpwardIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => moveInstruction(index, 1)}
+                disabled={index === form.instructions.length - 1}
+                aria-label={`Adım ${index + 1} aşağı taşı`}
+              >
+                <ArrowDownwardIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => removeInstruction(step._key)}
+                aria-label={`Adım ${index + 1} sil`}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+          </Stack>
+        ))}
+      </Stack>
+      <Button startIcon={<AddIcon />} onClick={addInstruction} sx={{ mt: 1.5 }}>
+        Adım ekle
+      </Button>
 
-        <Grid
-          item
-          xs={12}
-          sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
-        >
-          <Button
-            variant="outlined"
-            onClick={onClose}
-            sx={{ mr: 1 }}
-            disabled={loading}
-          >
-            İptal
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={loading}
-            startIcon={
-              loading ? <CircularProgress size={20} color="inherit" /> : null
-            }
-          >
-            {loading ? "Kaydediliyor..." : "Tarifi Kaydet"}
-          </Button>
-        </Grid>
-      </Grid>
+      {/* Notlar */}
+      <SectionTitle>Notlar</SectionTitle>
+      <TextField
+        value={form.notes}
+        onChange={setField("notes")}
+        multiline
+        minRows={2}
+        fullWidth
+        placeholder="Püf noktaları, servis önerileri, saklama koşulları…"
+        inputProps={{ "aria-label": "Notlar" }}
+      />
+
+      {isLong && (
+        <Alert severity="warning" variant="outlined" sx={{ mt: 2 }}>
+          Tarif PDF'de tek sayfaya sığmayabilir. Adımları kısaltmayı düşünebilirsiniz.
+        </Alert>
+      )}
+      {submitError && (
+        <Alert severity="error" sx={{ mt: 2 }} role="alert">
+          {submitError}
+        </Alert>
+      )}
+
+      <Divider sx={{ mt: 3 }} />
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent="flex-end"
+        sx={{
+          position: "sticky",
+          bottom: 0,
+          bgcolor: "background.paper",
+          py: 2,
+          zIndex: 1,
+        }}
+      >
+        <Button onClick={onClose} disabled={saving}>
+          Vazgeç
+        </Button>
+        <Tooltip title={!user ? "Giriş yapmalısınız" : ""}>
+          <span>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={saving || !user}
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              {saving ? "Kaydediliyor…" : isEdit ? "Değişiklikleri Kaydet" : "Tarifi Kaydet"}
+            </Button>
+          </span>
+        </Tooltip>
+      </Stack>
     </Box>
   );
 };

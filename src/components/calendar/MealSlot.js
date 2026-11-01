@@ -1,86 +1,91 @@
-import React from "react";
-import { useDrag } from "react-dnd";
-import { useMeals } from "../../context/MealContext";
+import React, { useMemo } from "react";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import CloseIcon from "@mui/icons-material/Close";
+import { palette } from "../../theme";
+import { useMealDrag } from "./dnd";
 
-// Türkçe gün adlarını İngilizce'ye çeviren fonksiyon
-const translateDayToEnglish = (turkishDay) => {
-  const dayMap = {
-    Pazartesi: "monday",
-    Salı: "tuesday",
-    Çarşamba: "wednesday",
-    Perşembe: "thursday",
-    Cuma: "friday",
-    Cumartesi: "saturday",
-    Pazar: "sunday",
-  };
+/**
+ * Plandaki tek bir yemek (kompakt kart). Başka bir slota sürüklenerek
+ * taşınabilir, tıklanınca tarif önizlemesi açılır.
+ */
+const MealSlot = ({ meal, day, type, onRemove, onClick, draggable = true }) => {
+  const from = useMemo(() => ({ day, type }), [day, type]);
+  const { dragRef, isDragging } = useMealDrag(meal, from);
+  const accent = palette[type] || palette.primary;
 
-  return dayMap[turkishDay] || turkishDay.toLowerCase();
-};
+  if (!meal?.id) return null;
 
-const MealSlot = ({ meal, type, dayIndex, mealIndex, dayName }) => {
-  const { updateMealPlan } = useMeals();
-
-  // Gün adını İngilizce'ye çevir
-  const englishDayName = translateDayToEnglish(dayName);
-
-  // Basitleştirilmiş sürükle-bırak
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: "MEAL",
-      item: meal, // Tüm meal nesnesini geçiyoruz
-      collect: (monitor) => ({
-        isDragging: !!monitor.isDragging(),
-      }),
-      end: (item, monitor) => {
-        const dropResult = monitor.getDropResult();
-
-        // Eğer başka bir slota bırakıldıysa ve başarılı olduysa, bu slottan kaldır
-        if (dropResult && dropResult.dayName && dropResult.type) {
-          // Aynı yere bırakılmadıysa kaldır
-          if (
-            dropResult.dayName.toLowerCase() !== englishDayName.toLowerCase() ||
-            dropResult.type !== type
-          ) {
-            updateMealPlan(englishDayName, type, meal, "remove");
-          }
-        }
-      },
-    }),
-    [meal, englishDayName, type, updateMealPlan]
-  );
-
-  // Yemeği kaldırmak için tıklama işleyicisi
-  const handleRemove = (e) => {
-    e.stopPropagation();
-    if (meal && englishDayName && type) {
-      updateMealPlan(englishDayName, type, meal, "remove");
-    }
-  };
-
-  // Gerekli prop'lar eksikse null döndür
-  if (!meal || !meal.id || !dayName || !type) {
-    return null;
-  }
-
-  // Basitleştirilmiş kart tasarımı - sadece isim ve kaldır butonu
   return (
-    <div
-      ref={drag}
-      className={`bg-white p-1 mt-1 rounded border border-gray-200 cursor-move ${
-        isDragging ? "opacity-50" : "opacity-100"
-      }`}
+    <Box
+      ref={draggable ? dragRef : undefined}
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick?.(meal)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(meal);
+        }
+      }}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        pl: 1,
+        pr: 0.25,
+        py: 0.25,
+        minHeight: 32,
+        borderRadius: 2,
+        bgcolor: "background.paper",
+        border: 1,
+        borderColor: alpha(accent, 0.35),
+        borderLeft: `3px solid ${accent}`,
+        cursor: draggable ? "grab" : "pointer",
+        opacity: isDragging ? 0.4 : 1,
+        transition: "box-shadow .15s ease, opacity .15s ease",
+        "&:hover": { boxShadow: `0 2px 8px ${alpha(accent, 0.25)}` },
+        "&:focus-visible": {
+          outline: `2px solid ${accent}`,
+          outlineOffset: 1,
+        },
+      }}
     >
-      <div className="flex justify-between items-center">
-        <span className="font-medium text-xs">{meal.name}</span>
-        <button
-          onClick={handleRemove}
-          className="ml-1 text-gray-400 hover:text-red-500 text-xs"
-          aria-label="Yemeği kaldır"
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          component="div"
+          sx={{ fontWeight: 600, lineHeight: 1.25 }}
+          noWrap
+          title={meal.name}
         >
-          ✕
-        </button>
-      </div>
-    </div>
+          {meal.name}
+        </Typography>
+        {meal.calories ? (
+          <Typography
+            variant="caption"
+            component="div"
+            color="text.secondary"
+            sx={{ fontSize: 10.5, lineHeight: 1.2 }}
+          >
+            {meal.calories} kcal
+          </Typography>
+        ) : null}
+      </Box>
+      <Tooltip title="Kaldır">
+        <IconButton
+          size="small"
+          aria-label={`${meal.name} yemeğini kaldır`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove?.(meal);
+          }}
+          sx={{ p: 0.25, color: "text.secondary" }}
+        >
+          <CloseIcon sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Tooltip>
+    </Box>
   );
 };
 

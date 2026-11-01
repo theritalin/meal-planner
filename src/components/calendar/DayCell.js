@@ -1,145 +1,109 @@
 import React from "react";
-import { useDrop } from "react-dnd";
+import { Box, IconButton, Tooltip } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import AddIcon from "@mui/icons-material/Add";
+import { palette } from "../../theme";
+import {
+  MAX_MEALS_PER_SLOT,
+  MEAL_TYPE_LABELS,
+  DAY_LABELS,
+} from "../../constants";
 import MealSlot from "./MealSlot";
-import { useMeals } from "../../context/MealContext";
+import { useMealDrop } from "./dnd";
 
-// Türkçe gün adlarını İngilizce'ye çeviren fonksiyon
-const translateDayToEnglish = (turkishDay) => {
-  const dayMap = {
-    Pazartesi: "monday",
-    Salı: "tuesday",
-    Çarşamba: "wednesday",
-    Perşembe: "thursday",
-    Cuma: "friday",
-    Cumartesi: "saturday",
-    Pazar: "sunday",
+const getDropStyles = (accent, { isOver, canDrop, isDragging }, isToday) => {
+  if (isOver && canDrop) {
+    return {
+      bgcolor: alpha(accent, 0.16),
+      borderColor: accent,
+      borderStyle: "solid",
+    };
+  }
+  if (isOver && !canDrop) {
+    return { bgcolor: alpha("#DC2626", 0.06), borderColor: "error.light" };
+  }
+  if (isDragging && canDrop) {
+    return {
+      bgcolor: alpha(accent, 0.06),
+      borderColor: alpha(accent, 0.6),
+      borderStyle: "dashed",
+    };
+  }
+  return {
+    bgcolor: isToday ? alpha(palette.primary, 0.035) : alpha(accent, 0.03),
+    borderColor: "divider",
   };
-
-  return dayMap[turkishDay] || turkishDay.toLowerCase();
 };
 
-// Bırakılabilir yemek slotu bileşeni
-const DroppableMealSlot = ({ type, dayIndex, dayName, meals = [] }) => {
-  const { updateMealPlan } = useMeals();
-
-  // Güvenlik kontrolü
-  const safeMeals = Array.isArray(meals) ? meals : [];
-
-  // Gün adını İngilizce'ye çevir
-  const englishDayName = translateDayToEnglish(dayName);
-
-  // Basitleştirilmiş drop işlemi
-  const [{ isOver }, drop] = useDrop({
-    accept: "MEAL",
-    drop: (item) => {
-      console.log("Drop item:", item); // Debug için
-
-      // Yemek bilgisini al ve güncelle
-      if (!item || !item.id) {
-        console.error("Invalid drop item:", item);
-        return;
-      }
-
-      // Doğrudan meal nesnesini kullanıyoruz ve İngilizce gün adını geçiyoruz
-      updateMealPlan(englishDayName, type, item, "add");
-
-      return { dayName: englishDayName, type };
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-      canDrop: !!monitor.canDrop(),
-    }),
-  });
-
-  const mealTypeLabels = {
-    breakfast: "Kahvaltı",
-    lunch: "Öğle",
-    dinner: "Akşam",
-  };
-
-  const mealTypeColors = {
-    breakfast: "bg-yellow-50 border-yellow-200",
-    lunch: "bg-green-50 border-green-200",
-    dinner: "bg-purple-50 border-purple-200",
-  };
+/** Haftalık tablodaki tek bir (gün × öğün) hücresi; bırakma hedefidir. */
+const DayCell = ({
+  day,
+  type,
+  meals = [],
+  isToday,
+  onAdd,
+  onRemove,
+  onMealClick,
+}) => {
+  const dropState = useMealDrop(day, type, meals);
+  const accent = palette[type] || palette.primary;
+  const isFull = meals.length >= MAX_MEALS_PER_SLOT;
 
   return (
-    <div className="meal-slot flex-1 flex flex-col mb-1">
-      <div className="flex items-center mb-1">
-        <div className="text-xs font-medium text-gray-600">
-          {mealTypeLabels[type] || type}
-        </div>
-      </div>
-      <div
-        ref={drop}
-        className={`${mealTypeColors[type] || ""} p-1 rounded flex-1 border ${
-          isOver ? "border-blue-400 bg-blue-50" : "border-gray-200"
-        }`}
-      >
-        {safeMeals.length > 0 ? (
-          safeMeals.map((meal, mealIndex) => (
-            <MealSlot
-              key={`${meal.id}-${mealIndex}`}
-              meal={meal}
-              type={type}
-              dayIndex={dayIndex}
-              mealIndex={mealIndex}
-              dayName={englishDayName} // İngilizce gün adını geçiyoruz
-            />
-          ))
-        ) : (
-          <div className="text-gray-400 text-xs text-center">
-            Yemek eklemek için sürükleyin
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const DayCell = ({ day, index }) => {
-  const { weekPlan } = useMeals();
-
-  // Gün adını İngilizce'ye çevir
-  const englishDay = translateDayToEnglish(day);
-
-  // İngilizce gün adını kullanarak veriyi al
-  const dayMeals =
-    weekPlan && weekPlan[englishDay]
-      ? weekPlan[englishDay]
-      : { breakfast: [], lunch: [], dinner: [] };
-
-  if (!day) return null;
-
-  return (
-    <div className="border rounded p-2 bg-white h-full flex flex-col">
-      <h3 className="text-sm font-bold text-center mb-2 bg-gray-50 py-1 rounded">
-        {day}
-      </h3>
-
-      <div className="flex flex-col flex-1">
-        <DroppableMealSlot
-          type="breakfast"
-          dayIndex={index}
-          dayName={day}
-          meals={dayMeals.breakfast}
+    <Box
+      ref={dropState.dropRef}
+      aria-label={`${DAY_LABELS[day]} ${MEAL_TYPE_LABELS[type]}`}
+      sx={{
+        minHeight: 104,
+        p: 0.75,
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.5,
+        borderRadius: 2.5,
+        border: "1px solid",
+        transition: "background-color .15s ease, border-color .15s ease",
+        ...getDropStyles(accent, dropState, isToday),
+      }}
+    >
+      {meals.map((meal) => (
+        <MealSlot
+          key={meal.id}
+          meal={meal}
+          day={day}
+          type={type}
+          onRemove={(m) => onRemove(day, type, m)}
+          onClick={onMealClick}
         />
-
-        <DroppableMealSlot
-          type="lunch"
-          dayIndex={index}
-          dayName={day}
-          meals={dayMeals.lunch}
-        />
-
-        <DroppableMealSlot
-          type="dinner"
-          dayIndex={index}
-          dayName={day}
-          meals={dayMeals.dinner}
-        />
-      </div>
-    </div>
+      ))}
+      {!isFull && (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 28,
+          }}
+        >
+          <Tooltip title="Yemek ekle">
+            <IconButton
+              size="small"
+              aria-label={`${DAY_LABELS[day]} ${MEAL_TYPE_LABELS[type]} için yemek ekle`}
+              onClick={() => onAdd(day, type)}
+              sx={{
+                color: alpha(accent, 0.8),
+                border: `1px dashed ${alpha(accent, 0.4)}`,
+                width: 28,
+                height: 28,
+                "&:hover": { bgcolor: alpha(accent, 0.1) },
+              }}
+            >
+              <AddIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+    </Box>
   );
 };
 

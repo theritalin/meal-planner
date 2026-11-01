@@ -1,456 +1,362 @@
-import React, { useState, useEffect } from "react";
-import { useDrag } from "react-dnd";
-import { useMeals } from "../../context/MealContext";
-import { useRecipes } from "../../context/recipes/RecipeContext";
-import AddMealForm from "./AddMealForm";
+import React, { useMemo, useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
   Box,
-  Divider,
+  Chip,
   IconButton,
+  InputAdornment,
+  Skeleton,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import CloseIcon from "@mui/icons-material/Close";
+import { alpha } from "@mui/material/styles";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartmentOutlined";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import { palette } from "../../theme";
+import { MEAL_TYPES, MEAL_TYPE_LABELS } from "../../constants";
+import { useMeals } from "../../context/MealContext";
+import { useRecipes } from "../../context/recipes/RecipeContext";
+import { useMealDrag } from "../calendar/dnd";
+import ConfirmDialog from "./ConfirmDialog";
 
-// Sürüklenebilir yemek bileşeni
-const DraggableMeal = ({
-  meal,
-  index,
-  onDelete,
-  compactMode,
-  onShowRecipe,
-}) => {
-  // Tam meal nesnesini item olarak geçirelim
-  const [{ isDragging }, drag] = useDrag({
-    type: "MEAL",
-    item: meal, // Tüm meal nesnesini geçiyoruz
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  });
+const SOURCE_OPTIONS = [
+  { value: "all", label: "Tümü" },
+  { value: "default", label: "Varsayılan" },
+  { value: "personal", label: "Kişisel" },
+];
 
-  const typeColors = {
-    breakfast: "bg-yellow-100 text-yellow-800",
-    lunch: "bg-green-100 text-green-800",
-    dinner: "bg-purple-100 text-purple-800",
-  };
+const MetaItem = ({ icon: Icon, children }) => (
+  <Stack
+    direction="row"
+    alignItems="center"
+    spacing={0.25}
+    sx={{ color: "text.secondary" }}
+  >
+    <Icon sx={{ fontSize: 14 }} />
+    <Typography variant="caption">{children}</Typography>
+  </Stack>
+);
+
+/** Kütüphanedeki sürüklenebilir yemek kartı. */
+const MealCard = ({ meal, recipeCount, onClick, onDelete }) => {
+  const { dragRef, isDragging } = useMealDrag(meal);
+  const accent = palette[meal.type] || palette.primary;
 
   return (
-    <div
-      ref={drag}
-      className={`${
-        compactMode ? "p-1" : "p-2"
-      } bg-white rounded border border-gray-200 cursor-move ${
-        isDragging ? "opacity-50" : "opacity-100"
-      } ${meal.isPersonal ? "border-blue-300" : ""}`}
+    <Box
+      ref={dragRef}
+      onClick={() => onClick?.(meal)}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        p: 1,
+        pl: 0.5,
+        borderRadius: 2.5,
+        border: 1,
+        borderColor: "divider",
+        borderLeft: `4px solid ${accent}`,
+        bgcolor: "background.paper",
+        cursor: "grab",
+        opacity: isDragging ? 0.4 : 1,
+        transition: "box-shadow .15s ease, transform .15s ease",
+        "&:hover": {
+          boxShadow: `0 4px 14px ${alpha(accent, 0.18)}`,
+          transform: "translateY(-1px)",
+        },
+        "&:hover .meal-delete": { opacity: 1 },
+      }}
     >
-      <div className="flex justify-between items-center">
-        <span className={`font-medium ${compactMode ? "text-xs" : "text-sm"}`}>
-          {meal.name}
-        </span>
-        <div className="flex items-center">
-          {meal.isPersonal && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onDelete) onDelete(meal.id);
-              }}
-              className="text-red-500 hover:text-red-700 mr-1 text-xs"
-              title="Sil"
-            >
-              ✕
-            </button>
+      <DragIndicatorIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 600 }}
+            noWrap
+            title={meal.name}
+          >
+            {meal.name}
+          </Typography>
+          {recipeCount > 0 && (
+            <Tooltip title={`${recipeCount} tarif`}>
+              <MenuBookIcon
+                aria-label="Tarifi var"
+                sx={{ fontSize: 15, color: "secondary.main", flexShrink: 0 }}
+              />
+            </Tooltip>
           )}
-          <button
+        </Stack>
+        <Stack
+          direction="row"
+          spacing={1.25}
+          alignItems="center"
+          sx={{ mt: 0.25 }}
+        >
+          <Typography variant="caption" sx={{ color: accent, fontWeight: 600 }}>
+            {MEAL_TYPE_LABELS[meal.type]}
+          </Typography>
+          {meal.calories ? (
+            <MetaItem icon={LocalFireDepartmentIcon}>
+              {meal.calories} kcal
+            </MetaItem>
+          ) : null}
+          {meal.prepTime ? (
+            <MetaItem icon={ScheduleIcon}>{meal.prepTime} dk</MetaItem>
+          ) : null}
+          {meal.isPersonal && (
+            <Chip
+              label="Kişisel"
+              size="small"
+              variant="outlined"
+              sx={{ height: 18, fontSize: 10 }}
+            />
+          )}
+        </Stack>
+      </Box>
+      {meal.isPersonal && onDelete && (
+        <Tooltip title="Sil">
+          <IconButton
+            className="meal-delete"
+            size="small"
+            aria-label={`${meal.name} yemeğini sil`}
             onClick={(e) => {
               e.stopPropagation();
-              if (onShowRecipe) onShowRecipe(meal);
+              onDelete(meal);
             }}
-            className="text-blue-500 hover:text-blue-700 mr-1 text-xs"
-            title="Tarifi Göster"
+            sx={{ opacity: { xs: 1, md: 0.5 }, transition: "opacity .15s" }}
           >
-            <MenuBookIcon fontSize="small" />
-          </button>
-          <span
-            className={`${
-              typeColors[meal.type]
-            } text-xs px-2 py-0.5 rounded-full`}
-          >
-            {meal.type === "breakfast"
-              ? "Kahvaltı"
-              : meal.type === "lunch"
-              ? "Öğle"
-              : "Akşam"}
-          </span>
-        </div>
-      </div>
-      {meal.isPersonal && (
-        <div className="mt-1">
-          <span
-            className={`text-xs text-blue-500 ${
-              compactMode ? "text-[10px]" : ""
-            }`}
-          >
-            Kişisel
-          </span>
-        </div>
-      )}
-      {meal.calories && !compactMode && (
-        <div className="mt-1 text-xs text-gray-500">
-          {meal.calories} kal | {meal.prepTime} dk
-        </div>
-      )}
-    </div>
-  );
-};
-
-// RecipeDialog bileşeni
-const RecipeDialog = ({ open, onClose, meal, recipes }) => {
-  const { getAllRecipes } = useRecipes();
-  const allRecipes = getAllRecipes();
-
-  // Yemeğe ait tarifi bul
-  const recipe = meal
-    ? allRecipes.find((r) => r.name.toLowerCase() === meal.name.toLowerCase())
-    : null;
-
-  // Malzeme formatını kontrol eden yardımcı fonksiyon
-  const formatIngredient = (ingredient) => {
-    if (typeof ingredient === "string") {
-      return ingredient;
-    } else if (typeof ingredient === "object" && ingredient !== null) {
-      // Obje formatındaysa (name, amount, unit)
-      return `${ingredient.name}: ${ingredient.amount} ${ingredient.unit}`;
-    }
-    return "";
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">{meal ? meal.name : ""} Tarifi</Typography>
-          <IconButton onClick={onClose} size="small">
-            <CloseIcon />
+            <DeleteOutlineIcon fontSize="small" />
           </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent dividers>
-        {recipe ? (
-          <>
-            <Box display="flex" gap={2} mb={2}>
-              <Chip
-                icon={<AccessTimeIcon />}
-                label={`Hazırlık: ${recipe.prepTime} dk`}
-                color="primary"
-                variant="outlined"
-              />
-              <Chip
-                icon={<AccessTimeIcon />}
-                label={`Pişirme: ${recipe.cookTime} dk`}
-                color="secondary"
-                variant="outlined"
-              />
-              <Chip
-                icon={<RestaurantIcon />}
-                label={`${recipe.servings} Porsiyon`}
-                color="success"
-                variant="outlined"
-              />
-            </Box>
-
-            <Typography variant="h6" gutterBottom>
-              Malzemeler
-            </Typography>
-            <List dense>
-              {recipe.ingredients &&
-                recipe.ingredients.map((ingredient, index) => (
-                  <ListItem key={index}>
-                    <ListItemText primary={formatIngredient(ingredient)} />
-                  </ListItem>
-                ))}
-            </List>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="h6" gutterBottom>
-              Hazırlanışı
-            </Typography>
-            <List dense>
-              {recipe.instructions &&
-                recipe.instructions.map((instruction, index) => (
-                  <ListItem key={index} alignItems="flex-start">
-                    <ListItemText primary={`${index + 1}. ${instruction}`} />
-                  </ListItem>
-                ))}
-            </List>
-          </>
-        ) : (
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            py={4}
-          >
-            <MenuBookIcon
-              sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
-            />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              Bu yemek için tarif bulunamadı
-            </Typography>
-            <Typography variant="body2" color="text.secondary" align="center">
-              Bu yemeğin tarifi henüz eklenmemiş. Tarifler bölümünden yeni bir
-              tarif ekleyebilirsiniz.
-            </Typography>
-          </Box>
-        )}
-      </DialogContent>
-    </Dialog>
+        </Tooltip>
+      )}
+    </Box>
   );
 };
 
-const MealList = ({ compactMode = false }) => {
+const MealListFilters = () => {
   const {
-    meals,
-    userMeals,
-    loading,
-    error,
-    deletePersonalMeal,
-    filteredMeals,
     searchTerm,
     setSearchTerm,
     mealTypeFilter,
     setMealTypeFilter,
     mealFilter,
     setMealFilter,
-    user,
   } = useMeals();
-  const { getAllRecipes } = useRecipes();
-  const [recipes, setRecipes] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState(null);
-  const [openRecipeDialog, setOpenRecipeDialog] = useState(false);
-
-  useEffect(() => {
-    // Tüm tarifleri al
-    setRecipes(getAllRecipes());
-  }, [getAllRecipes]);
-
-  // Ekran boyutunu kontrol et
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // İlk yükleme
-    checkScreenSize();
-
-    // Ekran boyutu değiştiğinde
-    window.addEventListener("resize", checkScreenSize);
-
-    // Temizleme
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  const handleDeleteMeal = async (mealId) => {
-    if (window.confirm("Bu yemeği silmek istediğinize emin misiniz?")) {
-      await deletePersonalMeal(mealId);
-    }
-  };
-
-  const handleShowRecipe = (meal) => {
-    setSelectedMeal(meal);
-    setOpenRecipeDialog(true);
-  };
-
-  const handleCloseRecipeDialog = () => {
-    setOpenRecipeDialog(false);
-    setSelectedMeal(null);
-  };
-
-  if (loading) return <div className="text-center py-4">Yükleniyor...</div>;
-  if (error)
-    return <div className="text-center py-4 text-red-500">{error}</div>;
 
   return (
-    <div
-      className={`bg-white rounded shadow ${
-        compactMode ? "p-2" : "p-3"
-      } h-full flex flex-col`}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <h2 className={`${compactMode ? "text-base" : "text-lg"} font-bold`}>
-          Yemek Listesi
-        </h2>
-        {isMobile && !compactMode && (
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-blue-500 text-white px-2 py-1 rounded text-xs"
-          >
-            {showFilters ? "Filtreleri Gizle" : "Filtrele"}
-          </button>
-        )}
-      </div>
-
-      <div className="mb-2 flex-shrink-0">
-        <input
-          type="text"
-          placeholder="Yemek ara..."
-          className={`w-full ${
-            compactMode ? "p-1 text-xs" : "p-2 text-sm"
-          } border rounded`}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {(!isMobile || showFilters || compactMode) && (
-        <div className="flex-shrink-0">
-          <div className="mb-2 flex flex-wrap gap-1">
-            <button
-              className={`${
-                compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-              } rounded ${
-                mealTypeFilter === "all"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setMealTypeFilter("all")}
-            >
-              Tümü
-            </button>
-            <button
-              className={`${
-                compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-              } rounded ${
-                mealTypeFilter === "breakfast"
-                  ? "bg-yellow-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setMealTypeFilter("breakfast")}
-            >
-              Kahvaltı
-            </button>
-            <button
-              className={`${
-                compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-              } rounded ${
-                mealTypeFilter === "lunch"
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setMealTypeFilter("lunch")}
-            >
-              Öğle
-            </button>
-            <button
-              className={`${
-                compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-              } rounded ${
-                mealTypeFilter === "dinner"
-                  ? "bg-purple-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setMealTypeFilter("dinner")}
-            >
-              Akşam
-            </button>
-          </div>
-
-          {user && (
-            <div className="mb-2 flex flex-wrap gap-1">
-              <button
-                className={`${
-                  compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-                } rounded ${
-                  mealFilter === "all"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setMealFilter("all")}
+    <Stack spacing={1.25}>
+      <TextField
+        fullWidth
+        placeholder="Yemek ara…"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        inputProps={{ "aria-label": "Yemek ara" }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+          endAdornment: searchTerm ? (
+            <InputAdornment position="end">
+              <IconButton
+                size="small"
+                aria-label="Aramayı temizle"
+                onClick={() => setSearchTerm("")}
               >
-                Tüm Yemekler
-              </button>
-              <button
-                className={`${
-                  compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-                } rounded ${
-                  mealFilter === "default"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setMealFilter("default")}
-              >
-                Varsayılan
-              </button>
-              <button
-                className={`${
-                  compactMode ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-xs"
-                } rounded ${
-                  mealFilter === "personal"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setMealFilter("personal")}
-              >
-                Kişisel
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {user && (
-        <div className="mb-2 flex-shrink-0">
-          {showAddForm ? (
-            <AddMealForm onClose={() => setShowAddForm(false)} />
-          ) : (
-            <button
-              onClick={() => setShowAddForm(true)}
-              className={`w-full ${
-                compactMode ? "py-1 text-xs" : "py-2 text-sm"
-              } bg-green-500 hover:bg-green-600 text-white rounded`}
-            >
-              + Kişisel Yemek Ekle
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-2 overflow-y-auto flex-grow">
-        {filteredMeals.map((meal, index) => (
-          <DraggableMeal
-            key={meal.id}
-            meal={meal}
-            index={index}
-            onDelete={user ? handleDeleteMeal : null}
-            compactMode={compactMode}
-            onShowRecipe={handleShowRecipe}
-          />
-        ))}
-      </div>
-
-      {/* Tarif Dialog */}
-      <RecipeDialog
-        open={openRecipeDialog}
-        onClose={handleCloseRecipeDialog}
-        meal={selectedMeal}
-        recipes={recipes}
+                <ClearIcon fontSize="small" />
+              </IconButton>
+            </InputAdornment>
+          ) : null,
+        }}
       />
-    </div>
+      <Stack
+        direction="row"
+        spacing={0.75}
+        sx={{ flexWrap: "wrap", rowGap: 0.75 }}
+      >
+        {["all", ...MEAL_TYPES].map((type) => {
+          const selected = mealTypeFilter === type;
+          const accent = palette[type];
+          return (
+            <Chip
+              key={type}
+              size="small"
+              label={type === "all" ? "Hepsi" : MEAL_TYPE_LABELS[type]}
+              onClick={() => setMealTypeFilter(type)}
+              variant={selected ? "filled" : "outlined"}
+              sx={
+                selected
+                  ? accent
+                    ? {
+                        bgcolor: alpha(accent, 0.16),
+                        color: accent,
+                        borderColor: accent,
+                      }
+                    : { bgcolor: "text.primary", color: "background.paper" }
+                  : undefined
+              }
+            />
+          );
+        })}
+      </Stack>
+      <ToggleButtonGroup
+        exclusive
+        fullWidth
+        size="small"
+        value={mealFilter}
+        onChange={(_, v) => v && setMealFilter(v)}
+        aria-label="Yemek kaynağı"
+      >
+        {SOURCE_OPTIONS.map((o) => (
+          <ToggleButton
+            key={o.value}
+            value={o.value}
+            sx={{ py: 0.4, fontSize: 12 }}
+          >
+            {o.label}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+    </Stack>
+  );
+};
+
+/**
+ * Aranabilir/filtrelenebilir, sürüklenebilir yemek kütüphanesi.
+ * Props: { onMealClick?(meal), onNotify?(message, severity) }
+ * Kapsayıcının yüksekliğini doldurur; liste kendi içinde kayar.
+ */
+const MealList = ({ onMealClick, onNotify }) => {
+  const { filteredMeals, loading, deletePersonalMeal } = useMeals();
+  const { getRecipesForMeal } = useRecipes();
+  const [pendingDelete, setPendingDelete] = useState(null);
+
+  const sortedMeals = useMemo(
+    () =>
+      [...filteredMeals].sort((a, b) =>
+        (a.name || "").localeCompare(b.name || "", "tr"),
+      ),
+    [filteredMeals],
+  );
+
+  const handleConfirmDelete = async () => {
+    const meal = pendingDelete;
+    setPendingDelete(null);
+    if (!meal) return;
+    const ok = await deletePersonalMeal(meal.id);
+    onNotify?.(
+      ok
+        ? `"${meal.name}" silindi`
+        : "Yemek silinemedi. Lütfen tekrar deneyin.",
+      ok ? "success" : "error",
+    );
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <Box sx={{ p: 2, pb: 1.5 }}>
+        <Stack
+          direction="row"
+          alignItems="baseline"
+          justifyContent="space-between"
+          sx={{ mb: 1.5 }}
+        >
+          <Typography variant="h6" component="h2">
+            Yemekler
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {loading ? "" : `${sortedMeals.length} yemek`}
+          </Typography>
+        </Stack>
+        <MealListFilters />
+      </Box>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          px: 2,
+          pb: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              height={56}
+              sx={{ flexShrink: 0 }}
+            />
+          ))
+        ) : sortedMeals.length === 0 ? (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ textAlign: "center", py: 4 }}
+          >
+            Eşleşen yemek bulunamadı.
+          </Typography>
+        ) : (
+          sortedMeals.map((meal) => (
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              recipeCount={
+                meal.recipes?.length || getRecipesForMeal(meal.id).length
+              }
+              onClick={onMealClick}
+              onDelete={setPendingDelete}
+            />
+          ))
+        )}
+      </Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          px: 2,
+          py: 1,
+          borderTop: 1,
+          borderColor: "divider",
+          textAlign: "center",
+        }}
+      >
+        Yemekleri sürükleyip haftalık plana bırakın
+      </Typography>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Yemeği sil"
+        message={
+          pendingDelete
+            ? `"${pendingDelete.name}" kişisel yemeklerinizden silinsin mi?`
+            : ""
+        }
+        confirmLabel="Sil"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setPendingDelete(null)}
+      />
+    </Box>
   );
 };
 
