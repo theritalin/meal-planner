@@ -7,26 +7,24 @@ import React, {
   useCallback,
 } from "react";
 import {
-  getRecipesFromFirestore,
   getUserRecipes,
   addUserRecipe,
+  updateUserRecipe,
   deleteUserRecipe,
   addDefaultRecipesToFirestore,
   addRecipeToDefaultMeal,
-  deleteRecipeFromDefaultMeal,
   getMealsFromFirestore,
   saveRecipeForUser,
   unsaveRecipeForUser,
-  db,
+  listenToAuthChanges,
+  getUserProfile,
 } from "../../services/firebase";
-import { getDoc, doc } from "firebase/firestore";
-import { useMeals } from "../MealContext";
 import default_recipes from "../../data/recipes";
+import { dedupeById, recipeMatches } from "../../utils/recipes";
 
 const RecipeContext = createContext();
 
 export function RecipeProvider({ children }) {
-  // Bunun yerine doğrudan auth'dan user bilgisini alacağız
   const [user, setUser] = useState(null);
   const [recipes, setRecipes] = useState([]); // Varsayılan tarifler
   const [userRecipes, setUserRecipes] = useState([]); // Kullanıcı tarifleri
@@ -34,87 +32,80 @@ export function RecipeProvider({ children }) {
   const [defaultMeals, setDefaultMeals] = useState([]); // Varsayılan yemekler
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [recipeFilter, setRecipeFilter] = useState("all"); // 'all', 'default', 'personal'
-  const [selectedMealId, setSelectedMealId] = useState(null); // Seçilen yemeğin ID'si
-  const [lastFetchTime, setLastFetchTime] = useState(0); // Son sorgu zamanı
+  const [recipeFilter, setRecipeFilter] = useState("all"); // 'all' | 'default' | 'personal' | 'saved'
+  const [selectedMealId, setSelectedMealId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState("all");
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Firebase'den auth durumunu dinle
+  // Oturum durumunu dinle
+  useEffect(() => listenToAuthChanges(setUser), []);
+
+  // Varsayılan yemekleri ve içlerindeki tarifleri yükle
   useEffect(() => {
-    import("firebase/auth").then(({ getAuth, onAuthStateChanged }) => {
-      const auth = getAuth();
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-      });
-
-      return () => unsubscribe();
-    });
-  }, []);
-
-  // Firebase'den tarifleri ve yemekleri yükle - sadece bir kez
-  useEffect(() => {
-    const loadData = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         setLoading(true);
-
-        // Şu anki zaman
-        const now = Date.now();
-
-        // Son sorgudan bu yana en az 5 dakika geçtiyse yeniden yükle
-        if (now - lastFetchTime > 5 * 60 * 1000) {
-          console.log("Veriler yükleniyor - 5 dakikadan fazla zaman geçti");
-
-          // Varsayılan yemekleri getir
-          const meals = await getMealsFromFirestore();
-          setDefaultMeals(meals);
-
-          // Tarifleri yemeklerden çıkar
-          const extractedRecipes = [];
-          meals.forEach((meal) => {
-            if (meal.recipes && Array.isArray(meal.recipes)) {
-              extractedRecipes.push(...meal.recipes);
-            }
-          });
-
-          setRecipes(extractedRecipes);
-          setLastFetchTime(now);
-        } else {
-          console.log("Veriler önbellekten kullanılıyor");
-        }
+        const meals = await getMealsFromFirestore();
+        if (cancelled) return;
+        setDefaultMeals(meals);
+        setRecipes(
+          meals.flatMap((meal) =>
+            Array.isArray(meal.recipes)
+              ? meal.recipes.map((r) => ({ mealId: meal.id, ...r }))
+              : []
+          )
+        );
       } catch (err) {
         console.error("Verileri yüklerken hata oluştu:", err);
-        setError(
-          "Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
-        );
+        if (!cancelled) {
+          setError(
+            "Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
+  }, [reloadKey]);
 
-    loadData();
-  }, [lastFetchTime]);
-
-  // Kullanıcı değiştiğinde kişisel tarifleri yükle
-  const loadUserRecipes = useCallback(async (userId) => {
-    if (userId) {
-      try {
-        const personalRecipes = await getUserRecipes(userId);
-        setUserRecipes(personalRecipes || []);
-      } catch (err) {
-        console.error("Kişisel tarifleri yüklerken hata oluştu:", err);
-        setUserRecipes([]);
-      }
-    } else {
+  // Kullanıcıya ait kişisel ve kaydedilmiş tarifleri tek okumada yükle
+  useEffect(() => {
+    if (!user) {
       setUserRecipes([]);
+      setSavedRecipes([]);
+      return;
     }
+    let cancelled = false;
+    getUserProfile(user.uid).then((profile) => {
+      if (cancelled) return;
+      setUserRecipes(profile?.personalRecipes || []);
+      setSavedRecipes(profile?.savedRecipes || []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, reloadKey]);
+
+  const loadUserRecipes = useCallback(async (userId) => {
+    const personal = userId ? await getUserRecipes(userId) : [];
+    setUserRecipes(personal || []);
   }, []);
 
-  // Kişisel tarif ekleme fonksiyonu
-  const addPersonalRecipe = async (userId, recipeData) => {
-    if (!userId) {
-      console.error("Kullanıcı giriş yapmamış, kişisel tarif eklenemez");
-      return null;
-    }
+  const loadSavedRecipes = useCallback(async (userId) => {
+    const profile = userId ? await getUserProfile(userId) : null;
+    setSavedRecipes(profile?.savedRecipes || []);
+  }, []);
 
+  const refreshData = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  // ---- Kişisel tarif CRUD ----
+  const addPersonalRecipe = useCallback(async (userId, recipeData) => {
+    if (!userId) return null;
     try {
       const newRecipe = await addUserRecipe(userId, recipeData);
       setUserRecipes((prev) => [...prev, newRecipe]);
@@ -123,218 +114,156 @@ export function RecipeProvider({ children }) {
       console.error("Kişisel tarif eklerken hata oluştu:", err);
       return null;
     }
-  };
-
-  // Kişisel tarif silme fonksiyonu
-  const deletePersonalRecipe = async (userId, recipeId) => {
-    if (!userId) {
-      console.error("Kullanıcı giriş yapmamış, kişisel tarif silinemez");
-      return false;
-    }
-
-    try {
-      const result = await deleteUserRecipe(userId, recipeId);
-      if (result) {
-        setUserRecipes((prev) =>
-          prev.filter((recipe) => recipe.id !== recipeId)
-        );
-      }
-      return result;
-    } catch (err) {
-      console.error("Kişisel tarif silerken hata oluştu:", err);
-      return false;
-    }
-  };
-
-  // Varsayılan yemeğe tarif ekleme fonksiyonu (admin için)
-  const addRecipeToFirestoreDb = async (recipeData) => {
-    try {
-      if (!recipeData.mealId) {
-        throw new Error("Tarif eklemek için yemek ID'si gerekli");
-      }
-
-      const newRecipe = await addRecipeToDefaultMeal(
-        recipeData.mealId,
-        recipeData
-      );
-
-      // Yerel state'i güncelle
-      setDefaultMeals((prevMeals) => {
-        return prevMeals.map((meal) => {
-          if (meal.id === recipeData.mealId) {
-            const recipes = meal.recipes || [];
-            return {
-              ...meal,
-              recipes: [...recipes, newRecipe],
-            };
-          }
-          return meal;
-        });
-      });
-
-      // Tarifleri güncelle
-      setRecipes((prev) => [...prev, newRecipe]);
-
-      return newRecipe;
-    } catch (err) {
-      console.error("Varsayılan tarif eklerken hata oluştu:", err);
-      return null;
-    }
-  };
-
-  // Verileri yeniden yükle
-  const refreshData = useCallback(async () => {
-    setLastFetchTime(0); // Sıfırlayarak yeniden yüklemeyi tetikle
   }, []);
 
-  // Varsayılan tarifleri eklemek için yönetici fonksiyonu
-  const addDefaultRecipes = async () => {
-    try {
-      await addDefaultRecipesToFirestore(default_recipes);
-      console.log("Varsayılan tarifler başarıyla eklendi");
-      // Verileri yeniden yükle
-      refreshData();
-      return true;
-    } catch (err) {
-      console.error("Varsayılan tarifleri eklerken hata oluştu:", err);
-      return false;
-    }
-  };
-
-  // Tüm tarifleri filtrele (varsayılan + kişisel) - memoize edilmiş
-  const getAllRecipes = useCallback(() => {
-    if (recipeFilter === "default") {
-      return recipes;
-    } else if (recipeFilter === "personal") {
-      return userRecipes;
-    } else {
-      // 'all' filtresi veya diğer durumlar
-      return [...recipes, ...userRecipes];
-    }
-  }, [recipes, userRecipes, recipeFilter]);
-
-  // Belirli bir yemeğe ait tarifleri getir - memoize edilmiş
-  const getRecipesForMeal = useCallback(
-    (mealId) => {
-      if (!mealId) return [];
-
-      // Önce varsayılan yemeklerden kontrol et
-      const meal = defaultMeals.find((m) => m.id === mealId);
-      if (meal && meal.recipes && Array.isArray(meal.recipes)) {
-        return meal.recipes;
+  const updatePersonalRecipe = useCallback(
+    async (userId, recipeId, updates) => {
+      if (!userId) return null;
+      try {
+        const updated = await updateUserRecipe(userId, recipeId, updates);
+        setUserRecipes((prev) =>
+          prev.map((r) => (r.id === recipeId ? updated : r))
+        );
+        return updated;
+      } catch (err) {
+        console.error("Kişisel tarif güncellenirken hata oluştu:", err);
+        return null;
       }
-
-      // Eğer bulunamazsa tüm tariflerde ara
-      return getAllRecipes().filter((recipe) => recipe.mealId === mealId);
     },
-    [getAllRecipes, defaultMeals]
+    []
   );
 
-  // Arama/filtreleme fonksiyonları
-  const [searchTerm, setSearchTerm] = useState("");
-  const [difficultyFilter, setDifficultyFilter] = useState("all");
-
-  // Filtrelenmiş tarifleri memoize et
-  const filteredRecipes = useMemo(() => {
-    console.log("filteredRecipes hesaplanıyor");
-    return getAllRecipes().filter((recipe) => {
-      const matchesSearch =
-        recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        recipe.ingredients?.some(
-          (ing) =>
-            typeof ing === "object" &&
-            ing.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-      const matchesDifficulty =
-        difficultyFilter === "all" || recipe.difficulty === difficultyFilter;
-
-      const matchesMeal = !selectedMealId || recipe.mealId === selectedMealId;
-
-      return matchesSearch && matchesDifficulty && matchesMeal;
-    });
-  }, [getAllRecipes, searchTerm, difficultyFilter, selectedMealId]);
-
-  // Kullanıcı tariflerini yükle
-  useEffect(() => {
-    if (user) {
-      loadUserRecipes(user.uid);
+  const deletePersonalRecipe = useCallback(async (userId, recipeId) => {
+    if (!userId) return false;
+    const result = await deleteUserRecipe(userId, recipeId);
+    if (result) {
+      setUserRecipes((prev) => prev.filter((r) => r.id !== recipeId));
     }
-  }, [user, loadUserRecipes, lastFetchTime]);
-
-  // Kaydedilen tarifleri yükle
-  const loadSavedRecipes = useCallback(async (userId) => {
-    if (!userId) {
-      setSavedRecipes([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const userRef = doc(db, "users", userId);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists() && userSnap.data().savedRecipes) {
-        setSavedRecipes(userSnap.data().savedRecipes);
-      } else {
-        setSavedRecipes([]);
-      }
-    } catch (err) {
-      console.error("Kaydedilen tarifleri yüklerken hata oluştu:", err);
-      setError("Kaydedilen tarifleri yüklerken bir hata oluştu");
-      setSavedRecipes([]);
-    } finally {
-      setLoading(false);
-    }
+    return result;
   }, []);
 
-  // Kullanıcı giriş yaptığında kaydedilen tarifleri yükle
-  useEffect(() => {
-    if (user) {
-      loadSavedRecipes(user.uid);
-    } else {
-      setSavedRecipes([]);
-    }
-  }, [user, loadSavedRecipes, lastFetchTime]);
-
-  // Tarif kaydetme fonksiyonu
-  const saveRecipe = async (userId, recipe) => {
-    if (!userId) {
-      console.error("Kullanıcı giriş yapmamış, tarif kaydedilemez");
-      return null;
-    }
-
+  // ---- Kaydedilen tarifler ----
+  const saveRecipe = useCallback(async (userId, recipe) => {
+    if (!userId) return null;
     try {
-      const updatedSavedRecipes = await saveRecipeForUser(userId, recipe);
-      setSavedRecipes(updatedSavedRecipes);
-      return updatedSavedRecipes;
+      const updated = await saveRecipeForUser(userId, recipe);
+      setSavedRecipes(updated);
+      return updated;
     } catch (err) {
       console.error("Tarif kaydedilirken hata oluştu:", err);
       return null;
     }
-  };
+  }, []);
 
-  // Kaydedilen tarifi kaldırma fonksiyonu
-  const unsaveRecipe = async (userId, recipeId) => {
-    if (!userId) {
-      console.error("Kullanıcı giriş yapmamış, tarif kaldırılamaz");
-      return false;
-    }
-
+  const unsaveRecipe = useCallback(async (userId, recipeId) => {
+    if (!userId) return false;
     try {
-      const updatedSavedRecipes = await unsaveRecipeForUser(userId, recipeId);
-      setSavedRecipes(updatedSavedRecipes);
+      const updated = await unsaveRecipeForUser(userId, recipeId);
+      setSavedRecipes(updated);
       return true;
     } catch (err) {
       console.error("Tarif kaldırılırken hata oluştu:", err);
       return false;
     }
-  };
+  }, []);
+
+  const isRecipeSaved = useCallback(
+    (recipeId) => savedRecipes.some((r) => r.id === recipeId),
+    [savedRecipes]
+  );
+
+  // ---- Yönetici işlemleri ----
+  const addRecipeToFirestoreDb = useCallback(async (recipeData) => {
+    try {
+      if (!recipeData.mealId) {
+        throw new Error("Tarif eklemek için yemek ID'si gerekli");
+      }
+      const newRecipe = await addRecipeToDefaultMeal(
+        recipeData.mealId,
+        recipeData
+      );
+      setDefaultMeals((prev) =>
+        prev.map((meal) =>
+          meal.id === recipeData.mealId
+            ? { ...meal, recipes: [...(meal.recipes || []), newRecipe] }
+            : meal
+        )
+      );
+      setRecipes((prev) => [...prev, newRecipe]);
+      return newRecipe;
+    } catch (err) {
+      console.error("Varsayılan tarif eklerken hata oluştu:", err);
+      return null;
+    }
+  }, []);
+
+  const addDefaultRecipes = useCallback(async () => {
+    const ok = await addDefaultRecipesToFirestore(default_recipes);
+    if (ok) refreshData();
+    return ok;
+  }, [refreshData]);
+
+  // ---- Seçiciler ----
+
+  /** Kişisel + kaydedilen + varsayılan tarifler (tekrarsız). */
+  const allRecipes = useMemo(
+    () => dedupeById([...userRecipes, ...savedRecipes, ...recipes]),
+    [userRecipes, savedRecipes, recipes]
+  );
+
+  /** Tarif kitabım: kullanıcının kendi ve kaydettiği tarifler. */
+  const cookbookRecipes = useMemo(
+    () => dedupeById([...userRecipes, ...savedRecipes]),
+    [userRecipes, savedRecipes]
+  );
+
+  const getRecipeById = useCallback(
+    (id) => allRecipes.find((r) => r.id === id) || null,
+    [allRecipes]
+  );
+
+  const getAllRecipes = useCallback(() => {
+    switch (recipeFilter) {
+      case "default":
+        return recipes;
+      case "personal":
+        return userRecipes;
+      case "saved":
+        return savedRecipes;
+      default:
+        return allRecipes;
+    }
+  }, [recipeFilter, recipes, userRecipes, savedRecipes, allRecipes]);
+
+  /** Belirli bir yemeğe ait tarifler. */
+  const getRecipesForMeal = useCallback(
+    (mealId) => {
+      if (!mealId) return [];
+      return allRecipes.filter((r) => r.mealId === mealId);
+    },
+    [allRecipes]
+  );
+
+  const filteredRecipes = useMemo(
+    () =>
+      getAllRecipes().filter(
+        (recipe) =>
+          recipeMatches(recipe, searchTerm) &&
+          (difficultyFilter === "all" ||
+            recipe.difficulty === difficultyFilter) &&
+          (!selectedMealId || recipe.mealId === selectedMealId)
+      ),
+    [getAllRecipes, searchTerm, difficultyFilter, selectedMealId]
+  );
 
   const value = {
+    user,
     recipes,
     userRecipes,
+    savedRecipes,
     defaultMeals,
+    allRecipes,
+    cookbookRecipes,
     filteredRecipes,
     searchTerm,
     setSearchTerm,
@@ -342,22 +271,24 @@ export function RecipeProvider({ children }) {
     setDifficultyFilter,
     recipeFilter,
     setRecipeFilter,
+    selectedMealId,
+    setSelectedMealId,
     loading,
     error,
     addPersonalRecipe,
+    updatePersonalRecipe,
     deletePersonalRecipe,
     loadUserRecipes,
-    getRecipesForMeal,
-    selectedMealId,
-    setSelectedMealId,
-    addDefaultRecipes,
-    getAllRecipes,
-    addRecipeToFirestoreDb,
-    refreshData,
-    savedRecipes,
+    loadSavedRecipes,
     saveRecipe,
     unsaveRecipe,
-    loadSavedRecipes,
+    isRecipeSaved,
+    getRecipeById,
+    getRecipesForMeal,
+    getAllRecipes,
+    addDefaultRecipes,
+    addRecipeToFirestoreDb,
+    refreshData,
     getUserRecipes,
   };
 

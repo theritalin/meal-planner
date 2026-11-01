@@ -6,7 +6,6 @@ import {
   getDoc,
   setDoc,
   doc,
-  addDoc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -515,6 +514,31 @@ export const deleteUserRecipe = async (userId, recipeId) => {
     console.error("Kişisel tarif silerken hata oluştu:", error);
     return false;
   }
+};
+
+// Kullanıcının kişisel tarifini güncelleyen fonksiyon
+export const updateUserRecipe = async (userId, recipeId, updates) => {
+  if (!userId || !recipeId) {
+    throw new Error("Kullanıcı kimliği ve tarif kimliği gerekli");
+  }
+
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+  const personalRecipes = userSnap.exists()
+    ? userSnap.data().personalRecipes || []
+    : [];
+
+  let updated = null;
+  const next = personalRecipes.map((recipe) => {
+    if (recipe.id !== recipeId) return recipe;
+    updated = { ...recipe, ...updates, id: recipeId, updatedAt: new Date() };
+    return updated;
+  });
+
+  if (!updated) throw new Error("Tarif bulunamadı");
+
+  await setDoc(userRef, { personalRecipes: next }, { merge: true });
+  return updated;
 };
 
 // Varsayılan tarifleri Firestore'a ekleyen fonksiyon

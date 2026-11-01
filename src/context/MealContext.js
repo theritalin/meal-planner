@@ -1,10 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   getMealsFromFirestore,
-  addDefaultMealsToFirestore,
   saveMealPlanToFirestore,
   getMealPlanFromFirestore,
-  getCurrentUser,
   checkAndAddUser,
   listenToAuthChanges,
   getUserMeals,
@@ -12,448 +18,236 @@ import {
   deleteUserMeal,
   isUserAdmin,
 } from "../services/firebase";
+import {
+  DAYS,
+  MEAL_TYPES,
+  MAX_MEALS_PER_SLOT,
+  createEmptyWeekPlan,
+} from "../constants";
+import { normalizeText } from "../utils/recipes";
 
-// RecipeProvider'ı kaldırıyoruz
-// import { RecipeProvider } from "./recipes/RecipeContext";
-import default_meals from "../data/meals";
 const MealContext = createContext();
 
-// Varsayılan boş haftalık plan
-const defaultWeekPlan = {
-  monday: { breakfast: [], lunch: [], dinner: [] },
-  tuesday: { breakfast: [], lunch: [], dinner: [] },
-  wednesday: { breakfast: [], lunch: [], dinner: [] },
-  thursday: { breakfast: [], lunch: [], dinner: [] },
-  friday: { breakfast: [], lunch: [], dinner: [] },
-  saturday: { breakfast: [], lunch: [], dinner: [] },
-  sunday: { breakfast: [], lunch: [], dinner: [] },
+/** Firestore'dan gelen planı eksik gün/öğünlere karşı tamamlar. */
+const normalizePlan = (plan) => {
+  const empty = createEmptyWeekPlan();
+  if (!plan) return empty;
+  DAYS.forEach((day) => {
+    MEAL_TYPES.forEach((type) => {
+      const slot = plan?.[day]?.[type];
+      empty[day][type] = Array.isArray(slot) ? slot : [];
+    });
+  });
+  return empty;
+};
+
+const shuffle = (list) => {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 };
 
 export function MealProvider({ children }) {
   const [meals, setMeals] = useState([]);
   const [userMeals, setUserMeals] = useState([]);
-  const [weekPlan, setWeekPlan] = useState(defaultWeekPlan);
-  const [loading, setLoading] = useState(true);
+  const [weekPlan, setWeekPlan] = useState(createEmptyWeekPlan);
+  const [loading, setLoading] = useState(true); // yemekler yükleniyor
+  const [authLoading, setAuthLoading] = useState(true); // oturum çözülüyor
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null); // 'saving', 'success', 'error', null
-  const [mealFilter, setMealFilter] = useState("all"); // 'all', 'default', 'personal'
-  const [selectedMeal, setSelectedMeal] = useState(null); // Tarif detayları için seçilen yemek
+  const [saveStatus, setSaveStatus] = useState(null); // 'saving' | 'success' | 'error' | null
+  const [mealFilter, setMealFilter] = useState("all"); // 'all' | 'default' | 'personal'
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mealTypeFilter, setMealTypeFilter] = useState("all");
+  const saveTimer = useRef(null);
 
-  // Firebase'den yemekleri yükle
+  // Oturum durumunu dinle
   useEffect(() => {
-    const loadMeals = async () => {
+    const unsubscribe = listenToAuthChanges(async (currentUser) => {
+      setUser(currentUser);
+      setIsAdmin(currentUser ? await isUserAdmin(currentUser.uid) : false);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Varsayılan yemekleri yükle
+  useEffect(() => {
+    (async () => {
       try {
         setLoading(true);
-        // Firebase'den yemekleri getir
         const firebaseMeals = await getMealsFromFirestore();
-
+        setMeals(firebaseMeals);
         if (firebaseMeals.length === 0) {
-          console.log("Firebase'de yemek bulunamadı");
-          setError(
-            "Yemekler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
-          );
-          setMeals([]);
-        } else {
-          console.log("Firebase'den yemekler yüklendi:", firebaseMeals.length);
-          setMeals(firebaseMeals);
+          setError("Yemek listesi şu anda boş görünüyor.");
         }
       } catch (err) {
         console.error("Yemekleri yüklerken hata oluştu:", err);
         setError(
           "Yemekler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
         );
-        setMeals([]);
       } finally {
         setLoading(false);
       }
-    };
-
-    loadMeals();
+    })();
   }, []);
 
-  //Sadece default meal eklenceği zaman kullan
-  // useEffect(() => {
-  //   const defaultMeals = async () => {
-  //     try {
-
-  //       // Firebase'den yemekleri getir
-  //       const defaultMeals = default_meals;
-  //       await addDefaultMealsToFirestore(defaultMeals);
-
-  //     } catch (err) {
-  //       console.error(" hata oluştu:", err);
-  //       setError(
-  //         " hata oluştu. Lütfen daha sonra tekrar deneyin."
-  //       );
-
-  //     } finally {
-
-  //     }
-  //   };
-
-  //   defaultMeals();
-  // }, []);
-
-  // Kullanıcı değiştiğinde kişisel yemekleri yükle
+  // Kullanıcı değişince kişisel yemekleri ve planı yükle
   useEffect(() => {
-    const loadUserMeals = async () => {
-      if (user) {
-        try {
-          const personalMeals = await getUserMeals(user.uid);
-          setUserMeals(personalMeals || []);
-        } catch (err) {
-          console.error("Kişisel yemekleri yüklerken hata oluştu:", err);
-          setUserMeals([]);
-        }
-      } else {
-        setUserMeals([]);
-      }
-    };
-
-    loadUserMeals();
-  }, [user]);
-
-  // Kullanıcı değiştiğinde yemek planını yükle
-  useEffect(() => {
-    const loadUserMealPlan = async () => {
-      if (user) {
-        try {
-          const userMealPlan = await getMealPlanFromFirestore(user.uid);
-          if (userMealPlan) {
-            setWeekPlan(userMealPlan);
-          }
-        } catch (err) {
-          console.error("Kullanıcı yemek planı yüklenirken hata oluştu:", err);
-        }
-      }
-    };
-
-    loadUserMealPlan();
-  }, [user]);
-
-  // Manuel kaydetme fonksiyonu
-  const saveMealPlanToFirebase = async () => {
     if (!user) {
-      console.error("Kullanıcı giriş yapmamış, yemek planı kaydedilemez");
+      setUserMeals([]);
+      setWeekPlan(createEmptyWeekPlan());
+      return;
+    }
+    let cancelled = false;
+    Promise.all([getUserMeals(user.uid), getMealPlanFromFirestore(user.uid)])
+      .then(([personalMeals, plan]) => {
+        if (cancelled) return;
+        setUserMeals(personalMeals || []);
+        if (plan) setWeekPlan(normalizePlan(plan));
+      })
+      .catch((err) =>
+        console.error("Kullanıcı verileri yüklenirken hata oluştu:", err)
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
+
+  const saveMealPlanToFirebase = useCallback(async () => {
+    if (!user) {
       setSaveStatus("error");
       return false;
     }
+    setSaveStatus("saving");
+    const ok = await saveMealPlanToFirestore(user.uid, weekPlan);
+    setSaveStatus(ok ? "success" : "error");
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => setSaveStatus(null), 3000);
+    return ok;
+  }, [user, weekPlan]);
 
-    try {
-      setSaveStatus("saving");
-      await saveMealPlanToFirestore(user.uid, weekPlan);
-      console.log("Yemek planı başarıyla kaydedildi");
-      setSaveStatus("success");
+  const addPersonalMeal = useCallback(
+    async (mealData) => {
+      if (!user) return null;
+      try {
+        const newMeal = await addUserMeal(user.uid, mealData);
+        setUserMeals((prev) => [...prev, newMeal]);
+        return newMeal;
+      } catch (err) {
+        console.error("Kişisel yemek eklerken hata oluştu:", err);
+        return null;
+      }
+    },
+    [user]
+  );
 
-      // 3 saniye sonra başarı mesajını kaldır
-      setTimeout(() => {
-        setSaveStatus(null);
-      }, 3000);
-
-      return true;
-    } catch (err) {
-      console.error("Yemek planı kaydedilirken hata oluştu:", err);
-      setSaveStatus("error");
-      return false;
-    }
-  };
-
-  // Kişisel yemek ekleme fonksiyonu
-  const addPersonalMeal = async (mealData) => {
-    if (!user) {
-      console.error("Kullanıcı giriş yapmamış, kişisel yemek eklenemez");
-      return null;
-    }
-
-    try {
-      const newMeal = await addUserMeal(user.uid, mealData);
-      setUserMeals((prev) => [...prev, newMeal]);
-      return newMeal;
-    } catch (err) {
-      console.error("Kişisel yemek eklerken hata oluştu:", err);
-      return null;
-    }
-  };
-
-  // Kişisel yemek silme fonksiyonu
-  const deletePersonalMeal = async (mealId) => {
-    if (!user) {
-      console.error("Kullanıcı giriş yapmamış, kişisel yemek silinemez");
-      return false;
-    }
-
-    try {
+  const deletePersonalMeal = useCallback(
+    async (mealId) => {
+      if (!user) return false;
       const result = await deleteUserMeal(user.uid, mealId);
-      if (result) {
-        setUserMeals((prev) => prev.filter((meal) => meal.id !== mealId));
-      }
+      if (result) setUserMeals((prev) => prev.filter((m) => m.id !== mealId));
       return result;
-    } catch (err) {
-      console.error("Kişisel yemek silerken hata oluştu:", err);
-      return false;
-    }
-  };
+    },
+    [user]
+  );
 
-  // Oturum durumunu dinle
-  useEffect(() => {
-    const unsubscribe = listenToAuthChanges((currentUser) => {
-      setUser(currentUser);
-    });
-
-    // Temizleme fonksiyonu
-    return () => unsubscribe();
-  }, []);
-
-  // Kullanıcı oturumunu ayarla
-  const setCurrentUser = async (newUser) => {
+  // Geriye dönük uyumluluk için korunuyor
+  const setCurrentUser = useCallback(async (newUser) => {
     if (newUser) {
-      // Kullanıcıyı kontrol et ve gerekirse ekle
       await checkAndAddUser(newUser);
-
-      // Admin kontrolü
-      const adminStatus = await isUserAdmin(newUser.uid);
-      setIsAdmin(adminStatus);
+      setIsAdmin(await isUserAdmin(newUser.uid));
     } else {
       setIsAdmin(false);
     }
     setUser(newUser);
-  };
+  }, []);
 
-  // Tüm yemekleri filtrele (varsayılan + kişisel)
-  const getAllMeals = () => {
-    if (mealFilter === "default") {
-      return meals;
-    } else if (mealFilter === "personal") {
-      return userMeals;
-    } else {
-      // 'all' filtresi veya diğer durumlar
-      return [...meals, ...userMeals];
-    }
-  };
+  const getAllMeals = useCallback(() => {
+    if (mealFilter === "default") return meals;
+    if (mealFilter === "personal") return userMeals;
+    return [...meals, ...userMeals];
+  }, [mealFilter, meals, userMeals]);
 
-  // Updated to handle adding/removing meals from slots with safety checks
-  const updateMealPlan = (day, mealType, meal, action = "add") => {
-    console.log("updateMealPlan called:", { day, mealType, meal, action }); // Debug için
-
-    if (!day || !mealType || (action !== "clear" && !meal)) {
-      console.error("Invalid parameters for updateMealPlan:", {
-        day,
-        mealType,
-        meal,
-        action,
-      });
-      return;
-    }
-
-    // Normalize day to lowercase
-    const normalizedDay = day.toLowerCase();
-
-    // Check if day exists in weekPlan
-    if (!Object.keys(defaultWeekPlan).includes(normalizedDay)) {
-      console.error(`Invalid day: ${normalizedDay}`);
-      return;
-    }
-
-    // Check if mealType is valid
-    if (!["breakfast", "lunch", "dinner"].includes(mealType)) {
-      console.error(`Invalid meal type: ${mealType}`);
-      return;
-    }
+  /**
+   * Plana yemek ekler / çıkarır / slotu temizler.
+   * action: "add" | "remove" | "clear"
+   */
+  const updateMealPlan = useCallback((day, mealType, meal, action = "add") => {
+    const normalizedDay = day?.toLowerCase();
+    if (!DAYS.includes(normalizedDay) || !MEAL_TYPES.includes(mealType)) return;
+    if (action !== "clear" && !meal) return;
 
     setWeekPlan((prev) => {
-      // Safety check: ensure the day exists in the previous state
-      const safeDay = prev[normalizedDay] || {
-        ...defaultWeekPlan[normalizedDay],
-      };
-
-      // Safety check: ensure the meal type array exists
-      const currentMeals = Array.isArray(safeDay[mealType])
-        ? [...safeDay[mealType]]
+      const dayPlan = prev[normalizedDay] || {};
+      const current = Array.isArray(dayPlan[mealType])
+        ? dayPlan[mealType]
         : [];
+      let next = current;
 
       if (action === "add") {
-        // Only add if we have fewer than 3 meals and the meal isn't already in the slot
         if (
-          currentMeals.length < 3 &&
-          !currentMeals.some((m) => m.id === meal.id)
+          current.length < MAX_MEALS_PER_SLOT &&
+          !current.some((m) => m.id === meal.id)
         ) {
-          currentMeals.push(meal);
-          console.log(
-            `Added meal ${meal.name} to ${normalizedDay} ${mealType}`
-          );
-        } else {
-          console.log(`Meal ${meal.name} already exists or slot is full`);
+          next = [...current, meal];
         }
       } else if (action === "remove") {
-        // Remove the meal if it exists
-        const index = currentMeals.findIndex((m) => m.id === meal.id);
-        if (index !== -1) {
-          currentMeals.splice(index, 1);
-          console.log(
-            `Removed meal ${meal.name} from ${normalizedDay} ${mealType}`
-          );
-        } else {
-          console.log(
-            `Meal ${meal.name} not found in ${normalizedDay} ${mealType}`
-          );
-        }
+        next = current.filter((m) => m.id !== meal.id);
       } else if (action === "clear") {
-        // Return a new state with an empty array for the specified day and meal type
-        console.log(`Cleared all meals from ${normalizedDay} ${mealType}`);
-        return {
-          ...prev,
-          [normalizedDay]: {
-            ...safeDay,
-            [mealType]: [],
-          },
-        };
+        next = [];
       }
 
-      // Return the updated state
+      if (next === current) return prev;
       return {
         ...prev,
-        [normalizedDay]: {
-          ...safeDay,
-          [mealType]: currentMeals,
-        },
+        [normalizedDay]: { ...dayPlan, [mealType]: next },
       };
     });
-  };
+  }, []);
 
-  // Add search/filter functionality
-  const [searchTerm, setSearchTerm] = useState("");
-  const [mealTypeFilter, setMealTypeFilter] = useState("all");
-
-  const filteredMeals = getAllMeals().filter((meal) => {
-    const matchesSearch =
-      meal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      meal.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType =
-      mealTypeFilter === "all" || meal.type === mealTypeFilter;
-
-    return matchesSearch && matchesType;
-  });
-
-  // Rastgele yemek planlama fonksiyonu
-  const generateRandomMealPlan = () => {
-    const days = [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ];
-    const mealTypes = ["breakfast", "lunch", "dinner"];
-
-    // Önce mevcut planı temizle
-    const newPlan = {
-      monday: { breakfast: [], lunch: [], dinner: [] },
-      tuesday: { breakfast: [], lunch: [], dinner: [] },
-      wednesday: { breakfast: [], lunch: [], dinner: [] },
-      thursday: { breakfast: [], lunch: [], dinner: [] },
-      friday: { breakfast: [], lunch: [], dinner: [] },
-      saturday: { breakfast: [], lunch: [], dinner: [] },
-      sunday: { breakfast: [], lunch: [], dinner: [] },
-    };
-
-    // Seçili filtreye göre yemekleri belirle
-    let mealsToUse = [];
-
-    if (mealFilter === "personal") {
-      // Sadece kişisel yemekleri kullan
-      mealsToUse = [...userMeals];
-      console.log(
-        "Rastgele dağıtım: Sadece kişisel yemekler kullanılıyor",
-        mealsToUse.length
-      );
-    } else if (mealFilter === "default") {
-      // Sadece varsayılan yemekleri kullan
-      mealsToUse = [...meals];
-      console.log(
-        "Rastgele dağıtım: Sadece varsayılan yemekler kullanılıyor",
-        mealsToUse.length
-      );
-    } else {
-      // Tüm yemekleri kullan (varsayılan + kişisel)
-      mealsToUse = [...meals, ...userMeals];
-      console.log(
-        "Rastgele dağıtım: Tüm yemekler kullanılıyor",
-        mealsToUse.length
-      );
-    }
-
-    // Yemekleri türlerine göre ayır
-    const mealsByType = {
-      breakfast: mealsToUse.filter((meal) => meal.type === "breakfast"),
-      lunch: mealsToUse.filter((meal) => meal.type === "lunch"),
-      dinner: mealsToUse.filter((meal) => meal.type === "dinner"),
-    };
-
-    console.log("Yemek türlerine göre dağılım:", {
-      breakfast: mealsByType.breakfast.length,
-      lunch: mealsByType.lunch.length,
-      dinner: mealsByType.dinner.length,
+  const filteredMeals = useMemo(() => {
+    const q = normalizeText(searchTerm);
+    return getAllMeals().filter((meal) => {
+      const matchesSearch =
+        !q ||
+        normalizeText(meal.name).includes(q) ||
+        normalizeText(meal.description).includes(q);
+      const matchesType =
+        mealTypeFilter === "all" || meal.type === mealTypeFilter;
+      return matchesSearch && matchesType;
     });
+  }, [getAllMeals, searchTerm, mealTypeFilter]);
 
-    // Her öğün türü için yemekleri dağıt
-    mealTypes.forEach((type) => {
-      const availableMeals = [...mealsByType[type]]; // Kopyasını al
+  /** Her öğün türü için mümkün olduğunca tekrarsız rastgele plan oluşturur. */
+  const generateRandomMealPlan = useCallback(() => {
+    const pool = getAllMeals();
+    const newPlan = createEmptyWeekPlan();
 
-      if (availableMeals.length === 0) {
-        console.log(`${type} türünde yemek bulunamadı`);
-        return; // Bu türde yemek yoksa atla
-      }
-
-      // Her gün için farklı yemek seç
-      days.forEach((day) => {
-        // Eğer hala dağıtılacak yemek varsa
-        if (availableMeals.length > 0) {
-          // Rastgele bir yemek seç
-          const randomIndex = Math.floor(Math.random() * availableMeals.length);
-          const selectedMeal = availableMeals[randomIndex];
-
-          // Seçilen yemeği plana ekle
-          newPlan[day][type] = [selectedMeal];
-
-          // Seçilen yemeği listeden çıkar (aynı yemeği tekrar seçmemek için)
-          availableMeals.splice(randomIndex, 1);
-        } else {
-          // Eğer tüm yemekler dağıtıldıysa, orijinal listeden tekrar seç
-          const originalList = mealsByType[type];
-          if (originalList.length > 0) {
-            const randomIndex = Math.floor(Math.random() * originalList.length);
-            newPlan[day][type] = [originalList[randomIndex]];
-          }
-        }
+    MEAL_TYPES.forEach((type) => {
+      const ofType = pool.filter((meal) => meal.type === type);
+      if (ofType.length === 0) return;
+      let bag = shuffle(ofType);
+      DAYS.forEach((day) => {
+        if (bag.length === 0) bag = shuffle(ofType);
+        newPlan[day][type] = [bag.pop()];
       });
     });
 
     setWeekPlan(newPlan);
-  };
+  }, [getAllMeals]);
 
-  // Tüm planı temizleme fonksiyonu
-  const clearMealPlan = () => {
-    // Tamamen yeni ve boş bir plan oluştur
-    const emptyPlan = {
-      monday: { breakfast: [], lunch: [], dinner: [] },
-      tuesday: { breakfast: [], lunch: [], dinner: [] },
-      wednesday: { breakfast: [], lunch: [], dinner: [] },
-      thursday: { breakfast: [], lunch: [], dinner: [] },
-      friday: { breakfast: [], lunch: [], dinner: [] },
-      saturday: { breakfast: [], lunch: [], dinner: [] },
-      sunday: { breakfast: [], lunch: [], dinner: [] },
-    };
-    setWeekPlan(emptyPlan);
-  };
-
-  // Yemek seçme fonksiyonu (tarif detayları için)
-  const selectMeal = (meal) => {
-    setSelectedMeal(meal);
-  };
+  const clearMealPlan = useCallback(
+    () => setWeekPlan(createEmptyWeekPlan()),
+    []
+  );
 
   const value = {
     meals,
@@ -470,6 +264,7 @@ export function MealProvider({ children }) {
     generateRandomMealPlan,
     clearMealPlan,
     loading,
+    authLoading,
     error,
     user,
     isAdmin,
@@ -479,7 +274,7 @@ export function MealProvider({ children }) {
     addPersonalMeal,
     deletePersonalMeal,
     selectedMeal,
-    selectMeal,
+    selectMeal: setSelectedMeal,
   };
 
   return <MealContext.Provider value={value}>{children}</MealContext.Provider>;
