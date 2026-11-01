@@ -1,128 +1,144 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  TextField,
   Autocomplete,
   Avatar,
   Box,
-  Typography,
-  Paper,
   CircularProgress,
   InputAdornment,
+  TextField,
+  Typography,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Search as SearchIcon } from "@mui/icons-material";
 import { searchUsers } from "../../services/firebase";
+import { useMeals } from "../../context/MealContext";
+import { getInitials } from "./profile/utils";
 
-const UserSearch = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+const MIN_CHARS = 2;
+const DEBOUNCE_MS = 300;
+
+/**
+ * Kompakt kullanıcı arama kutusu. Seçilen kullanıcının profiline
+ * (/profile/:uid) gider.
+ *
+ * Props:
+ * - onNavigate?: () => void — yönlendirmeden sonra çağrılır (ör. drawer kapatma)
+ * - size?: "small" | "medium" (varsayılan "small")
+ * - sx?: kök Autocomplete stili
+ */
+const UserSearch = ({ onNavigate, size = "small", sx }) => {
   const navigate = useNavigate();
+  const { user } = useMeals();
+  const [input, setInput] = useState("");
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (searchTerm.length < 2) {
-        setUsers([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const results = await searchUsers(searchTerm);
-        setUsers(results);
-      } catch (error) {
-        console.error("Kullanıcı arama hatası:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timer = setTimeout(() => {
-      fetchUsers();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  const handleUserSelect = (event, user) => {
-    if (user) {
-      navigate(`/profile/${user.uid}`);
+    const term = input.trim();
+    if (term.length < MIN_CHARS) {
+      setOptions([]);
+      setLoading(false);
+      return undefined;
     }
+
+    let active = true;
+    setLoading(true);
+    const timer = setTimeout(async () => {
+      const results = await searchUsers(term);
+      if (!active) return;
+      setOptions(results || []);
+      setLoading(false);
+    }, DEBOUNCE_MS);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [input]);
+
+  const handleChange = (_event, selected) => {
+    if (!selected?.uid) return;
+    navigate(`/profile/${selected.uid}`);
+    setInput("");
+    setOptions([]);
+    onNavigate?.();
   };
 
-  // Kullanıcı adından baş harflerini al
-  const getInitials = (name) => {
-    if (!name) return "K";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
+  const tooShort = input.trim().length < MIN_CHARS;
 
   return (
     <Autocomplete
-      options={users}
-      getOptionLabel={(option) => option.displayName || option.email || ""}
-      onChange={handleUserSelect}
-      loading={loading}
-      noOptionsText="Kullanıcı bulunamadı"
-      loadingText="Kullanıcılar aranıyor..."
-      fullWidth
-      sx={{
-        "& .MuiOutlinedInput-root": {
-          borderRadius: 2,
-        },
+      size={size}
+      sx={{ minWidth: 200, ...sx }}
+      options={options}
+      value={null}
+      inputValue={input}
+      onInputChange={(_e, value, reason) => {
+        if (reason !== "reset") setInput(value);
       }}
+      onChange={handleChange}
+      filterOptions={(x) => x}
+      isOptionEqualToValue={(a, b) => a.uid === b.uid}
+      getOptionLabel={(o) => o.displayName || o.email || ""}
+      loading={loading}
+      loadingText="Aranıyor…"
+      noOptionsText={
+        tooShort ? `En az ${MIN_CHARS} harf yazın` : "Kullanıcı bulunamadı"
+      }
+      clearOnBlur={false}
+      blurOnSelect
+      handleHomeEndKeys
       renderInput={(params) => (
         <TextField
           {...params}
-          placeholder="Kullanıcı ara..."
-          variant="outlined"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Kullanıcı ara…"
+          inputProps={{ ...params.inputProps, "aria-label": "Kullanıcı ara" }}
           InputProps={{
             ...params.InputProps,
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon color="action" />
+                <SearchIcon fontSize="small" color="action" />
               </InputAdornment>
             ),
             endAdornment: (
               <>
-                {loading ? (
-                  <CircularProgress color="inherit" size={20} />
-                ) : null}
+                {loading && <CircularProgress color="inherit" size={16} />}
                 {params.InputProps.endAdornment}
               </>
             ),
           }}
         />
       )}
-      renderOption={(props, option) => (
-        <Box component="li" {...props} key={option.uid}>
+      renderOption={(props, option) => {
+        const { key, ...optionProps } = props;
+        return (
           <Box
-            sx={{ display: "flex", alignItems: "center", width: "100%", py: 1 }}
+            component="li"
+            key={option.uid}
+            {...optionProps}
+            sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
           >
             <Avatar
-              src={option.photoURL}
-              alt={option.displayName || "Kullanıcı"}
-              sx={{ mr: 2, bgcolor: "primary.main" }}
+              src={option.photoURL || undefined}
+              alt=""
+              sx={{
+                width: 32,
+                height: 32,
+                fontSize: 14,
+                bgcolor: "primary.main",
+              }}
             >
-              {!option.photoURL && getInitials(option.displayName)}
+              {getInitials(option.displayName)}
             </Avatar>
-            <Box>
-              <Typography variant="body1" fontWeight="medium">
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" fontWeight={600} noWrap>
                 {option.displayName || "İsimsiz Kullanıcı"}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {option.email}
+                {user?.uid === option.uid && " (siz)"}
               </Typography>
             </Box>
           </Box>
-        </Box>
-      )}
+        );
+      }}
     />
   );
 };
