@@ -3,7 +3,7 @@ import { Box, Button, Divider, Link, Paper, Typography } from '@mui/material';
 import { adsEnabled, openConsentPreferences } from '../../services/ads';
 
 const APP_NAME = 'Tarif Kitabım';
-const LAST_UPDATED = '1 Kasım 2026';
+const LAST_UPDATED = '4 Kasım 2026';
 const CONTACT_EMAIL = (process.env.REACT_APP_CONTACT_EMAIL || '').trim() || 'bsckbilgi@gmail.com';
 
 const Section = ({ id, title, children }) => (
@@ -138,6 +138,13 @@ const PrivacyPolicy = () => (
             <>
               Google AdMob ve Google AdSense —{' '}
               <ExtLink href="https://policies.google.com/privacy">policies.google.com/privacy</ExtLink>
+            </>,
+            <>
+              Vercel Web Analytics (yalnızca web; çerez kullanmayan, kişiyi tanımlamayan toplu
+              ziyaret istatistikleri: sayfa, yönlendiren site, ülke, cihaz türü) —{' '}
+              <ExtLink href="https://vercel.com/docs/analytics/privacy-policy">
+                vercel.com/docs/analytics/privacy-policy
+              </ExtLink>
             </>,
           ]}
         />

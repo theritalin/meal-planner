@@ -2,25 +2,186 @@
 <html lang="tr">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/icon.svg" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon-192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="theme-color" content="#C2410C" />
+
+    <!-- SEO / GEO / AEO
+         Site adresi değişirse (ör. kendi alan adınız) bu dosyadaki, robots.txt,
+         sitemap.xml ve llms.txt içindeki https://haftalikyemek.vercel.app adreslerini güncelleyin. -->
+    <title>Tarif Kitabım — Ücretsiz Haftalık Yemek Planlayıcı ve PDF Tarif Kitabı</title>
     <meta
       name="description"
-      content="Tarif Kitabım - Haftalık yemek planlayıcı ve PDF olarak dışa aktarılabilen kişisel tarif kitabı"
+      content="Haftalık yemek menünü ücretsiz planla, tariflerini tek yerde sakla ve her tarif tek sayfa olacak şekilde PDF tarif kitabı ile alışveriş listesi oluştur. Telefon ve bilgisayarda çalışır."
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon.svg" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta
+      name="keywords"
+      content="haftalık yemek planı, yemek planlayıcı, haftalık menü, tarif kitabı, tarif defteri, PDF tarif kitabı, alışveriş listesi, yemek listesi, menü planlama"
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href="https://haftalikyemek.vercel.app/" />
+    <link rel="alternate" type="text/plain" title="LLM özeti" href="https://haftalikyemek.vercel.app/llms.txt" />
+    <meta name="author" content="Tarif Kitabım" />
+    <meta name="application-name" content="Tarif Kitabım" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Tarif Kitabım" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:url" content="https://haftalikyemek.vercel.app/" />
+    <meta property="og:title" content="Tarif Kitabım — Ücretsiz Haftalık Yemek Planlayıcı" />
+    <meta
+      property="og:description"
+      content="Haftalık menünü planla, tariflerini sakla, tarif kitabını PDF olarak indir."
+    />
+    <meta property="og:image" content="https://haftalikyemek.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Tarif Kitabım — ücretsiz yemek planlayıcı" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tarif Kitabım — Ücretsiz Haftalık Yemek Planlayıcı" />
+    <meta
+      name="twitter:description"
+      content="Haftalık menünü planla, tariflerini sakla, tarif kitabını PDF olarak indir."
+    />
+    <meta name="twitter:image" content="https://haftalikyemek.vercel.app/og-image.png" />
+
+    <!-- Yapılandırılmış veri (Google zengin sonuçlar, yapay zekâ yanıt motorları).
+         FAQPage bölümü src/content/faq.js ile aynı olmalı (test ile denetlenir). -->
+    <script type="application/ld+json">
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "Tarif Kitabım",
+          "alternateName": [
+            "Haftalık Yemek Planlayıcı",
+            "Tarif Kitabım - Yemek Planlayıcı"
+          ],
+          "url": "https://haftalikyemek.vercel.app/",
+          "description": "Ücretsiz haftalık yemek planlayıcı ve kişisel tarif kitabı. Kahvaltı, öğle ve akşam menünü planla, tariflerini sakla, her tarif tek sayfa olacak şekilde PDF tarif kitabı ve alışveriş listesi oluştur.",
+          "applicationCategory": "LifestyleApplication",
+          "applicationSubCategory": "Yemek planlama",
+          "operatingSystem": "Web, Android",
+          "browserRequirements": "JavaScript gerektirir",
+          "inLanguage": "tr-TR",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "TRY"
+          },
+          "image": "https://haftalikyemek.vercel.app/og-image.png",
+          "screenshot": "https://haftalikyemek.vercel.app/og-image.png",
+          "featureList": [
+            "Haftalık yemek planlayıcı (kahvaltı, öğle, akşam)",
+            "Sürükle-bırak ve rastgele menü oluşturma",
+            "Kişisel tarif kitabı: tarif ekleme, düzenleme, kaydetme",
+            "Tarif kitabını PDF olarak indirme (her tarif tek sayfa, kapak ve içindekiler)",
+            "Haftalık plan PDF’i ve otomatik alışveriş listesi",
+            "Porsiyon ölçekleme",
+            "Kullanıcı profilleri ve tarif paylaşımı"
+          ],
+          "author": {
+            "@type": "Organization",
+            "name": "Tarif Kitabım",
+            "email": "bsckbilgi@gmail.com",
+            "url": "https://haftalikyemek.vercel.app/"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Tarif Kitabım",
+          "url": "https://haftalikyemek.vercel.app/",
+          "inLanguage": "tr-TR"
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "inLanguage": "tr-TR",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Tarif Kitabım nedir?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Tarif Kitabım, haftalık yemek planı hazırlamanızı ve kendi tariflerinizi tek yerde saklamanızı sağlayan ücretsiz bir web uygulamasıdır. Tariflerinizi her tarif tek sayfa olacak şekilde PDF tarif kitabına dönüştürebilirsiniz."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Ücretsiz mi?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Evet. Tarif Kitabım tamamen ücretsizdir; reklamlarla desteklenir. Google hesabınızla giriş yapmanız yeterlidir."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Haftalık yemek planı nasıl hazırlanır?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Giriş yaptıktan sonra Planlayıcı sayfasında yemekleri kahvaltı, öğle ve akşam öğünlerine sürükleyip bırakın (telefonda dokunarak ekleyin). İsterseniz Rastgele butonuyla tüm haftayı tek tıkla otomatik doldurabilirsiniz."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Tarif kitabımı PDF olarak nasıl indiririm?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "PDF sayfasında kitaba eklemek istediğiniz tarifleri seçin, kitabınıza bir ad verin ve PDF İndir'e dokunun. Kapak, tıklanabilir içindekiler ve her tarif için bir sayfa içeren A4 bir PDF oluşturulur."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Her tarif tek sayfaya sığıyor mu?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Evet, mümkün olduğunca. Uzun tariflerde yazı boyutu ve düzen otomatik olarak küçültülür ya da tek sütuna geçilir; yalnızca çok uzun tarifler ikinci sayfaya taşar."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Alışveriş listesi oluşturabilir miyim?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Evet. Haftalık planınızı PDF olarak indirdiğinizde, plandaki tariflerin malzemeleri birleştirilerek miktarları toplanmış bir alışveriş listesi de oluşturulur."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Telefonda kullanılabilir mi?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Evet. Uygulama telefona uyumludur ve tarayıcıdan ana ekrana eklenebilir. Android uygulaması da hazırlanmaktadır."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Tariflerim nerede saklanır?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Tarifleriniz ve planlarınız Google hesabınıza bağlı olarak Google Firebase üzerinde saklanır; her cihazdan erişebilirsiniz. Ayrıntılar Gizlilik Politikası sayfasındadır."
+              }
+            }
+          ]
+        }
+      ]
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
       rel="stylesheet"
     />
+
     <meta name="google-adsense-account" content="ca-pub-8721131084537312" />
     <script>
       // Kullanıcı kişiselleştirilmiş reklamı kabul etmediyse (çerez bandı)
@@ -38,10 +199,57 @@
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8721131084537312"
       crossorigin="anonymous"
     ></script>
-    <title>Tarif Kitabım</title>
+
+    <!-- Vercel Web Analytics (çerezsiz). Yapay zekâ asistanlarından
+         (chatgpt.com, perplexity.ai, gemini, copilot…) gelen ziyaretleri
+         "Referrers" bölümünde gösterir. Vercel panelinden Analytics açılmalı. -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+
+    <style>
+      /* JavaScript çalıştırmayan tarayıcı/botlar için statik içerik.
+         React yüklenince #root içeriği uygulamayla değiştirilir. */
+      .seo-static { max-width: 720px; margin: 0 auto; padding: 48px 20px;
+        font-family: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #1c1917; line-height: 1.6; }
+      .seo-static h1 { font-family: "Playfair Display", Georgia, serif; font-size: 40px; margin: 0 0 8px; }
+      .seo-static h2 { font-family: "Playfair Display", Georgia, serif; margin-top: 32px; }
+      .seo-static a { color: #c2410c; }
+      .seo-static details { border: 1px solid #e7e0d8; border-radius: 10px; padding: 10px 14px; margin: 8px 0; background: #fff; }
+      .seo-static summary { font-weight: 600; cursor: pointer; }
+    </style>
   </head>
   <body>
     <noscript>Bu uygulamayı kullanmak için JavaScript'i etkinleştirin.</noscript>
-    <div id="root"></div>
+    <div id="root">
+      <main class="seo-static">
+        <h1>Tarif Kitabım</h1>
+        <p><strong>Ücretsiz haftalık yemek planlayıcı ve kişisel tarif kitabı.</strong>
+          Kahvaltı, öğle ve akşam menünü dakikalar içinde planla, tariflerini tek yerde sakla
+          ve tarif kitabını her tarif tek sayfa olacak şekilde PDF olarak indir.</p>
+        <h2>Özellikler</h2>
+        <ul>
+          <li><strong>Haftalık yemek planlayıcı:</strong> sürükle-bırak, dokunarak ekleme ve tek tıkla rastgele menü.</li>
+          <li><strong>Tarif kitabı:</strong> kendi tariflerini ekle, düzenle, başkalarının tariflerini kaydet.</li>
+          <li><strong>PDF tarif kitabı:</strong> kapak, içindekiler ve tarif başına bir A4 sayfa.</li>
+          <li><strong>Alışveriş listesi:</strong> haftalık planın malzemeleri birleştirilerek PDF'e eklenir.</li>
+          <li><strong>Porsiyon ölçekleme</strong> ve pişirirken adım adım işaretleme.</li>
+          <li>Telefon ve bilgisayarda çalışır; Google hesabıyla ücretsiz giriş.</li>
+        </ul>
+        <p><a href="/login">Ücretsiz başla — Google ile giriş yap</a></p>
+        <h2>Sık Sorulan Sorular</h2>
+          <details><summary>Tarif Kitabım nedir?</summary><p>Tarif Kitabım, haftalık yemek planı hazırlamanızı ve kendi tariflerinizi tek yerde saklamanızı sağlayan ücretsiz bir web uygulamasıdır. Tariflerinizi her tarif tek sayfa olacak şekilde PDF tarif kitabına dönüştürebilirsiniz.</p></details>
+          <details><summary>Ücretsiz mi?</summary><p>Evet. Tarif Kitabım tamamen ücretsizdir; reklamlarla desteklenir. Google hesabınızla giriş yapmanız yeterlidir.</p></details>
+          <details><summary>Haftalık yemek planı nasıl hazırlanır?</summary><p>Giriş yaptıktan sonra Planlayıcı sayfasında yemekleri kahvaltı, öğle ve akşam öğünlerine sürükleyip bırakın (telefonda dokunarak ekleyin). İsterseniz Rastgele butonuyla tüm haftayı tek tıkla otomatik doldurabilirsiniz.</p></details>
+          <details><summary>Tarif kitabımı PDF olarak nasıl indiririm?</summary><p>PDF sayfasında kitaba eklemek istediğiniz tarifleri seçin, kitabınıza bir ad verin ve PDF İndir'e dokunun. Kapak, tıklanabilir içindekiler ve her tarif için bir sayfa içeren A4 bir PDF oluşturulur.</p></details>
+          <details><summary>Her tarif tek sayfaya sığıyor mu?</summary><p>Evet, mümkün olduğunca. Uzun tariflerde yazı boyutu ve düzen otomatik olarak küçültülür ya da tek sütuna geçilir; yalnızca çok uzun tarifler ikinci sayfaya taşar.</p></details>
+          <details><summary>Alışveriş listesi oluşturabilir miyim?</summary><p>Evet. Haftalık planınızı PDF olarak indirdiğinizde, plandaki tariflerin malzemeleri birleştirilerek miktarları toplanmış bir alışveriş listesi de oluşturulur.</p></details>
+          <details><summary>Telefonda kullanılabilir mi?</summary><p>Evet. Uygulama telefona uyumludur ve tarayıcıdan ana ekrana eklenebilir. Android uygulaması da hazırlanmaktadır.</p></details>
+          <details><summary>Tariflerim nerede saklanır?</summary><p>Tarifleriniz ve planlarınız Google hesabınıza bağlı olarak Google Firebase üzerinde saklanır; her cihazdan erişebilirsiniz. Ayrıntılar Gizlilik Politikası sayfasındadır.</p></details>
+        <p><a href="/privacy">Gizlilik Politikası</a> · İletişim: <a href="mailto:bsckbilgi@gmail.com">bsckbilgi@gmail.com</a></p>
+      </main>
+    </div>
   </body>
 </html>

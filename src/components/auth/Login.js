@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Link as RouterLink, Navigate, useNavigate } from "react-router-dom";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -16,7 +19,9 @@ import {
   MenuBook as MenuBookIcon,
   PictureAsPdf as PictureAsPdfIcon,
 } from "@mui/icons-material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { signInWithGoogle } from "../../services/firebase";
+import FAQ from "../../content/faq";
 import { useMeals } from "../../context/MealContext";
 
 const FEATURES = [
@@ -89,6 +94,48 @@ const errorMessage = (err) => {
   }
 };
 
+/** Sık sorulan sorular (arama motorları ve yapay zekâ yanıtları için de görünür). */
+const LoginFaq = () => (
+  <Box
+    component="section"
+    aria-labelledby="faq-title"
+    sx={{ width: "100%", maxWidth: 520, mt: 4, position: "relative" }}
+  >
+    <Typography
+      id="faq-title"
+      variant="h5"
+      component="h2"
+      textAlign="center"
+      sx={{ mb: 2, fontFamily: '"Playfair Display", Georgia, serif' }}
+    >
+      Sık Sorulan Sorular
+    </Typography>
+    {FAQ.map(({ q, a }) => (
+      <Accordion
+        key={q}
+        disableGutters
+        elevation={0}
+        sx={{
+          mb: 1,
+          borderRadius: 2,
+          border: 1,
+          borderColor: "divider",
+          "&:before": { display: "none" },
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography component="h3" fontWeight={600}>
+            {q}
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography color="text.secondary">{a}</Typography>
+        </AccordionDetails>
+      </Accordion>
+    ))}
+  </Box>
+);
+
 const Login = () => {
   const navigate = useNavigate();
   const { user, authLoading } = useMeals();
@@ -119,6 +166,7 @@ const Login = () => {
         minHeight: "100vh",
         "@supports (min-height: 100dvh)": { minHeight: "100dvh" },
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         px: 2,
@@ -276,6 +324,7 @@ const Login = () => {
           </Link>
         </Typography>
       </Paper>
+      <LoginFaq />
     </Box>
   );
 };

@@ -39,6 +39,26 @@ import { initAds } from "../../services/ads";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
+const SITE_NAME = "Tarif Kitabım";
+const PAGE_TITLES = [
+  ["/recipes/", "Tarif"],
+  ["/recipes", "Tarif Kitabım"],
+  ["/export", "PDF Olarak Dışa Aktar"],
+  ["/profile", "Profil"],
+  ["/privacy", "Gizlilik Politikası"],
+  ["/login", "Giriş Yap — Ücretsiz Haftalık Yemek Planlayıcı"],
+];
+
+/** Sayfa başlığını (sekme adı) rotaya göre ayarlar. */
+const usePageTitle = (pathname) => {
+  useEffect(() => {
+    const match = PAGE_TITLES.find(([prefix]) => pathname.startsWith(prefix));
+    document.title = match
+      ? `${match[1]} | ${SITE_NAME}`
+      : `Haftalık Plan | ${SITE_NAME}`;
+  }, [pathname]);
+};
+
 const NAV_ITEMS = [
   { to: "/", label: "Planlayıcı", icon: <CalendarMonthRoundedIcon /> },
   { to: "/recipes", label: "Tarif Kitabım", icon: <MenuBookRoundedIcon /> },
@@ -198,6 +218,7 @@ const AppShell = ({ children }) => {
   const navigate = useNavigate();
   const current = activeIndex(location.pathname);
   const showChrome = Boolean(user) && location.pathname !== "/login";
+  usePageTitle(location.pathname);
 
   useEffect(() => {
     initAds();
