@@ -21,7 +21,23 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
       rel="stylesheet"
     />
-    <meta name="google-adsense-account" content="%REACT_APP_ADSENSE_CLIENT%" />
+    <meta name="google-adsense-account" content="ca-pub-8721131084537312" />
+    <script>
+      // Kullanıcı kişiselleştirilmiş reklamı kabul etmediyse (çerez bandı)
+      // kişiselleştirilmemiş reklam iste. AdSense betiğinden önce çalışmalı.
+      (function () {
+        var consent = null;
+        try { consent = localStorage.getItem("mp_ads_consent"); } catch (e) {}
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.requestNonPersonalizedAds = consent === "granted" ? 0 : 1;
+      })();
+    </script>
+    <script
+      async
+      data-mp-adsense="true"
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8721131084537312"
+      crossorigin="anonymous"
+    ></script>
     <title>Tarif Kitabım</title>
   </head>
   <body>

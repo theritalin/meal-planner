@@ -10,17 +10,27 @@ Tüm reklam mantığı `src/services/ads.js` içindedir. Bileşenler:
 | `src/components/ads/hooks.js` | `useNativeBanner()`, `useAdsConsent()` |
 | `src/components/ads/ConsentBanner.js` | Web için basit çerez/reklam onay bandı |
 
-**Varsayılan davranış:** `REACT_APP_ADS_ENABLED` `true` değilse her şey no-op'tur —
-hiçbir betik yüklenmez, hiçbir şey çizilmez. Reklam hataları uygulamayı asla çökertmez.
+**Varsayılan davranış:**
+- **Web (AdSense):** üretim derlemesinde (Vercel) varsayılan olarak **açık**. Yayıncı kimliği
+  `ca-pub-8721131084537312`; AdSense betiği `public/index.html` `<head>` içinde, `public/ads.txt`
+  site kökünde. Kapatmak için `REACT_APP_ADS_ENABLED=false`.
+- **Android (AdMob):** `REACT_APP_ADS_ENABLED=true` olmadıkça kapalı (gerçek birim kimlikleri gerekir).
+- Reklam hataları uygulamayı asla çökertmez.
+
+**Otomatik reklamlar:** Slot kimliği girilmediyse sayfa içi `<AdBanner>` birimleri çizilmez;
+reklamları AdSense panelindeki **Reklamlar → Site bazında → Otomatik reklamlar** yerleştirir.
+Belirli yerlerde (planlayıcı, tarif listesi, tarif detayı, PDF sayfası) reklam göstermek için
+AdSense'te "Görüntülü reklam" birimi oluşturup slot kimliğini aşağıdaki değişkenlere girin.
 
 ## Ortam değişkenleri
 
 | Değişken | Varsayılan | Açıklama |
 | --- | --- | --- |
-| `REACT_APP_ADS_ENABLED` | `false` | Ana anahtar |
-| `REACT_APP_ADS_TEST_MODE` | `true` | `true` iken Google'ın resmi **test** reklam birimleri kullanılır (AdMob) ve AdSense'e `data-adtest="on"` eklenir. Yalnızca Play'e yüklenecek yayın derlemesinde `false` yapın. |
+| `REACT_APP_ADS_ENABLED` | web üretimde `true`, Android'de `false` | Ana anahtar |
+| `REACT_APP_ADS_TEST_MODE` | `true` | `true` iken Google'ın resmi **test** AdMob birimleri kullanılır. Yalnızca Play'e yüklenecek yayın derlemesinde `false` yapın. |
+| `REACT_APP_ADSENSE_TEST_MODE` | `false` | `true` iken AdSense birimlerine `data-adtest="on"` eklenir (gelir oluşmaz) |
 | `REACT_APP_ADS_DEBUG` | `false` | Reklamlar kapalıyken reklam alanlarını kesikli çerçeve olarak gösterir (yerleşimi görmek için) |
-| `REACT_APP_ADSENSE_CLIENT` | — | `ca-pub-XXXXXXXXXXXXXXXX` |
+| `REACT_APP_ADSENSE_CLIENT` | `ca-pub-8721131084537312` | Yayıncı kimliği |
 | `REACT_APP_ADSENSE_SLOT_DEFAULT` | — | Yerleşime özel slot yoksa kullanılır |
 | `REACT_APP_ADSENSE_SLOT_PLANNER` / `_RECIPES` / `_RECIPE_DETAIL` / `_EXPORT` | — | Yerleşime özel slotlar |
 | `REACT_APP_ADMOB_APP_ID` | — | `ca-app-pub-XXX~YYY` (bilgi amaçlı; asıl yeri `AndroidManifest.xml`) |
@@ -126,18 +136,16 @@ doğal bir duraklamada (PDF hazırlandıktan sonra) gösterin.
 
 ## AdSense site doğrulaması
 
-AdSense, siteyi onaylarken `<head>` içinde hesap etiketini arar. Betik tembel yüklendiği için
-`public/index.html` `<head>` içine şu meta etiketi eklenmelidir:
-
-```html
-<meta name="google-adsense-account" content="%REACT_APP_ADSENSE_CLIENT%" />
-```
-
-Ayrıca web sitesinin köküne `public/ads.txt` koyun:
+Yapıldı: `public/index.html` `<head>` içinde AdSense betiği ve
+`<meta name="google-adsense-account" content="ca-pub-8721131084537312">` var;
+`public/ads.txt`:
 
 ```
-google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+google.com, pub-8721131084537312, DIRECT, f08c47fec0942fa0
 ```
+
+Betikten önce çalışan küçük satır içi kod, kullanıcı çerez bandında "Kabul et" demediyse
+kişiselleştirilmemiş reklam ister.
 
 ## Politika notları
 

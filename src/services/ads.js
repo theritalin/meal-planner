@@ -36,11 +36,23 @@ const ADSENSE_SLOTS = {
   export: trimmed(env.REACT_APP_ADSENSE_SLOT_EXPORT),
 };
 
+/** Sitenin AdSense yayıncı kimliği (public/index.html'deki betikle aynı). */
+export const DEFAULT_ADSENSE_CLIENT = 'ca-pub-8721131084537312';
+
+const adsFlag = trimmed(env.REACT_APP_ADS_ENABLED);
+// Web: üretim derlemesinde varsayılan olarak AÇIK (REACT_APP_ADS_ENABLED=false ile kapatılır).
+const webAdsEnabled =
+  adsFlag === 'true' || (adsFlag !== 'false' && env.NODE_ENV === 'production');
+// Android (AdMob): gerçek reklam birimi kimlikleri girilene kadar açıkça etkinleştirilmeli.
+const nativeAdsEnabled = adsFlag === 'true';
+
 const config = Object.freeze({
-  enabled: trimmed(env.REACT_APP_ADS_ENABLED) === 'true',
-  testMode: trimmed(env.REACT_APP_ADS_TEST_MODE) !== 'false', // varsayılan: true
+  enabled: isNativeApp() ? nativeAdsEnabled : webAdsEnabled,
+  testMode: trimmed(env.REACT_APP_ADS_TEST_MODE) !== 'false', // AdMob; varsayılan: true
+  // AdSense test modu (data-adtest="on") yalnızca açıkça istenirse.
+  adsenseTestMode: trimmed(env.REACT_APP_ADSENSE_TEST_MODE) === 'true',
   debug: trimmed(env.REACT_APP_ADS_DEBUG) === 'true',
-  adsenseClient: trimmed(env.REACT_APP_ADSENSE_CLIENT),
+  adsenseClient: trimmed(env.REACT_APP_ADSENSE_CLIENT) || DEFAULT_ADSENSE_CLIENT,
   adsenseSlots: ADSENSE_SLOTS,
   admobAppId: trimmed(env.REACT_APP_ADMOB_APP_ID),
   admobBannerId: trimmed(env.REACT_APP_ADMOB_BANNER_ID),

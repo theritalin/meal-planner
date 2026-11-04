@@ -119,7 +119,7 @@ const AdBanner = ({ placement = 'default', sx }) => {
           data-ad-slot={slot}
           data-ad-format="auto"
           data-full-width-responsive="true"
-          {...(config.testMode ? { 'data-adtest': 'on' } : {})}
+          {...(config.adsenseTestMode ? { 'data-adtest': 'on' } : {})}
         />
       </Box>
     </Box>
