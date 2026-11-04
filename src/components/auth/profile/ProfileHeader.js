@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   CircularProgress,
   Paper,
   Stack,
@@ -15,17 +16,39 @@ import {
 } from "@mui/icons-material";
 import { alpha } from "@mui/material/styles";
 import { getInitials } from "./utils";
+import FollowListDialog from "./FollowListDialog";
 
-const Stat = ({ value, label }) => (
-  <Box sx={{ textAlign: "center", minWidth: 64 }}>
-    <Typography variant="h6" component="p" sx={{ lineHeight: 1.2 }}>
-      {value}
-    </Typography>
-    <Typography variant="caption" color="text.secondary">
-      {label}
-    </Typography>
-  </Box>
-);
+const Stat = ({ value, label, onClick }) => {
+  const content = (
+    <>
+      <Typography variant="h6" component="p" sx={{ lineHeight: 1.2 }}>
+        {value}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+    </>
+  );
+  if (!onClick) {
+    return <Box sx={{ textAlign: "center", minWidth: 64 }}>{content}</Box>;
+  }
+  return (
+    <ButtonBase
+      onClick={onClick}
+      aria-label={`${label} listesini göster`}
+      sx={{
+        flexDirection: "column",
+        minWidth: 64,
+        px: 1,
+        py: 0.5,
+        borderRadius: 2,
+        "&:hover": { bgcolor: "action.hover" },
+      }}
+    >
+      {content}
+    </ButtonBase>
+  );
+};
 
 /**
  * Profil başlığı: avatar, isim, (kendi profilinde) e-posta, hakkında metni,
@@ -39,8 +62,12 @@ const ProfileHeader = ({
   followBusy,
   onToggleFollow,
   onEdit,
+  currentUid,
 }) => {
   const name = profile.displayName || "İsimsiz Kullanıcı";
+  const [list, setList] = useState(null); // 'followers' | 'following' | null
+  const followers = Array.isArray(profile.followers) ? profile.followers : [];
+  const following = Array.isArray(profile.following) ? profile.following : [];
 
   return (
     <Paper
@@ -169,10 +196,25 @@ const ProfileHeader = ({
         >
           <Stat value={stats.recipes} label="Tarif" />
           <Stat value={stats.saved} label="Kaydedilen" />
-          <Stat value={stats.followers} label="Takipçi" />
-          <Stat value={stats.following} label="Takip" />
+          <Stat
+            value={stats.followers}
+            label="Takipçi"
+            onClick={() => setList("followers")}
+          />
+          <Stat
+            value={stats.following}
+            label="Takip"
+            onClick={() => setList("following")}
+          />
         </Stack>
       </Box>
+      <FollowListDialog
+        open={list !== null}
+        onClose={() => setList(null)}
+        title={list === "following" ? "Takip Edilenler" : "Takipçiler"}
+        uids={list === "following" ? following : followers}
+        currentUid={currentUid}
+      />
     </Paper>
   );
 };

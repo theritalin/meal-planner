@@ -161,6 +161,7 @@ const UserProfile = () => {
         followBusy={followBusy}
         onToggleFollow={handleToggleFollow}
         onEdit={() => setEditOpen(true)}
+        currentUid={user?.uid}
       />
 
       <Tabs
