@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tarif Kitabım</string>
+    <string name="title_activity_main">Tarif Kitabım</string>
+    <string name="package_name">com.mealplanner.tarifkitabi</string>
+    <string name="custom_url_scheme">com.mealplanner.tarifkitabi</string>
+</resources>

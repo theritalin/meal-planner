@@ -41,3 +41,6 @@ PRD.md
 *.jks
 *.keystore
 android/keystore.properties
+
+# Firebase Android yapılandırması (GitHub secret GOOGLE_SERVICES_JSON ile verilir)
+android/app/google-services.json

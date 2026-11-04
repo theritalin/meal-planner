@@ -36,6 +36,7 @@ import SignOutButton from "../auth/SignOut";
 import ConsentBanner from "../ads/ConsentBanner";
 import { useNativeBanner } from "../ads/AdBanner";
 import { initAds } from "../../services/ads";
+import { isNativeApp } from "../../services/platform";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
@@ -224,6 +225,26 @@ const AppShell = ({ children }) => {
     initAds();
   }, []);
 
+  // Android geri tuşu: geçmişte geri git, yoksa uygulamadan çık.
+  useEffect(() => {
+    if (!isNativeApp()) return undefined;
+    let handle;
+    import("@capacitor/app")
+      .then(({ App }) =>
+        App.addListener("backButton", ({ canGoBack }) => {
+          if (canGoBack && window.history.length > 1) window.history.back();
+          else App.exitApp();
+        })
+      )
+      .then((h) => {
+        handle = h;
+      })
+      .catch(() => {});
+    return () => {
+      if (handle) handle.remove();
+    };
+  }, []);
+
   const { bannerHeight } = useNativeBanner({
     enabled: showChrome && location.pathname !== "/privacy",
   });
@@ -231,7 +252,13 @@ const AppShell = ({ children }) => {
 
   if (!showChrome) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "background.default",
+          pt: "env(safe-area-inset-top)",
+        }}
+      >
         {children}
         <ConsentBanner bottomOffset={{ xs: 16, md: 16 }} />
       </Box>
@@ -247,7 +274,12 @@ const AppShell = ({ children }) => {
         bgcolor: "background.default",
       }}
     >
-      <AppBar position="sticky" elevation={0} className="no-print">
+      <AppBar
+        position="sticky"
+        elevation={0}
+        className="no-print"
+        sx={{ pt: "env(safe-area-inset-top)" }}
+      >
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ gap: 1, minHeight: { xs: 56, md: 68 } }}>
             <Logo />

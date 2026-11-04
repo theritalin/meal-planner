@@ -1,0 +1,153 @@
+# Android derlemesi: Google Play için imzalı AAB + telefona kurulabilir imzalı APK.
+#
+# Çalıştırma: GitHub → Actions → "Android Build" → Run workflow
+# (main dalına her push'ta da otomatik çalışır).
+# Çıktılar: çalışmanın "Artifacts" bölümünde (tarif-kitabim-android-<sürüm>).
+#
+# Gerekli GitHub Secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#   GOOGLE_SERVICES_JSON           (Firebase'den indirilen google-services.json içeriği)
+#   REACT_APP_FIREBASE_API_KEY, REACT_APP_FIREBASE_AUTH_DOMAIN, REACT_APP_FIREBASE_PROJECT_ID,
+#   REACT_APP_FIREBASE_STORAGE_BUCKET, REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+#   REACT_APP_FIREBASE_APP_ID, REACT_APP_FIREBASE_MEASUREMENT_ID
+# İsteğe bağlı (reklamlar; üçü birlikte girilirse gerçek AdMob reklamları açılır):
+#   ADMOB_APP_ID, ADMOB_BANNER_ID, ADMOB_INTERSTITIAL_ID
+# Ayrıntılar: docs/ANDROID.md
+name: Android Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Sürüm adı (ör. 1.0.0). Boş bırakılırsa 1.0.<çalışma no>"
+        required: false
+        default: ""
+  push:
+    branches: [main, "claude/**"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: ${{ github.event.inputs.version_name != '' && github.event.inputs.version_name || format('1.0.{0}', github.run_number) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Gizli ayarları denetle
+        id: check
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' && secrets.ANDROID_KEY_ALIAS != '' && secrets.ANDROID_KEY_PASSWORD != '' }}
+          HAS_GSERVICES: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+          HAS_FIREBASE_WEB: ${{ secrets.REACT_APP_FIREBASE_API_KEY != '' && secrets.REACT_APP_FIREBASE_PROJECT_ID != '' && secrets.REACT_APP_FIREBASE_APP_ID != '' }}
+          HAS_ADMOB: ${{ secrets.ADMOB_APP_ID != '' && secrets.ADMOB_BANNER_ID != '' && secrets.ADMOB_INTERSTITIAL_ID != '' }}
+        run: |
+          missing=""
+          [ "$HAS_KEYSTORE" = "true" ]     || missing="$missing\n - ANDROID_KEYSTORE_* (imzalama anahtarı)"
+          [ "$HAS_GSERVICES" = "true" ]    || missing="$missing\n - GOOGLE_SERVICES_JSON"
+          [ "$HAS_FIREBASE_WEB" = "true" ] || missing="$missing\n - REACT_APP_FIREBASE_* (web yapılandırması)"
+          if [ -n "$missing" ]; then
+            echo "complete=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Eksik secret'lar::Bu bir DENEME derlemesidir; Play'e yüklemeyin ve telefona kurmayın. Eksik:$(printf "$missing" | tr '\n' ' ')"
+            printf "### ⚠️ Deneme derlemesi\nEksik secret'lar:$missing\n\nAyrıntılar: docs/ANDROID.md\n" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "complete=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "admob=$HAS_ADMOB" >> "$GITHUB_OUTPUT"
+
+      - name: Bağımlılıkları kur
+        run: npm ci --no-audit --no-fund
+
+      - name: Web uygulamasını derle
+        env:
+          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ secrets.REACT_APP_FIREBASE_AUTH_DOMAIN }}
+          REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
+          REACT_APP_FIREBASE_MEASUREMENT_ID: ${{ secrets.REACT_APP_FIREBASE_MEASUREMENT_ID }}
+          REACT_APP_ADMIN_EMAIL: ${{ secrets.REACT_APP_ADMIN_EMAIL }}
+          REACT_APP_CONTACT_EMAIL: bsckbilgi@gmail.com
+          # Android reklamları yalnızca gerçek AdMob kimlikleri girildiyse açılır.
+          REACT_APP_ADS_ENABLED: ${{ steps.check.outputs.admob == 'true' && 'true' || 'false' }}
+          REACT_APP_ADS_TEST_MODE: "false"
+          REACT_APP_ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          REACT_APP_ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+          REACT_APP_ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          GENERATE_SOURCEMAP: "false"
+        run: npm run build
+
+      - name: Capacitor ile Android projesine aktar
+        run: npx cap sync android
+
+      - name: google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          else
+            # Yalnızca derlemenin doğrulanması için sahte dosya (uygulama ÇALIŞMAZ).
+            cp .github/google-services.placeholder.json android/app/google-services.json
+          fi
+
+      - name: İmzalama anahtarı
+        if: steps.check.outputs.complete == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Gradle ile derle (AAB + APK)
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - name: Çıktıları topla
+        run: |
+          mkdir -p dist
+          prefix="tarif-kitabim-${VERSION_NAME}"
+          [ "${{ steps.check.outputs.complete }}" = "true" ] || prefix="DENEME-KURMAYIN-${prefix}"
+          cp android/app/build/outputs/bundle/release/*.aab "dist/${prefix}.aab"
+          cp android/app/build/outputs/apk/release/*.apk "dist/${prefix}.apk"
+          ls -la dist
+          {
+            echo "### 📦 Tarif Kitabım ${VERSION_NAME} (versionCode ${VERSION_CODE})"
+            echo "- \`.aab\` → Google Play Console'a yükleyin"
+            echo "- \`.apk\` → telefona doğrudan kurup test edin"
+            echo "- AdMob reklamları: ${{ steps.check.outputs.admob == 'true' && 'açık' || 'kapalı (ADMOB_* secret yok)' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarif-kitabim-android-${{ env.VERSION_NAME }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30

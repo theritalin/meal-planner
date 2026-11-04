@@ -1,261 +1,118 @@
-# Android'e Paketleme ve Google Play'de Yayınlama
+# Android (Google Play) — Derleme ve Yayınlama
 
-Bu rehber, React (Create React App) uygulamasını **Capacitor 8** ile Android uygulamasına
-dönüştürüp reklamlı olarak Google Play'de yayınlamayı adım adım anlatır.
+Android projesi (`android/`) hazırdır ve **GitHub Actions** ile derlenir. Bilgisayarınıza
+Android Studio kurmanız gerekmez. Sizin yapacaklarınız: bir kez **Firebase** ve **GitHub
+secret** ayarları, sonra her sürümde **Actions'tan dosyayı indirip Play Console'a yüklemek**.
 
-Projede hazır olanlar:
+## Projede hazır olanlar
 
-- `capacitor.config.json` — `appId`, `appName: "Tarif Kitabım"`, `webDir: "build"`
-- Bağımlılıklar: `@capacitor/core`, `@capacitor/android`, `@capacitor/cli` (dev),
-  `@capacitor-community/admob` (hepsi 8.x)
-- npm betikleri: `npm run cap:sync` (derle + senkronize et), `npm run cap:open` (Android Studio'da aç)
-- Reklam katmanı: `src/services/ads.js` (bkz. [ADS.md](./ADS.md))
-- Gizlilik politikası sayfası: `/privacy`
+| Ne | Nerede |
+| --- | --- |
+| Android projesi (Capacitor 8, minSdk 24, target/compile SDK 36) | `android/` |
+| Uygulama kimliği / adı | `com.mealplanner.tarifkitabi` / **Tarif Kitabım** |
+| İkonlar (uyarlanabilir), açılış ekranı (açık/koyu) | `android/app/src/main/res` (kaynak: `assets/`) |
+| Yerel Google ile giriş (`@capacitor-firebase/authentication`) | `src/services/firebase.js` |
+| PDF'i kaydet/paylaş (Filesystem + Share) | `src/components/pdf/exportUtils.js` |
+| AdMob banner + sıklık sınırlı geçiş reklamı, UMP onay formu | `src/services/ads.js` |
+| Android geri tuşu, çentik/durum çubuğu boşlukları | `src/components/layout/AppShell.js` |
+| AdMob uygulama kimliği (manifest), sürüm numarası, imzalama | `android/app/build.gradle` (ortam değişkenleri) |
+| `app-ads.txt` | `public/app-ads.txt` → https://haftalikyemek.space/app-ads.txt |
+| Otomatik derleme (AAB + APK) | `.github/workflows/android.yml` |
+
+Web sürümündeki AdSense ve Vercel analitiği uygulama içinde **yüklenmez** (AdSense'in
+uygulama içinde kullanılması yasaktır; uygulamada AdMob kullanılır).
 
 ---
 
-## 0. Gereksinimler
+## 1. Firebase'e Android uygulamasını ekleyin (bir kez)
 
-| Araç | Sürüm |
+1. Firebase Console → ⚙️ *Proje ayarları* → *Genel* → **Uygulama ekle → Android**.
+   - Paket adı: `com.mealplanner.tarifkitabi`
+   - Takma ad: Tarif Kitabım (Android)
+2. Aynı sayfada uygulamanın altındaki **SHA sertifika parmak izleri** bölümüne yükleme
+   anahtarınızın parmak izlerini ekleyin:
+   - SHA-1: `C4:5C:4E:92:E9:B8:AB:54:0F:2B:2F:63:AB:1E:9E:12:F9:DA:8E:C5`
+   - SHA-256: `0F:FC:B3:97:C7:E7:A1:94:80:D3:C0:8F:43:4A:10:44:20:26:AF:07:DF:16:9B:23:DE:C6:D6:76:0D:91:28:43`
+3. *Authentication → Sign-in method* → **Google** açık olmalı.
+4. Parmak izlerini ekledikten **sonra** `google-services.json` dosyasını indirin
+   (önce indirirseniz Google girişi için gereken istemci kimliği dosyada olmaz).
+
+> Play'e ilk yüklemeden sonra Play Console → *Test ve yayınlama → Uygulama bütünlüğü →
+> Uygulama imzalama* bölümünde **Uygulama imzalama anahtarı sertifikası** (Google'ın anahtarı)
+> görünür. O SHA-1 ve SHA-256'yı da Firebase'e ekleyin, `google-services.json`'u yeniden
+> indirip secret'ı güncelleyin ve yeniden derleyin. **Bunu yapmazsanız Play'den indirilen
+> uygulamada Google girişi çalışmaz** (en sık yapılan hata).
+
+## 2. GitHub secret'larını ekleyin (bir kez)
+
+GitHub → depo → **Settings → Secrets and variables → Actions → New repository secret**.
+
+| Secret adı | Değer |
 | --- | --- |
-| Node.js | 22 veya üzeri (Capacitor 8 şartı) |
-| Android Studio | Güncel kararlı sürüm (Android SDK 36 kurulu) |
-| JDK | 21 (Android Studio ile birlikte gelir) |
-| Google Play Console | Geliştirici hesabı (tek seferlik ücret) |
-| AdMob hesabı | Uygulama + reklam birimleri oluşturulmuş |
+| `ANDROID_KEYSTORE_BASE64` | Size verilen `ANDROID_KEYSTORE_BASE64.txt` dosyasının içeriği |
+| `ANDROID_KEYSTORE_PASSWORD` | Size verilen şifre |
+| `ANDROID_KEY_PASSWORD` | Aynı şifre |
+| `ANDROID_KEY_ALIAS` | `upload` |
+| `GOOGLE_SERVICES_JSON` | İndirdiğiniz `google-services.json` dosyasının **tüm metni** |
+| `REACT_APP_FIREBASE_API_KEY`, `REACT_APP_FIREBASE_AUTH_DOMAIN`, `REACT_APP_FIREBASE_PROJECT_ID`, `REACT_APP_FIREBASE_STORAGE_BUCKET`, `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`, `REACT_APP_FIREBASE_APP_ID`, `REACT_APP_FIREBASE_MEASUREMENT_ID` | Vercel → Settings → Environment Variables'daki değerlerin aynısı |
 
-## 1. Uygulama kimliğini (appId) seçin — KALICIDIR
+İsteğe bağlı — **AdMob reklamları** (üçü birlikte girilince uygulamada gerçek reklamlar açılır;
+girilmezse uygulama reklamsız derlenir):
 
-`capacitor.config.json` içindeki `"appId": "com.mealplanner.tarifkitabi"` geçici bir
-örnektir. Play'e **ilk yüklemeden önce** kendinize ait, benzersiz bir kimlik seçin
-(ör. `com.soyadiniz.tarifkitabi`). Paket adı yüklendikten sonra **asla değiştirilemez**;
-değiştirmek yeni bir uygulama yayınlamak demektir.
+| Secret adı | Nereden |
+| --- | --- |
+| `ADMOB_APP_ID` | AdMob → Uygulamalar → Uygulama ekle (Android) → *Uygulama kimliği* `ca-app-pub-…~…` |
+| `ADMOB_BANNER_ID` | AdMob → Reklam birimleri → **Banner** `ca-app-pub-…/…` |
+| `ADMOB_INTERSTITIAL_ID` | AdMob → Reklam birimleri → **Geçiş reklamı** `ca-app-pub-…/…` |
 
-## 2. Web uygulamasını derleyin ve Android projesini ekleyin
+> 🔐 İmzalama anahtarını (`tarifkitabi-upload.jks`) ve şifresini güvenli bir yerde
+> (parola yöneticisi + bulut yedeği) saklayın. Kaybederseniz Play Console'dan yükleme
+> anahtarı sıfırlama talebi gerekir.
 
-```bash
-npm install
-npm run build                 # build/ klasörü oluşur
-npx cap add android           # android/ klasörünü oluşturur (yalnızca bir kez)
-npx cap sync android          # build/ ve eklentileri android/ içine kopyalar
-npm run cap:open              # Android Studio'da açar
-```
+## 3. Derleme
 
-Sonraki her değişiklikte yalnızca:
+GitHub → **Actions → Android Build → Run workflow** (isterseniz sürüm adı girin, ör. `1.0.0`).
+`main` dalına her push'ta da otomatik çalışır. ~10 dakika sonra çalışmanın sayfasında
+**Artifacts → tarif-kitabim-android-…** zip'ini indirin:
 
-```bash
-npm run cap:sync
-```
+- `tarif-kitabim-<sürüm>.aab` → **Google Play Console'a yükleyin**
+- `tarif-kitabim-<sürüm>.apk` → telefona doğrudan kurup deneyin
 
-> `android/` klasörü git'e eklenmelidir (yerel ayarlar, manifest, ikonlar orada).
-> Ancak **keystore dosyalarını ve şifrelerini asla commit etmeyin** (bkz. Adım 9).
+`versionCode` her çalışmada otomatik artar (Actions çalışma numarası). Dosya adı
+**DENEME-KURMAYIN-** ile başlıyorsa secret'lar eksiktir; çalışma özetinde hangilerinin eksik
+olduğu yazar.
 
-Yayın derlemesi için ortam değişkenlerini `.env.production.local` içine yazın
-(`REACT_APP_ADS_ENABLED=true`, `REACT_APP_ADS_TEST_MODE=false`, gerçek AdMob kimlikleri).
-Geliştirme ve iç test sırasında `REACT_APP_ADS_TEST_MODE=true` kalsın.
+## 4. Play Console'a yükleme
 
-## 3. AdMob uygulama kimliği (AndroidManifest)
+1. https://play.google.com/console → **Uygulama oluştur** (ad: Tarif Kitabım, dil: Türkçe,
+   Uygulama, Ücretsiz).
+2. *Test ve yayınlama → Test → Dahili test* → **Yeni sürüm oluştur** → `.aab` dosyasını yükleyin.
+   **Play Uygulama İmzalama**'yı kabul edin (varsayılan).
+3. Ardından 1. adımdaki notu uygulayın (Google'ın imzalama SHA'larını Firebase'e ekleyin).
+4. Mağaza girişi: kısa/uzun açıklama, 512×512 ikon (`public/icon-512.png`), 1024×500 öne
+   çıkan görsel, en az 2 telefon ekran görüntüsü.
+5. Yeni kişisel geliştirici hesaplarında üretime çıkmadan önce **en az 12 test kullanıcısıyla
+   14 gün kapalı test** zorunludur.
 
-AdMob SDK, uygulama kimliği manifestte yoksa **açılışta çöker**. Dosya:
-`android/app/src/main/AndroidManifest.xml` — `<application>` etiketinin içine:
+## 5. app-ads.txt
 
-```xml
-<meta-data
-    android:name="com.google.android.gms.ads.APPLICATION_ID"
-    android:value="@string/admob_app_id" />
-```
+Play Console → *Mağaza ayarları → İletişim bilgileri → Web sitesi*: `https://haftalikyemek.space`.
+AdMob bu sitedeki `app-ads.txt` dosyasını doğrular. AdMob yayıncı kimliğiniz AdSense'tekinden
+(`pub-8721131084537312`) farklıysa `public/app-ads.txt` dosyasını güncelleyin.
 
-`android/app/src/main/res/values/strings.xml` içine:
+## 6. Play Console formları
 
-```xml
-<!-- Test: ca-app-pub-3940256099942544~3347511713 — yayında kendi kimliğinizle değiştirin -->
-<string name="admob_app_id">ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY</string>
-```
+#### Gizlilik politikası URL'si
 
-Notlar:
+`https://haftalikyemek.space/privacy` (web sürümü yayında olmalı; girişsiz erişilebilir olmalı).
 
-- Bu değer `REACT_APP_ADMOB_APP_ID` ile aynı olmalı (JS tarafı bilgi amaçlı tutar; asıl
-  kaynak manifesttir).
-- Google Mobile Ads SDK, `com.google.android.gms.permission.AD_ID` iznini otomatik ekler.
-  Play Console'da "Reklam kimliği kullanıyor musunuz?" sorusuna **Evet** deyin.
-- AdMob panelinde *Gizlilik ve mesajlaşma → GDPR* mesajı oluşturun; uygulama Google UMP
-  onay formunu (`initAds()` içinde) otomatik gösterir.
-
-## 4. app-ads.txt
-
-AdMob, reklam envanterini doğrulamak için **geliştirici web sitenizde** `app-ads.txt` arar.
-
-1. Play Console → *Mağaza ayarları → İletişim bilgileri* bölümüne web sitenizi girin
-   (ör. `https://tarifkitabi.example.com`).
-2. Sitenin **kök dizinine** `app-ads.txt` koyun
-   (`https://tarifkitabi.example.com/app-ads.txt`). Web sürümü bu projeden yayınlanıyorsa
-   dosyayı `public/app-ads.txt` olarak ekleyin:
-
-   ```
-   google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
-   ```
-
-3. AdMob → *Uygulamalar → app-ads.txt* sekmesinde doğrulamanın tamamlanmasını bekleyin
-   (24 saate kadar sürebilir).
-
-## 5. Firebase Google ile giriş (Android)
-
-**Sorun:** `signInWithPopup` Android WebView'da çalışmaz (açılır pencere yok); Google ayrıca
-gömülü WebView içinde OAuth girişini engeller (`disallowed_useragent`).
-
-**Çözüm (uygulandı):** `@capacitor-firebase/authentication` ile yerel Google girişi.
-Firebase JS SDK 12'ye yükseltildi, eklenti `package.json`'da, `capacitor.config.json`'da
-`skipNativeAuth: true` ayarlı. `src/services/firebase.js` içindeki `signInWithGoogle()`
-Android'de yerel girişi yapıp dönen kimlik bilgisiyle web SDK'da oturum açar;
-`signOutUser()` her iki oturumu da kapatır. Sizin yapmanız gereken yalnızca aşağıdaki
-Firebase / SHA-1 kurulumu ve `npx cap sync android`.
-
-**Firebase / SHA-1 kurulumu:**
-
-1. Firebase Console → *Proje ayarları → Uygulama ekle → Android*; paket adı = `appId`.
-2. **SHA-1 ve SHA-256** parmak izlerini ekleyin — üç ayrı anahtar için:
-   - Hata ayıklama (debug) anahtarı:
-     ```bash
-     keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey \
-       -storepass android -keypass android
-     ```
-     veya `cd android && ./gradlew signingReport`
-   - Yükleme (upload) anahtarınız (Adım 9'da oluşturulan keystore)
-   - **Play Uygulama İmzalama anahtarı:** Play Console → *Test ve yayınlama → Uygulama
-     bütünlüğü → Uygulama imzalama* bölümündeki SHA-1/SHA-256. (Bunu eklemezseniz Play'den
-     indirilen uygulamada giriş **çalışmaz** — en sık yapılan hata.)
-3. `google-services.json` dosyasını indirip `android/app/` içine koyun
-   (Capacitor şablonu dosya varsa Google Services Gradle eklentisini otomatik uygular).
-4. Firebase Console → *Authentication → Sign-in method* → Google açık olmalı.
-
-## 6. PDF kaydetme / paylaşma (Android)
-
-**Uygulandı.** WebView'da `<a download>` çalışmadığı için
-`src/components/pdf/exportUtils.js` içindeki `saveBlob()` Android'de PDF'i
-`@capacitor/filesystem` ile önbelleğe yazar ve `@capacitor/share` ile sistem paylaşım
-menüsünü açar (Dosyalar'a kaydet, Drive, WhatsApp…). "Önizle" de aynı yolla bir PDF
-görüntüleyicide açılır. Depolama izni gerekmez. Dışa aktarma sonrası sıklık sınırlı
-geçiş reklamı otomatik denenir. Yalnızca `npx cap sync android` çalıştırmanız yeterli.
-
-## 7. İkonlar ve açılış ekranı
-
-```bash
-npm install -D @capacitor/assets
-```
-
-Proje kökünde `assets/` klasörü oluşturun:
-
-- `assets/icon-only.png` — 1024×1024, kenarlarda boşluklu
-- `assets/icon-foreground.png` + `assets/icon-background.png` — uyarlanabilir ikon (1024×1024)
-- `assets/splash.png` ve `assets/splash-dark.png` — 2732×2732
-
-```bash
-npx capacitor-assets generate --android
-```
-
-Play mağazası için ayrıca: 512×512 uygulama ikonu, 1024×500 öne çıkan görsel, en az 2 telefon
-ekran görüntüsü.
-
-## 8. Sürüm numarası
-
-`android/app/build.gradle` → `defaultConfig`:
-
-```gradle
-versionCode 1        // her yüklemede 1 artırın (tam sayı)
-versionName "1.0.0"  // kullanıcıya görünen sürüm
-```
-
-## 9. İmzalama (keystore)
-
-Play App Signing kullanılır: siz **yükleme anahtarı** ile imzalarsınız, Google son
-kullanıcıya kendi anahtarıyla dağıtır.
-
-```bash
-keytool -genkeypair -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 \
-  -validity 10000 -alias upload
-```
-
-- Dosyayı ve şifreleri **repo dışında**, güvenli bir yerde yedekleyin (kaybederseniz
-  Play Console'dan anahtar sıfırlama talep etmeniz gerekir).
-- `.gitignore`'a ekleyin: `*.jks`, `*.keystore`, `android/keystore.properties`.
-
-`android/keystore.properties` (commit etmeyin):
-
-```properties
-storeFile=/mutlak/yol/upload-keystore.jks
-storePassword=******
-keyAlias=upload
-keyPassword=******
-```
-
-`android/app/build.gradle`:
-
-```gradle
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
-android {
-    signingConfigs {
-        release {
-            if (keystorePropertiesFile.exists()) {
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-            }
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-        }
-    }
-}
-```
-
-## 10. AAB oluşturma ve yükleme
-
-```bash
-npm run cap:sync
-cd android && ./gradlew bundleRelease
-# Çıktı: android/app/build/outputs/bundle/release/app-release.aab
-```
-
-(veya Android Studio → *Build → Generate Signed App Bundle*)
-
-Play Console:
-
-1. *Uygulama oluştur* → ad: "Tarif Kitabım", dil: Türkçe, Uygulama, Ücretsiz.
-2. **Dahili test** kanalına AAB'yi yükleyin, kendi cihazınızda deneyin.
-3. Yeni kişisel geliştirici hesaplarında üretime geçmeden önce **kapalı test** zorunludur
-   (en az 12 test kullanıcısı, 14 gün — güncel şartı Play Console'da kontrol edin).
-4. Sonra üretime yükseltin.
-
-## 11. Hedef API düzeyi (target SDK)
-
-Google Play, yeni uygulamaların ve güncellemelerin **güncel Android sürümünü hedeflemesini**
-şart koşar. 31 Ağustos 2026'dan itibaren bu **API 36 (Android 16)**'dır. Capacitor 8
-şablonu varsayılan olarak `compileSdkVersion = 36`, `targetSdkVersion = 36`,
-`minSdkVersion = 24` ayarlar (`android/variables.gradle`). Her yıl Ağustos ayında şart
-yükselir — Play Console uyarılarını takip edin ve Capacitor'ı güncel tutun.
-
-## 12. Play Console formları
-
-### Gizlilik politikası URL'si
-
-`https://<alan-adınız>/privacy` (web sürümü yayında olmalı; girişsiz erişilebilir olmalı).
-
-### Veri güvenliği (Data safety) — `/privacy` sayfasıyla uyumlu yanıtlar
+#### Veri güvenliği (Data safety) — `/privacy` sayfasıyla uyumlu yanıtlar
 
 | Soru | Yanıt |
 | --- | --- |
 | Uygulama kullanıcı verisi topluyor veya paylaşıyor mu? | **Evet** |
 | Aktarım sırasında veriler şifreleniyor mu? | **Evet** (HTTPS/TLS) |
-| Kullanıcılar veri silinmesini isteyebilir mi? | **Evet** — e-posta ile (`/privacy` §7). Play ayrıca bir **hesap silme URL'si** ister: `https://<alan-adınız>/privacy#pp-delete` |
+| Kullanıcılar veri silinmesini isteyebilir mi? | **Evet** — e-posta ile (`/privacy` §7). Play ayrıca bir **hesap silme URL'si** ister: `https://haftalikyemek.space/privacy#pp-delete` |
 | Hesap oluşturma | Google ile giriş (OAuth) |
 
 Toplanan veri türleri:
@@ -276,7 +133,7 @@ Toplanan veri türleri:
 Konum (yaklaşık konum, IP'den) için AdMob'un güncel veri beyanı rehberine bakın:
 <https://developers.google.com/admob/android/privacy/play-data-disclosure>
 
-### Diğer beyanlar
+#### Diğer beyanlar
 
 - **Reklamlar:** "Uygulamanız reklam içeriyor mu?" → **Evet**.
 - **Reklam kimliği beyanı:** Evet, reklam amaçlı.
@@ -286,9 +143,9 @@ Konum (yaklaşık konum, IP'den) için AdMob'un güncel veri beyanı rehberine b
 - **Uygulama erişimi:** Bazı özellikler giriş gerektiriyorsa incelemeciler için bir test
   hesabı ya da açıklama verin.
 
-## 13. Reklam politikası notları (hesap kapatılmasını önlemek için)
+## 7. Reklam politikası notları (hesap kapatılmasını önlemek için)
 
-- Geliştirme ve testte **daima test reklamları** (`REACT_APP_ADS_TEST_MODE=true`) kullanın;
+- Geliştirme ve testte **daima test reklamları** (AdMob test cihazı ekleyin: AdMob → Ayarlar → Test cihazları) kullanın;
   kendi gerçek reklamlarınıza asla tıklamayın.
 - **Yanlışlıkla tıklama yok:** Banner'ı alt navigasyon butonlarına, "PDF indir" butonuna
   veya sürükle-bırak alanlarına yapışık koymayın. Native banner en altta, alt navigasyon
@@ -305,8 +162,28 @@ Konum (yaklaşık konum, IP'den) için AdMob'un güncel veri beyanı rehberine b
 
 | Belirti | Çözüm |
 | --- | --- |
-| Açılışta çökme: "The Google Mobile Ads SDK was initialized incorrectly" | Manifestte `APPLICATION_ID` meta-data eksik (Adım 3) |
-| Play'den indirilen sürümde Google girişi `DEVELOPER_ERROR` / 10 | Play App Signing SHA-1'i Firebase'e eklenmemiş (Adım 5) |
+| Açılışta çökme: "The Google Mobile Ads SDK was initialized incorrectly" | `ADMOB_APP_ID` secret'ı hatalı biçimde (`ca-app-pub-…~…` olmalı) |
+| Play'den indirilen sürümde Google girişi `DEVELOPER_ERROR` / 10 | Play App Signing SHA-1'i Firebase'e eklenmemiş (Adım 1 notu) |
 | Beyaz ekran | `npm run build` yapılmadan `cap sync` çalıştırılmış; `webDir` = `build` olmalı |
 | Banner gelmiyor | Yeni reklam birimleri birkaç saat "no fill" verebilir; önce test modunda deneyin |
 | PDF indirilmiyor | `npx cap sync android` çalıştırılmamış (Filesystem/Share eklentileri yüklenmemiş) |
+| Uygulama açılır açılmaz kapanıyor | `GOOGLE_SERVICES_JSON` secret'ı eksik/yanlış (paket adı `com.mealplanner.tarifkitabi` olmalı) |
+| Beyaz ekran ya da "API key" hatası | `REACT_APP_FIREBASE_*` secret'ları eksik |
+
+## Yerel derleme (isteğe bağlı)
+
+Android Studio kuruluysa: `npm run cap:sync` → `npm run cap:open`. İmzalı derleme için
+`android/keystore.properties` oluşturun (git'e eklenmez):
+
+```properties
+storeFile=/tam/yol/tarifkitabi-upload.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+`assets/` içindeki görselleri değiştirirseniz ikon ve açılış ekranını yeniden üretin:
+
+```bash
+npx @capacitor/assets generate --android --iconBackgroundColor '#C2410C' --splashBackgroundColor '#FBF7F2' --splashBackgroundColorDark '#1C1917'
+```

@@ -184,29 +184,39 @@
 
     <meta name="google-adsense-account" content="ca-pub-8721131084537312" />
     <script>
-      // Kullanıcı kişiselleştirilmiş reklamı kabul etmediyse (çerez bandı)
-      // kişiselleştirilmemiş reklam iste. AdSense betiğinden önce çalışmalı.
+      // Android uygulaması (Capacitor) içinde AdSense ve web analitiği YÜKLENMEZ:
+      // uygulamada reklamlar AdMob ile gösterilir (AdSense'in WebView'da
+      // kullanılması politikaya aykırıdır). Uygulama https://localhost'tan açılır.
       (function () {
+        var isApp =
+          location.hostname === "localhost" ||
+          !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        if (isApp) return;
+
+        // Kullanıcı çerez bandında "Kabul et" demediyse kişiselleştirilmemiş reklam.
         var consent = null;
         try { consent = localStorage.getItem("mp_ads_consent"); } catch (e) {}
         window.adsbygoogle = window.adsbygoogle || [];
         window.adsbygoogle.requestNonPersonalizedAds = consent === "granted" ? 0 : 1;
+
+        function addScript(src, attrs) {
+          var s = document.createElement("script");
+          s.src = src;
+          for (var k in attrs) s.setAttribute(k, attrs[k]);
+          document.head.appendChild(s);
+        }
+        // Google AdSense
+        addScript(
+          "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8721131084537312",
+          { async: "", crossorigin: "anonymous", "data-mp-adsense": "true" }
+        );
+        // Vercel Web Analytics (çerezsiz). Yapay zekâ asistanlarından
+        // (chatgpt.com, perplexity.ai, gemini, copilot…) gelen ziyaretleri
+        // "Referrers" bölümünde gösterir. Vercel panelinden Analytics açılmalı.
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+        addScript("/_vercel/insights/script.js", { defer: "" });
       })();
     </script>
-    <script
-      async
-      data-mp-adsense="true"
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8721131084537312"
-      crossorigin="anonymous"
-    ></script>
-
-    <!-- Vercel Web Analytics (çerezsiz). Yapay zekâ asistanlarından
-         (chatgpt.com, perplexity.ai, gemini, copilot…) gelen ziyaretleri
-         "Referrers" bölümünde gösterir. Vercel panelinden Analytics açılmalı. -->
-    <script>
-      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/insights/script.js"></script>
 
     <style>
       /* JavaScript çalıştırmayan tarayıcı/botlar için statik içerik.
