@@ -23,4 +23,4 @@ User-agent: YandexBot
 Allow: /
 Disallow: /profile/
 
-Sitemap: https://haftalikyemek.vercel.app/sitemap.xml
+Sitemap: https://haftalikyemek.space/sitemap.xml

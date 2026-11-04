@@ -25,8 +25,8 @@ yapay zekâ asistanlarının siteyi bulup kullanıcıya önermesi ve gelen ziyar
 3. **Bing Webmaster Tools:** https://www.bing.com/webmasters → siteyi ekleyin (Search Console'dan
    içe aktarabilirsiniz) → sitemap gönderin. **ChatGPT arama ve Copilot Bing dizinini kullanır**;
    bu adım yapay zekâ görünürlüğü için önemlidir. IndexNow'u da açabilirsiniz.
-4. **Kendi alan adı:** `*.vercel.app` yerine kendi alan adınızı aldığınızda şu dosyalardaki
-   `https://haftalikyemek.vercel.app` adresini değiştirin: `public/index.html`, `public/robots.txt`,
+4. **Alan adı:** Asıl adres `https://haftalikyemek.space` (www'suz). Adres değişirse şu
+   dosyalardaki adresi güncelleyin: `public/index.html`, `public/robots.txt`,
    `public/sitemap.xml`, `public/llms.txt`.
 5. **Bahsedilme (en etkili GEO adımı):** Yapay zekâ asistanları, başka sitelerde adı geçen
    uygulamaları önerir. Uygulamayı yemek blogları, Ekşi Sözlük, Reddit (r/Turkey, r/yemek),
