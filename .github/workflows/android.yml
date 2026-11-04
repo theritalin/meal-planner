@@ -112,12 +112,21 @@ jobs:
           fi
 
       - name: İmzalama anahtarı
-        if: steps.check.outputs.complete == 'true'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
-          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          if [ "${{ steps.check.outputs.complete }}" = "true" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          else
+            # Deneme derlemesi: imzalama yolunu doğrulamak için geçici anahtar
+            # (bu anahtarla imzalanan dosyalar Play'e YÜKLENEMEZ).
+            keytool -genkeypair -keystore "$RUNNER_TEMP/throwaway.jks" -storetype PKCS12 \
+              -alias throwaway -keyalg RSA -keysize 2048 -validity 1 \
+              -storepass throwaway -keypass throwaway -dname "CN=Deneme" >/dev/null 2>&1
+            printf 'storeFile=%s\nstorePassword=throwaway\nkeyAlias=throwaway\nkeyPassword=throwaway\n' \
+              "$RUNNER_TEMP/throwaway.jks" > android/keystore.properties
+          fi
 
       - name: Gradle ile derle (AAB + APK)
         working-directory: android
@@ -129,6 +138,10 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon bundleRelease assembleRelease
+          # İmzayı doğrula
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs app/build/outputs/apk/release/*.apk | head -3
+          jarsigner -verify app/build/outputs/bundle/release/*.aab | tail -1
 
       - name: Çıktıları topla
         run: |
