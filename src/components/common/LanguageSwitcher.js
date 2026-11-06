@@ -26,9 +26,9 @@ const LanguageSwitcher = ({ size = "small", showIcon = false, sx }) => {
             border: 1,
             borderColor: "divider",
           },
-          "& .Mui-selected": {
-            bgcolor: "primary.main !important",
-            color: "primary.contrastText !important",
+          "& .MuiToggleButton-root.Mui-selected, & .MuiToggleButton-root.Mui-selected:hover": {
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
           },
           ...sx,
         }}
