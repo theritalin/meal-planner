@@ -3,6 +3,9 @@
 // Desteklenen miktar biçimleri: "2", "1.5", "1,5", "1/2", "1 1/2", "½",
 // aralıklar ("2-3") ve sayının ardından gelen metin ("2 adet", "1/2 demet").
 // Sayısal olmayan miktarlar ("bir tutam", "az") olduğu gibi bırakılır.
+// Ayrıştırma dilden bağımsızdır; biçimlendirme dile uyar (TR "1,5", EN "1.5").
+
+import { getLang } from "../../i18n/core";
 
 const UNICODE_FRACTIONS = {
   "¼": 0.25,
@@ -59,24 +62,27 @@ export const parseAmount = (amount) => {
   return parseNumberToken(amount);
 };
 
-/** Sayıyı okunur Türkçe biçime çevirir: 2 -> "2", 1.5 -> "1,5", 0.333 -> "0,33". */
-export const formatAmount = (value) => {
+/**
+ * Sayıyı okunur biçime çevirir. Türkçe: 2 -> "2", 1.5 -> "1,5", 0.333 -> "0,33";
+ * İngilizce: 1.5 -> "1.5".
+ */
+export const formatAmount = (value, lang = getLang()) => {
   if (!Number.isFinite(value)) return "";
   const rounded = Math.round(value * 100) / 100;
   if (Number.isInteger(rounded)) return String(rounded);
-  return String(rounded).replace(".", ",");
+  return lang === "en" ? String(rounded) : String(rounded).replace(".", ",");
 };
 
 /**
  * Bir miktarı verilen katsayıyla ölçekler. Sayısal olmayan miktarlar
  * değişmeden döner; sayının ardındaki metin korunur.
  */
-export const scaleAmount = (amount, factor) => {
+export const scaleAmount = (amount, factor, lang = getLang()) => {
   if (amount === null || amount === undefined || amount === "") return amount;
   if (!Number.isFinite(factor) || factor <= 0 || factor === 1) return amount;
 
   if (typeof amount === "number") {
-    return Number.isFinite(amount) ? formatAmount(amount * factor) : amount;
+    return Number.isFinite(amount) ? formatAmount(amount * factor, lang) : amount;
   }
 
   const match = String(amount).match(LEADING_AMOUNT);
@@ -86,11 +92,11 @@ export const scaleAmount = (amount, factor) => {
   const a = parseNumberToken(first);
   if (a === null) return amount;
 
-  let result = formatAmount(a * factor);
+  let result = formatAmount(a * factor, lang);
   if (second !== undefined) {
     const b = parseNumberToken(second);
     if (b === null) return amount;
-    result += `-${formatAmount(b * factor)}`;
+    result += `-${formatAmount(b * factor, lang)}`;
   }
   // "2adet" gibi bitişik metinlerde boşluk ekleme; aksi halde metni koru.
   return result + (rest || "");
@@ -105,10 +111,10 @@ export const getScaleFactor = (baseServings, targetServings) => {
 };
 
 /** Malzeme listesini ölçekler; yeni dizi döndürür, girdiyi değiştirmez. */
-export const scaleIngredients = (ingredients, factor) => {
+export const scaleIngredients = (ingredients, factor, lang = getLang()) => {
   if (!Array.isArray(ingredients)) return [];
   return ingredients.map((ing) => {
     if (!ing || typeof ing === "string") return ing;
-    return { ...ing, amount: scaleAmount(ing.amount, factor) };
+    return { ...ing, amount: scaleAmount(ing.amount, factor, lang) };
   });
 };

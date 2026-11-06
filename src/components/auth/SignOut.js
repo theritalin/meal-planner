@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Logout as LogoutIcon } from "@mui/icons-material";
 import { signOutUser } from "../../services/firebase";
+import { useI18n } from "../../i18n";
 
 /**
  * Yeniden kullanılabilir çıkış butonu.
@@ -25,6 +26,7 @@ import { signOutUser } from "../../services/firebase";
  */
 const SignOutButton = ({ variant = "button", onDone, ...rest }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
 
   const handleSignOut = async () => {
@@ -46,7 +48,7 @@ const SignOutButton = ({ variant = "button", onDone, ...rest }) => {
           <LogoutIcon fontSize="small" color="error" />
         </ListItemIcon>
         <ListItemText primaryTypographyProps={{ color: "error" }}>
-          Çıkış Yap
+          {t("auth.signOut")}
         </ListItemText>
       </MenuItem>
     );
@@ -54,10 +56,10 @@ const SignOutButton = ({ variant = "button", onDone, ...rest }) => {
 
   if (variant === "icon") {
     return (
-      <Tooltip title="Çıkış Yap">
+      <Tooltip title={t("auth.signOut")}>
         <span>
           <IconButton
-            aria-label="Çıkış Yap"
+            aria-label={t("auth.signOut")}
             onClick={handleSignOut}
             disabled={busy}
             {...rest}
@@ -80,7 +82,7 @@ const SignOutButton = ({ variant = "button", onDone, ...rest }) => {
       }
       {...rest}
     >
-      Çıkış Yap
+      {t("auth.signOut")}
     </Button>
   );
 };

@@ -8,6 +8,7 @@
 // edilir).
 
 import { formatIngredient } from "../../utils/recipes";
+import { getLang, translate } from "../../i18n/core";
 
 // ---- Sayfa geometrisi (pt) ----
 export const PAGE = {
@@ -165,13 +166,23 @@ const stepsOf = (recipe) =>
     .map((s) => (typeof s === "string" ? s : s?.text || ""))
     .filter((s) => s.trim());
 
+/**
+ * Belgede kullanılan, dile bağlı yer tutucu metinler. CookbookDocument da
+ * aynı fonksiyonu kullanır; böylece tahmin ve çizim aynı metinleri ölçer.
+ */
+export const recipeLabels = (lang = getLang()) => ({
+  untitled: translate(lang, "pdf.doc.untitledRecipe"),
+  noIngredients: translate(lang, "pdf.doc.recipe.noIngredients"),
+  noSteps: translate(lang, "pdf.doc.recipe.noSteps"),
+});
+
 /** Başlık + meta + açıklama bölümünün yüksekliği. */
-const headerHeight = (recipe, m) => {
+const headerHeight = (recipe, m, labels) => {
   const hasKicker = Boolean(recipe?.mealType || recipe?.category);
   let h = hasKicker ? m.kickerSize * 1.3 + m.kickerGap : 0;
   h +=
     textHeight(
-      recipe?.name || "İsimsiz tarif",
+      recipe?.name || labels.untitled,
       CONTENT_WIDTH,
       m.titleSize,
       m.titleLineHeight,
@@ -239,10 +250,14 @@ const notesHeight = (recipe, m) => {
 };
 
 /** İki sütunlu düzenin toplam yüksekliği (pt). */
-export const estimateTwoColumnHeight = (recipe, scale) => {
+export const estimateTwoColumnHeight = (recipe, scale, lang = getLang()) => {
   const m = metricsFor(scale);
+  const labels = recipeLabels(lang);
+  // Boş listelerde belge bir yer tutucu cümle gösterir; onu da ölç.
   const ings = ingredientsOf(recipe);
   const steps = stepsOf(recipe);
+  if (!ings.length) ings.push(labels.noIngredients);
+  if (!steps.length) steps.push(labels.noSteps);
   const left =
     m.leftPad * 2 +
     sectionTitleHeight(m) +
@@ -250,7 +265,7 @@ export const estimateTwoColumnHeight = (recipe, scale) => {
   const right =
     m.leftPad + sectionTitleHeight(m) + stepsHeight(steps, m.rightWidth, m);
   return (
-    headerHeight(recipe, m) +
+    headerHeight(recipe, m, labels) +
     m.bodyGap +
     Math.max(left, right) +
     notesHeight(recipe, m)
@@ -261,8 +276,9 @@ export const estimateTwoColumnHeight = (recipe, scale) => {
  * Tek sütunlu (kompakt) düzen: malzemeler tam genişlikte iki alt sütun,
  * ardından adımlar tam genişlikte.
  */
-export const estimateSingleColumnHeight = (recipe, scale) => {
+export const estimateSingleColumnHeight = (recipe, scale, lang = getLang()) => {
   const m = metricsFor(scale);
+  const labels = recipeLabels(lang);
   const ings = ingredientsOf(recipe);
   const steps = stepsOf(recipe);
   const half = (CONTENT_WIDTH - m.gutter) / 2;
@@ -270,7 +286,7 @@ export const estimateSingleColumnHeight = (recipe, scale) => {
   const colA = ingredientsHeight(ings.slice(0, mid), half, m);
   const colB = ingredientsHeight(ings.slice(mid), half, m);
   return (
-    headerHeight(recipe, m) +
+    headerHeight(recipe, m, labels) +
     m.bodyGap +
     sectionTitleHeight(m) +
     Math.max(colA, colB) +
@@ -288,12 +304,14 @@ const AVAILABLE = CONTENT_HEIGHT * SAFETY;
 
 /**
  * Tarifin tek sayfaya sığacağı en büyük ölçeği ve düzeni seçer.
+ * @param {object} recipe
+ * @param {string} [lang] belge dili (varsayılan: arayüz dili)
  * @returns {{ scale: number, layout: 'two-column'|'single-column',
  *             estimatedPages: number, estimatedHeight: number }}
  */
-export const computeRecipeLayout = (recipe) => {
+export const computeRecipeLayout = (recipe, lang = getLang()) => {
   for (const scale of SCALE_PRESETS) {
-    const h = estimateTwoColumnHeight(recipe, scale);
+    const h = estimateTwoColumnHeight(recipe, scale, lang);
     if (h <= AVAILABLE) {
       return {
         scale,
@@ -303,7 +321,7 @@ export const computeRecipeLayout = (recipe) => {
       };
     }
   }
-  const h = estimateSingleColumnHeight(recipe, MIN_SCALE);
+  const h = estimateSingleColumnHeight(recipe, MIN_SCALE, lang);
   return {
     scale: MIN_SCALE,
     layout: "single-column",
@@ -329,12 +347,15 @@ export const tocPageCount = (count) => {
  * Kitap planı: her tarifin düzeni ve başladığı sayfa numarası.
  * Sayfa 1 = kapak, ardından içindekiler, sonra tarifler.
  */
-export const planCookbook = (recipes, { cover = true, toc = true } = {}) => {
+export const planCookbook = (
+  recipes,
+  { cover = true, toc = true, lang = getLang() } = {}
+) => {
   const list = recipes || [];
   const tocPages = toc && list.length ? tocPageCount(list.length) : 0;
   let page = (cover ? 1 : 0) + tocPages + 1;
   const entries = list.map((recipe) => {
-    const layout = computeRecipeLayout(recipe);
+    const layout = computeRecipeLayout(recipe, lang);
     const entry = { recipe, ...layout, startPage: page };
     page += layout.estimatedPages;
     return entry;

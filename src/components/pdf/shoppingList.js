@@ -2,6 +2,7 @@
 
 import { DAYS, MEAL_TYPES } from "../../constants";
 import { normalizeText } from "../../utils/recipes";
+import { getLang, localeOf } from "../../i18n/core";
 
 const UNICODE_FRACTIONS = {
   "½": 0.5,
@@ -36,10 +37,14 @@ export const parseAmount = (value) => {
   return null;
 };
 
-/** Sayıyı Türkçe biçimde yazar: 1.5 → "1,5", 0.333 → "0,33". */
-export const formatAmount = (n) => {
+/**
+ * Sayıyı dile uygun biçimde yazar: tr → 1.5 → "1,5", en → "1.5".
+ * @param {number} n
+ * @param {string} [lang] varsayılan: geçerli arayüz dili
+ */
+export const formatAmount = (n, lang = getLang()) => {
   const rounded = Math.round(n * 100) / 100;
-  return rounded.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+  return rounded.toLocaleString(localeOf(lang), { maximumFractionDigits: 2 });
 };
 
 const cleanName = (name) => (name || "").toString().trim().replace(/\s+/g, " ");
@@ -51,10 +56,15 @@ const cleanName = (name) => (name || "").toString().trim().replace(/\s+/g, " ");
  *
  * @param {object} weekPlan  { monday: { breakfast: [meal], ... }, ... }
  * @param {(mealId: string) => Array} getRecipesForMeal
+ * @param {string} [lang] sayı biçimi ve sıralama dili (varsayılan: arayüz dili)
  * @returns {Array<{ key, name, quantities: string[], meals: string[] }>}
  *          ada göre (Türkçe) sıralı
  */
-export const buildShoppingList = (weekPlan, getRecipesForMeal) => {
+export const buildShoppingList = (
+  weekPlan,
+  getRecipesForMeal,
+  lang = getLang()
+) => {
   const items = new Map();
 
   const recipesFor = (meal) => {
@@ -114,13 +124,13 @@ export const buildShoppingList = (weekPlan, getRecipesForMeal) => {
       name: item.name,
       quantities: [
         ...[...item.sums.values()].map(({ unit, total }) =>
-          [formatAmount(total), unit].filter(Boolean).join(" ")
+          [formatAmount(total, lang), unit].filter(Boolean).join(" ")
         ),
         ...item.others,
       ],
       meals: [...item.meals].filter(Boolean),
     }))
-    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+    .sort((a, b) => a.name.localeCompare(b.name, localeOf(lang)));
 };
 
 /** Plandaki toplam yemek sayısı ve dolu gün sayısı. */

@@ -20,6 +20,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { getUserProfile } from "../../../services/firebase";
 import { getInitials } from "./utils";
+import { useI18n } from "../../../i18n";
 
 /**
  * Takipçi / takip edilen listesini gösterir; bir kişiye dokununca o kişinin
@@ -30,6 +31,7 @@ import { getInitials } from "./utils";
  */
 const FollowListDialog = ({ open, onClose, title, uids, currentUid }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [people, setPeople] = useState([]);
@@ -70,7 +72,7 @@ const FollowListDialog = ({ open, onClose, title, uids, currentUid }) => {
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", pr: 1 }}>
         <Box sx={{ flexGrow: 1 }}>{title}</Box>
-        <IconButton aria-label="Kapat" onClick={onClose}>
+        <IconButton aria-label={t("common.actions.close")} onClick={onClose}>
           <CloseRoundedIcon />
         </IconButton>
       </DialogTitle>
@@ -84,7 +86,7 @@ const FollowListDialog = ({ open, onClose, title, uids, currentUid }) => {
             color="text.secondary"
             sx={{ textAlign: "center", py: 5, px: 2 }}
           >
-            Henüz kimse yok.
+            {t("auth.profile.followList.empty")}
           </Typography>
         ) : (
           <List disablePadding>
@@ -93,7 +95,7 @@ const FollowListDialog = ({ open, onClose, title, uids, currentUid }) => {
                 <ListItemAvatar>
                   <Avatar
                     src={person.photoURL || undefined}
-                    alt={person.displayName || "Kullanıcı"}
+                    alt={person.displayName || t("auth.user")}
                     sx={{ bgcolor: "primary.main" }}
                   >
                     {getInitials(person.displayName)}
@@ -101,8 +103,8 @@ const FollowListDialog = ({ open, onClose, title, uids, currentUid }) => {
                 </ListItemAvatar>
                 <ListItemText
                   primary={
-                    (person.displayName || "İsimsiz Kullanıcı") +
-                    (person.uid === currentUid ? " (siz)" : "")
+                    (person.displayName || t("auth.unnamedUser")) +
+                    (person.uid === currentUid ? t("auth.you") : "")
                   }
                   secondary={
                     person.about

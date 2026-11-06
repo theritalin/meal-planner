@@ -37,4 +37,43 @@ const FAQ = [
   },
 ];
 
+// İngilizce SSS (yalnızca uygulama içinde; SEO dosyaları Türkçe SSS'yi kullanır).
+export const FAQ_EN = [
+  {
+    q: "What is Tarif Kitabım (Recipe Book)?",
+    a: "Tarif Kitabım is a free web app for planning your weekly meals and keeping all your own recipes in one place. You can turn your recipes into a PDF recipe book, with each recipe on its own page.",
+  },
+  {
+    q: "Is it free?",
+    a: "Yes. Tarif Kitabım is completely free and supported by ads. All you need is a Google account to sign in.",
+  },
+  {
+    q: "How do I plan my meals for the week?",
+    a: "After signing in, open the Planner and drag meals into the breakfast, lunch and dinner slots (on your phone, tap to add them). You can also fill the whole week automatically with a single tap on the Random button.",
+  },
+  {
+    q: "How do I download my recipe book as a PDF?",
+    a: "On the PDF page, pick the recipes you want in your book, give it a name and tap Download PDF. You'll get an A4 PDF with a cover, a clickable table of contents and one page per recipe.",
+  },
+  {
+    q: "Does each recipe fit on a single page?",
+    a: "Yes, whenever possible. For longer recipes the font size and layout are reduced automatically or switched to a single column; only very long recipes spill over onto a second page.",
+  },
+  {
+    q: "Can I create a shopping list?",
+    a: "Yes. When you download your weekly plan as a PDF, the ingredients of the planned recipes are combined into a shopping list with the quantities added up.",
+  },
+  {
+    q: "Can I use it on my phone?",
+    a: "Yes. The app works great on phones and can be added to your home screen from the browser. An Android app is also on the way.",
+  },
+  {
+    q: "Where are my recipes stored?",
+    a: "Your recipes and plans are stored on Google Firebase, linked to your Google account, so you can access them from any device. See the Privacy Policy for details.",
+  },
+];
+
+/** Dile göre SSS listesi (varsayılan Türkçe). */
+export const getFaq = (lang) => (lang === "en" ? FAQ_EN : FAQ);
+
 export default FAQ;

@@ -17,10 +17,12 @@ import {
   Restaurant as RestaurantIcon,
 } from "@mui/icons-material";
 import { alpha } from "@mui/material/styles";
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from "../../../constants";
+import { DIFFICULTY_COLORS } from "../../../constants";
 import { totalTime } from "../../../utils/recipes";
+import { useI18n } from "../../../i18n";
 
 const RecipeCard = ({ recipe, to, onOpen, action }) => {
+  const { t } = useI18n();
   const minutes = totalTime(recipe);
   const actionAreaProps = to
     ? { component: RouterLink, to }
@@ -81,7 +83,7 @@ const RecipeCard = ({ recipe, to, onOpen, action }) => {
                 size="small"
                 variant="outlined"
                 icon={<AccessTimeIcon />}
-                label={`${minutes} dk`}
+                label={t("common.minutes", { count: minutes })}
               />
             )}
             {recipe.servings ? (
@@ -89,15 +91,15 @@ const RecipeCard = ({ recipe, to, onOpen, action }) => {
                 size="small"
                 variant="outlined"
                 icon={<RestaurantIcon />}
-                label={`${recipe.servings} kişilik`}
+                label={t("common.servings", { count: recipe.servings })}
               />
             ) : null}
-            {recipe.difficulty && DIFFICULTY_LABELS[recipe.difficulty] && (
+            {recipe.difficulty && DIFFICULTY_COLORS[recipe.difficulty] && (
               <Chip
                 size="small"
                 color={DIFFICULTY_COLORS[recipe.difficulty]}
                 variant="outlined"
-                label={DIFFICULTY_LABELS[recipe.difficulty]}
+                label={t(`common.difficulty.${recipe.difficulty}`)}
               />
             )}
           </Stack>

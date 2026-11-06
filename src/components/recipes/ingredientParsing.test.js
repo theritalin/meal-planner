@@ -1,4 +1,9 @@
-import { parseIngredientLine, parseIngredientLines } from "./ingredientParsing";
+import {
+  COMMON_UNITS,
+  getCommonUnits,
+  parseIngredientLine,
+  parseIngredientLines,
+} from "./ingredientParsing";
 
 describe("parseIngredientLine", () => {
   it("parses amount, multi-word unit and name", () => {
@@ -32,6 +37,44 @@ describe("parseIngredientLine", () => {
       name: "peynir",
     });
     expect(parseIngredientLine("   ")).toBeNull();
+  });
+});
+
+describe("English units", () => {
+  it("recognises English units and plurals regardless of language", () => {
+    expect(parseIngredientLine("2 cups flour", "en")).toEqual({
+      amount: "2",
+      unit: "cup",
+      name: "flour",
+    });
+    expect(parseIngredientLine("1 Tbsp olive oil", "en")).toEqual({
+      amount: "1",
+      unit: "tbsp",
+      name: "olive oil",
+    });
+    expect(parseIngredientLine("3 cloves garlic", "tr")).toEqual({
+      amount: "3",
+      unit: "clove",
+      name: "garlic",
+    });
+    expect(parseIngredientLine("1.5 teaspoons. salt", "en")).toEqual({
+      amount: "1.5",
+      unit: "tsp",
+      name: "salt",
+    });
+  });
+
+  it("maps shared aliases to the current language's unit", () => {
+    expect(parseIngredientLine("200 g cheese", "en").unit).toBe("g");
+    expect(parseIngredientLine("200 gr cheese", "en").unit).toBe("g");
+    expect(parseIngredientLine("200 g peynir", "tr").unit).toBe("gr");
+    // Türkçe birimler İngilizce arayüzde de tanınır
+    expect(parseIngredientLine("2 su bardağı un", "en").unit).toBe("su bardağı");
+  });
+
+  it("offers the unit list matching the language", () => {
+    expect(getCommonUnits("tr")).toBe(COMMON_UNITS);
+    expect(getCommonUnits("en")).toEqual(expect.arrayContaining(["cup", "tbsp", "tsp"]));
   });
 });
 

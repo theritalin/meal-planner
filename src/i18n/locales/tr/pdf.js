@@ -1,3 +1,105 @@
-const pdf = {};
+// PDF dışa aktarma: sayfa arayüzü ve üretilen PDF belgeleri.
+const pdf = {
+  export: {
+    title: "Dışa Aktar",
+    subtitle:
+      "Haftalık planınızı ve tarif kitabınızı yazdırmaya hazır, şık PDF'ler olarak indirin.",
+    download: "PDF İndir",
+    preparing: "Hazırlanıyor…",
+    preview: "Önizle",
+    error: "PDF oluşturulamadı. Lütfen tekrar deneyin.",
+    plan: {
+      title: "Haftalık Plan",
+      subtitle:
+        "Yatay A4 plan tablosu ve malzemeleri birleştirilmiş alışveriş listesi",
+      statMeals: "yemek",
+      statDays: "gün",
+      statIngredients: "malzeme",
+      summaryAria: "Haftalık plan özeti",
+      slotTooltip: "{meal}: {count} yemek",
+      empty: "Planınız henüz boş. Önce haftanıza birkaç yemek ekleyin.",
+      goToPlan: "Plana git",
+    },
+    book: {
+      title: "Tarif Kitabı",
+      subtitle:
+        "Kapak, içindekiler ve her tarif için tek sayfa — otomatik sığdırma ile",
+      titleLabel: "Kitap adı",
+      search: "Tariflerde ara",
+      sortLabel: "Sıralama",
+      sortAz: "A–Z",
+      sortType: "Öğün türüne göre",
+      includeDefaults: "Hazır tarifleri de ekle",
+      selected: "{selected} / {total} tarif seçili",
+      pageEstimate: " · yaklaşık {count} sayfa",
+      selectAll: "Tümünü seç",
+      selectNone: "Hiçbiri",
+      empty:
+        "Tarif kitabınızda henüz tarif yok. Kendi tarifinizi ekleyin veya hazır tarifleri dahil edin.",
+      goToRecipes: "Tariflere git",
+      noMatch: "“{query}” ile eşleşen tarif bulunamadı.",
+      longRecipe: "Uzun tarif · ~{count} sayfa",
+      personal: "Kendi tarifim",
+      placing: "{count} tarif sayfaya yerleştiriliyor…",
+    },
+  },
+  doc: {
+    defaultBookTitle: "Tarif Kitabım",
+    untitledRecipe: "İsimsiz tarif",
+    untitledMeal: "İsimsiz yemek",
+    recipeBookmark: "Tarif",
+    subject: "Tarif kitabı",
+    creator: "Haftalık Yemek Planlayıcı",
+    minutes: "{count} dk",
+    servingsValue: "{count} kişilik",
+    cover: {
+      kicker: "Kişisel tarif koleksiyonu",
+      tagline: "Mutfağımdan, sevdiklerimle paylaştığım lezzetler",
+      preparedBy: "Hazırlayan",
+      recipeCount: "{count} tarif",
+    },
+    toc: {
+      title: "İçindekiler",
+      continued: "İçindekiler (devam)",
+    },
+    recipe: {
+      prep: "Hazırlık",
+      cook: "Pişirme",
+      servings: "Porsiyon",
+      difficulty: "Zorluk",
+      ingredients: "Malzemeler",
+      method: "Hazırlanışı",
+      notes: "Notlar",
+      noIngredients: "Malzeme eklenmemiş.",
+      noSteps: "Hazırlanış adımı eklenmemiş.",
+      mealKicker: {
+        breakfast: "Kahvaltı",
+        lunch: "Öğle yemeği",
+        dinner: "Akşam yemeği",
+      },
+    },
+    plan: {
+      title: "Haftalık Yemek Planı",
+      kicker: "Bu haftanın menüsü",
+      statMeals: "Yemek",
+      statDays: "Gün",
+      statIngredients: "Malzeme",
+      total: "Toplam",
+      shoppingTitle: "Alışveriş Listesi",
+      shoppingKicker: "Haftalık ihtiyaçlar",
+      continued: "Devam",
+      shoppingEmpty:
+        "Planlanan yemekler için tarif bulunamadı. Yemeklere tarif ekledikçe malzemeler burada otomatik toplanır.",
+      footer: "Haftalık Yemek Planı · {date}",
+    },
+  },
+  files: {
+    cookbook: "tarif-kitabim",
+    plan: "haftalik-yemek-plani",
+    preview: "onizleme",
+    recipe: "tarif",
+    shareTitle: "PDF'i paylaş",
+  },
+};
 
 export default pdf;

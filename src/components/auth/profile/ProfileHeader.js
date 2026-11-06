@@ -17,8 +17,10 @@ import {
 import { alpha } from "@mui/material/styles";
 import { getInitials } from "./utils";
 import FollowListDialog from "./FollowListDialog";
+import { useI18n } from "../../../i18n";
 
 const Stat = ({ value, label, onClick }) => {
+  const { t } = useI18n();
   const content = (
     <>
       <Typography variant="h6" component="p" sx={{ lineHeight: 1.2 }}>
@@ -35,7 +37,7 @@ const Stat = ({ value, label, onClick }) => {
   return (
     <ButtonBase
       onClick={onClick}
-      aria-label={`${label} listesini göster`}
+      aria-label={t("auth.profile.header.showList", { label })}
       sx={{
         flexDirection: "column",
         minWidth: 64,
@@ -64,7 +66,8 @@ const ProfileHeader = ({
   onEdit,
   currentUid,
 }) => {
-  const name = profile.displayName || "İsimsiz Kullanıcı";
+  const { t } = useI18n();
+  const name = profile.displayName || t("auth.unnamedUser");
   const [list, setList] = useState(null); // 'followers' | 'following' | null
   const followers = Array.isArray(profile.followers) ? profile.followers : [];
   const following = Array.isArray(profile.following) ? profile.following : [];
@@ -136,7 +139,7 @@ const ProfileHeader = ({
                 startIcon={<EditIcon />}
                 onClick={onEdit}
               >
-                Profili Düzenle
+                {t("auth.profile.header.edit")}
               </Button>
             ) : (
               <Button
@@ -153,7 +156,9 @@ const ProfileHeader = ({
                 onClick={onToggleFollow}
                 disabled={followBusy}
               >
-                {isFollowing ? "Takibi Bırak" : "Takip Et"}
+                {isFollowing
+                  ? t("auth.profile.header.unfollow")
+                  : t("auth.profile.header.follow")}
               </Button>
             )}
           </Box>
@@ -177,8 +182,7 @@ const ProfileHeader = ({
               color="text.secondary"
               sx={{ mt: 2, textAlign: { xs: "center", sm: "left" } }}
             >
-              Henüz kendinizden bahsetmediniz. "Profili Düzenle" ile kısa bir
-              tanıtım ekleyebilirsiniz.
+              {t("auth.profile.header.noAbout")}
             </Typography>
           )
         )}
@@ -194,16 +198,16 @@ const ProfileHeader = ({
             borderColor: "divider",
           }}
         >
-          <Stat value={stats.recipes} label="Tarif" />
-          <Stat value={stats.saved} label="Kaydedilen" />
+          <Stat value={stats.recipes} label={t("auth.profile.stats.recipes")} />
+          <Stat value={stats.saved} label={t("auth.profile.stats.saved")} />
           <Stat
             value={stats.followers}
-            label="Takipçi"
+            label={t("auth.profile.stats.followers")}
             onClick={() => setList("followers")}
           />
           <Stat
             value={stats.following}
-            label="Takip"
+            label={t("auth.profile.stats.following")}
             onClick={() => setList("following")}
           />
         </Stack>
@@ -211,7 +215,11 @@ const ProfileHeader = ({
       <FollowListDialog
         open={list !== null}
         onClose={() => setList(null)}
-        title={list === "following" ? "Takip Edilenler" : "Takipçiler"}
+        title={
+          list === "following"
+            ? t("auth.profile.followList.following")
+            : t("auth.profile.followList.followers")
+        }
         uids={list === "following" ? following : followers}
         currentUid={currentUid}
       />

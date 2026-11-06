@@ -34,6 +34,13 @@ describe("formatAmount", () => {
     expect(formatAmount(1.5)).toBe("1,5");
     expect(formatAmount(1 / 3)).toBe("0,33");
     expect(formatAmount(2.999)).toBe("3");
+    expect(formatAmount(1.5, "tr")).toBe("1,5");
+  });
+
+  it("formats decimals with a point in English", () => {
+    expect(formatAmount(2, "en")).toBe("2");
+    expect(formatAmount(1.5, "en")).toBe("1.5");
+    expect(formatAmount(1 / 3, "en")).toBe("0.33");
   });
 });
 
@@ -49,6 +56,14 @@ describe("scaleAmount", () => {
   it("scales ranges and keeps trailing text", () => {
     expect(scaleAmount("2-3", 2)).toBe("4-6");
     expect(scaleAmount("2 adet", 1.5)).toBe("3 adet");
+  });
+
+  it("parses both separators and formats per language", () => {
+    expect(scaleAmount("1,5", 3, "en")).toBe("4.5");
+    expect(scaleAmount("1.5", 3, "en")).toBe("4.5");
+    expect(scaleAmount("1/2", 3, "en")).toBe("1.5");
+    expect(scaleAmount("1-1.5", 0.5, "en")).toBe("0.5-0.75");
+    expect(scaleAmount("1.5", 3, "tr")).toBe("4,5");
   });
 
   it("leaves non-numeric or unchanged amounts as-is", () => {
@@ -84,6 +99,11 @@ describe("scaleIngredients", () => {
     ]);
     expect(input[0].amount).toBe("2");
     expect(out[0]).not.toBe(input[0]);
+  });
+
+  it("formats scaled amounts in the requested language", () => {
+    const out = scaleIngredients([{ name: "Flour", amount: "1", unit: "cup" }], 1.5, "en");
+    expect(out[0].amount).toBe("1.5");
   });
 
   it("handles non-arrays", () => {

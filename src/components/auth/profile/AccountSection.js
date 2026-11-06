@@ -15,20 +15,21 @@ import {
   ChevronRight as ChevronRightIcon,
   DeleteForever as DeleteForeverIcon,
   PrivacyTip as PrivacyTipIcon,
+  Translate as TranslateIcon,
 } from "@mui/icons-material";
 import SignOutButton from "../SignOut";
 import { CONTACT_EMAIL } from "./utils";
-
-const DELETE_SUBJECT = encodeURIComponent("Hesap silme talebi");
+import { useI18n } from "../../../i18n";
+import LanguageSwitcher from "../../common/LanguageSwitcher";
 
 /** Kendi profilinde gösterilen hesap ayarları bölümü. */
 const AccountSection = ({ email }) => {
+  const { t } = useI18n();
+  const subject = encodeURIComponent(t("auth.profile.account.mailSubject"));
   const deleteBody = encodeURIComponent(
-    `Merhaba,\n\nTarif Kitabım hesabımın ve tüm verilerimin silinmesini talep ediyorum.\n\nHesap e-postası: ${
-      email || ""
-    }\n`,
+    t("auth.profile.account.mailBody", { email: email || "" }),
   );
-  const mailto = `mailto:${CONTACT_EMAIL}?subject=${DELETE_SUBJECT}&body=${deleteBody}`;
+  const mailto = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${deleteBody}`;
 
   return (
     <Paper
@@ -36,7 +37,7 @@ const AccountSection = ({ email }) => {
       sx={{ borderRadius: 4, mt: 4, overflow: "hidden" }}
     >
       <Typography variant="h6" component="h2" sx={{ px: 2.5, pt: 2, pb: 1 }}>
-        Hesap
+        {t("auth.profile.account.title")}
       </Typography>
       <List disablePadding>
         <ListItem disablePadding>
@@ -44,9 +45,16 @@ const AccountSection = ({ email }) => {
             <ListItemIcon>
               <PrivacyTipIcon />
             </ListItemIcon>
-            <ListItemText primary="Gizlilik Politikası" />
+            <ListItemText primary={t("auth.profile.account.privacy")} />
             <ChevronRightIcon color="action" />
           </ListItemButton>
+        </ListItem>
+        <ListItem sx={{ borderTop: 1, borderColor: "divider", gap: 1 }}>
+          <ListItemIcon>
+            <TranslateIcon />
+          </ListItemIcon>
+          <ListItemText primary={t("auth.profile.account.language")} />
+          <LanguageSwitcher />
         </ListItem>
         <ListItem
           sx={{
@@ -59,17 +67,15 @@ const AccountSection = ({ email }) => {
             <DeleteForeverIcon color="error" />
           </ListItemIcon>
           <ListItemText
-            primary="Hesabımı sil"
+            primary={t("auth.profile.account.deleteTitle")}
             secondaryTypographyProps={{ component: "div" }}
             secondary={
               <>
-                Hesabınızın ve tüm verilerinizin (tarifler, planlar,
-                kaydedilenler) kalıcı olarak silinmesi için{" "}
+                {t("auth.profile.account.deleteBefore")}{" "}
                 <Link href={mailto} underline="hover">
                   {CONTACT_EMAIL}
                 </Link>{" "}
-                adresine hesabınıza bağlı e-posta adresinden yazın. Talebiniz en
-                geç 30 gün içinde işleme alınır.
+                {t("auth.profile.account.deleteAfter")}
               </>
             }
           />

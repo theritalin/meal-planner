@@ -8,10 +8,11 @@ import {
   FONT_SERIF,
   PDF_COLORS as C,
   ensurePdfFonts,
-  upperTr,
+  upperFor,
 } from "./pdfFonts";
 import { buildShoppingList, summarizePlan } from "./shoppingList";
-import { DAYS, DAY_LABELS, MEAL_TYPES, MEAL_TYPE_LABELS } from "../../constants";
+import { DAYS, MEAL_TYPES } from "../../constants";
+import { getLang, localeOf, translate } from "../../i18n/core";
 
 const MARGIN = 36;
 const ROWS_PER_COLUMN = 15;
@@ -179,9 +180,11 @@ const s = StyleSheet.create({
   },
 });
 
-const Footer = ({ date }) => (
+const Footer = ({ date, lang }) => (
   <View style={s.footer} fixed>
-    <Text style={s.footerText}>Haftalık Yemek Planı · {date}</Text>
+    <Text style={s.footerText}>
+      {translate(lang, "pdf.doc.plan.footer", { date })}
+    </Text>
     <Text
       style={s.footerText}
       render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
@@ -227,6 +230,7 @@ const chunk = (arr, size) => {
  *        weekPlan + getRecipesForMeal ile hesaplanır)
  * @param {Date} [props.date]
  * @param {string} [props.author]
+ * @param {"tr"|"en"} [props.lang] Belge dili (varsayılan: arayüz dili)
  */
 const PlanDocument = ({
   weekPlan,
@@ -234,14 +238,19 @@ const PlanDocument = ({
   shoppingList,
   date,
   author,
+  lang = getLang(),
 }) => {
   ensurePdfFonts();
-  const dateText = (date || new Date()).toLocaleDateString("tr-TR", {
+  const tr = (key, params) => translate(lang, key, params);
+  const up = (text) => upperFor(text, lang);
+  const kcal = (count) => tr("common.kcal", { count });
+  const dateText = (date || new Date()).toLocaleDateString(localeOf(lang), {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
-  const list = shoppingList || buildShoppingList(weekPlan, getRecipesForMeal);
+  const list =
+    shoppingList || buildShoppingList(weekPlan, getRecipesForMeal, lang);
   const summary = summarizePlan(weekPlan);
   const perPage = ROWS_PER_COLUMN * COLUMNS;
   const listPages = list.length ? chunk(list, perPage) : [[]];
@@ -261,26 +270,33 @@ const PlanDocument = ({
 
   return (
     <Document
-      title="Haftalık Yemek Planı"
+      title={tr("pdf.doc.plan.title")}
       author={author || undefined}
-      creator="Haftalık Yemek Planlayıcı"
-      producer="Haftalık Yemek Planlayıcı"
-      language="tr-TR"
+      creator={tr("pdf.doc.creator")}
+      producer={tr("pdf.doc.creator")}
+      language={localeOf(lang)}
     >
       <Page size="A4" orientation="landscape" style={s.page}>
-        <Header kicker="BU HAFTANIN MENÜSÜ" title="Haftalık Yemek Planı">
+        <Header
+          kicker={up(tr("pdf.doc.plan.kicker"))}
+          title={tr("pdf.doc.plan.title")}
+        >
           <View style={s.stats}>
             <View style={s.stat}>
               <Text style={s.statValue}>{summary.mealCount}</Text>
-              <Text style={s.statLabel}>YEMEK</Text>
+              <Text style={s.statLabel}>
+                {up(tr("pdf.doc.plan.statMeals", { count: summary.mealCount }))}
+              </Text>
             </View>
             <View style={s.stat}>
               <Text style={s.statValue}>{summary.activeDays}/7</Text>
-              <Text style={s.statLabel}>GÜN</Text>
+              <Text style={s.statLabel}>{up(tr("pdf.doc.plan.statDays"))}</Text>
             </View>
             <View style={s.stat}>
               <Text style={s.statValue}>{list.length}</Text>
-              <Text style={s.statLabel}>MALZEME</Text>
+              <Text style={s.statLabel}>
+                {up(tr("pdf.doc.plan.statIngredients", { count: list.length }))}
+              </Text>
             </View>
           </View>
         </Header>
@@ -290,7 +306,7 @@ const PlanDocument = ({
             <View style={s.labelCell} />
             {DAYS.map((day) => (
               <View key={day} style={s.headCell}>
-                <Text style={s.headText}>{upperTr(DAY_LABELS[day])}</Text>
+                <Text style={s.headText}>{up(tr(`common.days.${day}`))}</Text>
               </View>
             ))}
           </View>
@@ -308,7 +324,7 @@ const PlanDocument = ({
                   <View
                     style={[s.labelDot, { backgroundColor: MEAL_COLORS[type] }]}
                   />
-                  <Text style={s.labelText}>{MEAL_TYPE_LABELS[type]}</Text>
+                  <Text style={s.labelText}>{tr(`common.mealTypes.${type}`)}</Text>
                 </View>
               </View>
               {DAYS.map((day) => {
@@ -319,13 +335,17 @@ const PlanDocument = ({
                       meals.map((meal, i) => (
                         <View key={`${meal?.id || i}`} style={s.meal}>
                           <Text style={s.mealName}>
-                            {meal?.name || "İsimsiz yemek"}
+                            {meal?.name || tr("pdf.doc.untitledMeal")}
                           </Text>
                           {meal?.calories || meal?.prepTime ? (
                             <Text style={s.mealMeta}>
                               {[
-                                meal.calories ? `${meal.calories} kcal` : null,
-                                meal.prepTime ? `${meal.prepTime} dk` : null,
+                                meal.calories ? kcal(meal.calories) : null,
+                                meal.prepTime
+                                  ? tr("pdf.doc.minutes", {
+                                      count: meal.prepTime,
+                                    })
+                                  : null,
                               ]
                                 .filter(Boolean)
                                 .join(" · ")}
@@ -343,18 +363,18 @@ const PlanDocument = ({
           ))}
           {hasCalories ? (
             <View style={[s.row, s.rowLast]}>
-              <Text style={s.totalsLabel}>TOPLAM</Text>
+              <Text style={s.totalsLabel}>{up(tr("pdf.doc.plan.total"))}</Text>
               {DAYS.map((day, i) => (
                 <View key={day} style={s.totalsCell}>
                   <Text style={s.totalsText}>
-                    {dayCalories[i] ? `${dayCalories[i]} kcal` : "—"}
+                    {dayCalories[i] ? kcal(dayCalories[i]) : "—"}
                   </Text>
                 </View>
               ))}
             </View>
           ) : null}
         </View>
-        <Footer date={dateText} />
+        <Footer date={dateText} lang={lang} />
       </Page>
 
       {listPages.map((pageItems, p) => {
@@ -367,8 +387,14 @@ const PlanDocument = ({
             style={s.page}
           >
             <Header
-              kicker={p === 0 ? "HAFTALIK İHTİYAÇLAR" : "DEVAM"}
-              title="Alışveriş Listesi"
+              kicker={up(
+                tr(
+                  p === 0
+                    ? "pdf.doc.plan.shoppingKicker"
+                    : "pdf.doc.plan.continued"
+                )
+              )}
+              title={tr("pdf.doc.plan.shoppingTitle")}
             />
             {pageItems.length ? (
               <View style={s.columns}>
@@ -402,11 +428,10 @@ const PlanDocument = ({
               </View>
             ) : (
               <Text style={s.note}>
-                Planlanan yemekler için tarif bulunamadı. Yemeklere tarif
-                ekledikçe malzemeler burada otomatik toplanır.
+                {tr("pdf.doc.plan.shoppingEmpty")}
               </Text>
             )}
-            <Footer date={dateText} />
+            <Footer date={dateText} lang={lang} />
           </Page>
         );
       })}

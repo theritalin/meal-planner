@@ -21,25 +21,16 @@ import {
 } from "@mui/icons-material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { signInWithGoogle } from "../../services/firebase";
-import FAQ from "../../content/faq";
+import { getFaq } from "../../content/faq";
 import { useMeals } from "../../context/MealContext";
+import { useI18n } from "../../i18n";
+import LanguageSwitcher from "../common/LanguageSwitcher";
 
+// Metinler auth.login.features.<key> altında; çeviri render sırasında yapılır.
 const FEATURES = [
-  {
-    icon: CalendarMonthIcon,
-    title: "Planlayıcı",
-    text: "Haftanın yemeklerini sürükle-bırak ile dakikalar içinde planla.",
-  },
-  {
-    icon: MenuBookIcon,
-    title: "Tarif Kitabı",
-    text: "Kendi tariflerini ve beğendiklerini tek yerde sakla.",
-  },
-  {
-    icon: PictureAsPdfIcon,
-    title: "PDF",
-    text: "Planını ya da tarif kitabını PDF olarak indir, paylaş.",
-  },
+  { key: "planner", icon: CalendarMonthIcon },
+  { key: "recipes", icon: MenuBookIcon },
+  { key: "pdf", icon: PictureAsPdfIcon },
 ];
 
 const FOOD_EMOJI = ["🥘", "🥗", "🍲", "🥐", "🍝", "🫓"];
@@ -70,76 +61,83 @@ const GoogleIcon = () => (
   </Box>
 );
 
-const errorMessage = (err) => {
+const errorMessage = (err, t) => {
   switch (err?.code) {
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
-      return "Giriş penceresi kapatıldı. Tekrar denemek için butona dokunun.";
+      return t("auth.login.errors.popupClosed");
     case "auth/popup-blocked":
-      return "Tarayıcınız giriş penceresini engelledi. Açılır pencerelere izin verip tekrar deneyin.";
+      return t("auth.login.errors.popupBlocked");
     case "auth/network-request-failed":
-      return "İnternet bağlantısı kurulamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+      return t("auth.login.errors.network");
     case "auth/unauthorized-domain":
-      return `Bu alan adı (${window.location.hostname}) Firebase'de yetkili değil. Firebase Console > Authentication > Settings > Authorized domains listesine ekleyin.`;
+      return t("auth.login.errors.unauthorizedDomain", {
+        host: window.location.hostname,
+      });
     case "auth/invalid-api-key":
     case "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
-      return "Firebase API anahtarı eksik veya hatalı. Ortam değişkenlerini (REACT_APP_FIREBASE_*) kontrol edin.";
+      return t("auth.login.errors.invalidApiKey");
     case "auth/configuration-not-found":
     case "auth/operation-not-allowed":
-      return "Google ile giriş Firebase'de etkin değil. Firebase Console > Authentication > Sign-in method bölümünden Google'ı etkinleştirin.";
+      return t("auth.login.errors.operationNotAllowed");
     default:
-      return `Google ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.${
+      return `${t("auth.login.errors.generic")}${
         err?.code ? ` (${err.code})` : ""
       }`;
   }
 };
 
 /** Sık sorulan sorular (arama motorları ve yapay zekâ yanıtları için de görünür). */
-const LoginFaq = () => (
-  <Box
-    component="section"
-    aria-labelledby="faq-title"
-    sx={{ width: "100%", maxWidth: 520, mt: 4, position: "relative" }}
-  >
-    <Typography
-      id="faq-title"
-      variant="h5"
-      component="h2"
-      textAlign="center"
-      sx={{ mb: 2, fontFamily: '"Playfair Display", Georgia, serif' }}
+const LoginFaq = () => {
+  const { lang, t } = useI18n();
+  return (
+    <Box
+      component="section"
+      aria-labelledby="faq-title"
+      sx={{ width: "100%", maxWidth: 520, mt: 4, position: "relative" }}
     >
-      Sık Sorulan Sorular
-    </Typography>
-    {FAQ.map(({ q, a }) => (
-      <Accordion
-        key={q}
-        disableGutters
-        elevation={0}
-        sx={{
-          mb: 1,
-          borderRadius: 2,
-          border: 1,
-          borderColor: "divider",
-          "&:before": { display: "none" },
-        }}
+      <Typography
+        id="faq-title"
+        variant="h5"
+        component="h2"
+        textAlign="center"
+        sx={{ mb: 2, fontFamily: '"Playfair Display", Georgia, serif' }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography component="h3" fontWeight={600}>
-            {q}
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography color="text.secondary">{a}</Typography>
-        </AccordionDetails>
-      </Accordion>
-    ))}
-  </Box>
-);
+        {t("auth.login.faqTitle")}
+      </Typography>
+      {getFaq(lang).map(({ q, a }) => (
+        <Accordion
+          key={q}
+          disableGutters
+          elevation={0}
+          sx={{
+            mb: 1,
+            borderRadius: 2,
+            border: 1,
+            borderColor: "divider",
+            "&:before": { display: "none" },
+          }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography component="h3" fontWeight={600}>
+              {q}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Typography color="text.secondary">{a}</Typography>
+          </AccordionDetails>
+        </Accordion>
+      ))}
+    </Box>
+  );
+};
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, authLoading } = useMeals();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
+  // Hata nesnesi saklanır; mesaj render sırasında geçerli dilde üretilir.
   const [error, setError] = useState(null);
 
   if (!authLoading && user) {
@@ -154,7 +152,7 @@ const Login = () => {
       navigate("/", { replace: true });
     } catch (err) {
       console.error("Giriş yaparken hata oluştu:", err);
-      setError(errorMessage(err));
+      setError(err || {});
       setLoading(false);
     }
   };
@@ -205,6 +203,21 @@ const Login = () => {
         ))}
       </Box>
 
+      {/* Dil seçici: kartın sağ üstünde, giriş yapmadan önce de değiştirilebilir */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+          maxWidth: 440,
+          display: "flex",
+          justifyContent: "flex-end",
+          mb: 1.5,
+        }}
+      >
+        <LanguageSwitcher showIcon />
+      </Box>
+
       <Paper
         variant="outlined"
         sx={{
@@ -237,10 +250,10 @@ const Login = () => {
             component="h1"
             sx={{ fontSize: { xs: 32, sm: 38 } }}
           >
-            Tarif Kitabım
+            {t("common.appName")}
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 320 }}>
-            Haftalık planla, tariflerini sakla, PDF olarak paylaş
+            {t("auth.login.tagline")}
           </Typography>
         </Stack>
 
@@ -249,10 +262,10 @@ const Login = () => {
           spacing={2}
           sx={{ listStyle: "none", p: 0, my: 4 }}
         >
-          {FEATURES.map(({ icon: Icon, title, text }) => (
+          {FEATURES.map(({ key, icon: Icon }) => (
             <Stack
               component="li"
-              key={title}
+              key={key}
               direction="row"
               spacing={2}
               alignItems="center"
@@ -273,10 +286,10 @@ const Login = () => {
               </Box>
               <Box>
                 <Typography variant="subtitle2" component="p" fontWeight={700}>
-                  {title}
+                  {t(`auth.login.features.${key}.title`)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {text}
+                  {t(`auth.login.features.${key}.text`)}
                 </Typography>
               </Box>
             </Stack>
@@ -285,7 +298,7 @@ const Login = () => {
 
         {error && (
           <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-            {error}
+            {errorMessage(error, t)}
           </Alert>
         )}
 
@@ -307,7 +320,7 @@ const Login = () => {
             },
           }}
         >
-          {loading ? "Giriş yapılıyor…" : "Google ile Giriş Yap"}
+          {loading ? t("auth.login.signingIn") : t("auth.login.google")}
         </Button>
 
         <Typography
@@ -317,10 +330,9 @@ const Login = () => {
           textAlign="center"
           sx={{ mt: 3 }}
         >
-          Giriş yaparak planlarınızı ve tariflerinizi her cihazdan erişilebilir
-          şekilde saklarsınız.{" "}
+          {t("auth.login.footer")}{" "}
           <Link component={RouterLink} to="/privacy" underline="hover">
-            Gizlilik Politikası
+            {t("auth.login.privacy")}
           </Link>
         </Typography>
       </Paper>

@@ -13,6 +13,7 @@ import { Search as SearchIcon } from "@mui/icons-material";
 import { searchUsers } from "../../services/firebase";
 import { useMeals } from "../../context/MealContext";
 import { getInitials } from "./profile/utils";
+import { useI18n } from "../../i18n";
 
 const MIN_CHARS = 2;
 const DEBOUNCE_MS = 300;
@@ -29,6 +30,7 @@ const DEBOUNCE_MS = 300;
 const UserSearch = ({ onNavigate, size = "small", sx }) => {
   const navigate = useNavigate();
   const { user } = useMeals();
+  const { t } = useI18n();
   const [input, setInput] = useState("");
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -81,9 +83,11 @@ const UserSearch = ({ onNavigate, size = "small", sx }) => {
       isOptionEqualToValue={(a, b) => a.uid === b.uid}
       getOptionLabel={(o) => o.displayName || o.email || ""}
       loading={loading}
-      loadingText="Aranıyor…"
+      loadingText={t("auth.search.searching")}
       noOptionsText={
-        tooShort ? `En az ${MIN_CHARS} harf yazın` : "Kullanıcı bulunamadı"
+        tooShort
+          ? t("auth.search.minChars", { count: MIN_CHARS })
+          : t("auth.search.noResults")
       }
       clearOnBlur={false}
       blurOnSelect
@@ -91,8 +95,11 @@ const UserSearch = ({ onNavigate, size = "small", sx }) => {
       renderInput={(params) => (
         <TextField
           {...params}
-          placeholder="Kullanıcı ara…"
-          inputProps={{ ...params.inputProps, "aria-label": "Kullanıcı ara" }}
+          placeholder={t("auth.search.placeholder")}
+          inputProps={{
+            ...params.inputProps,
+            "aria-label": t("auth.search.ariaLabel"),
+          }}
           InputProps={{
             ...params.InputProps,
             startAdornment: (
@@ -132,8 +139,8 @@ const UserSearch = ({ onNavigate, size = "small", sx }) => {
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="body2" fontWeight={600} noWrap>
-                {option.displayName || "İsimsiz Kullanıcı"}
-                {user?.uid === option.uid && " (siz)"}
+                {option.displayName || t("auth.unnamedUser")}
+                {user?.uid === option.uid && t("auth.you")}
               </Typography>
             </Box>
           </Box>

@@ -9,50 +9,57 @@ import {
 } from '../../services/ads';
 import { isNativeApp } from '../../services/platform';
 import { useAdsConsent } from './hooks';
+import { useI18n } from '../../i18n';
 
 export { useNativeBanner, useAdsConsent } from './hooks';
 
 const MIN_HEIGHT = { xs: 100, sm: 120 };
 
-const Label = () => (
-  <Typography
-    component="span"
-    variant="caption"
-    sx={{
-      display: 'block',
-      textAlign: 'center',
-      color: 'text.secondary',
-      fontSize: '0.65rem',
-      letterSpacing: '0.08em',
-      textTransform: 'uppercase',
-      mb: 0.5,
-      userSelect: 'none',
-    }}
-  >
-    Reklam
-  </Typography>
-);
+const Label = () => {
+  const { t } = useI18n();
+  return (
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{
+        display: 'block',
+        textAlign: 'center',
+        color: 'text.secondary',
+        fontSize: '0.65rem',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        mb: 0.5,
+        userSelect: 'none',
+      }}
+    >
+      {t('ads.label')}
+    </Typography>
+  );
+};
 
-const DebugPlaceholder = ({ placement, sx }) => (
-  <Box
-    role="presentation"
-    sx={{
-      my: 2,
-      minHeight: MIN_HEIGHT,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      border: '2px dashed',
-      borderColor: 'divider',
-      borderRadius: 2,
-      color: 'text.secondary',
-      fontSize: '0.8rem',
-      ...sx,
-    }}
-  >
-    Reklam alanı · {placement || 'default'}
-  </Box>
-);
+const DebugPlaceholder = ({ placement, sx }) => {
+  const { t } = useI18n();
+  return (
+    <Box
+      role="presentation"
+      sx={{
+        my: 2,
+        minHeight: MIN_HEIGHT,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '2px dashed',
+        borderColor: 'divider',
+        borderRadius: 2,
+        color: 'text.secondary',
+        fontSize: '0.8rem',
+        ...sx,
+      }}
+    >
+      {t('ads.debugPlaceholder', { placement: placement || 'default' })}
+    </Box>
+  );
+};
 
 /**
  * Sayfa içi reklam alanı.
@@ -65,6 +72,7 @@ const DebugPlaceholder = ({ placement, sx }) => (
  *        placement: 'planner' | 'recipes' | 'recipeDetail' | 'export' | ...
  */
 const AdBanner = ({ placement = 'default', sx }) => {
+  const { t } = useI18n();
   const config = getAdsConfig();
   const consent = useAdsConsent();
   const native = isNativeApp();
@@ -106,7 +114,7 @@ const AdBanner = ({ placement = 'default', sx }) => {
   return (
     <Box
       component="aside"
-      aria-label="Reklam"
+      aria-label={t('ads.label')}
       sx={{ my: 2, width: '100%', overflow: 'hidden', textAlign: 'center', ...sx }}
     >
       <Label />

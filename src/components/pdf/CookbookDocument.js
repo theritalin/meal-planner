@@ -18,7 +18,7 @@ import {
   FONT_SERIF,
   PDF_COLORS as C,
   ensurePdfFonts,
-  upperTr,
+  upperFor,
 } from "./pdfFonts";
 import {
   PAGE,
@@ -27,24 +27,19 @@ import {
   metricsFor,
   planCookbook,
   computeRecipeLayout,
+  recipeLabels,
 } from "./fitRecipe";
-import { DIFFICULTY_LABELS, MEAL_TYPE_LABELS } from "../../constants";
+import { getLang, localeOf, translate } from "../../i18n/core";
 
-const MEAL_KICKER = {
-  breakfast: "Kahvaltı",
-  lunch: "Öğle Yemeği",
-  dinner: "Akşam Yemeği",
-};
-
-const formatDateTr = (date) =>
+const formatLongDate = (date, lang) =>
   (date instanceof Date ? date : new Date(date || Date.now())).toLocaleDateString(
-    "tr-TR",
+    localeOf(lang),
     { day: "numeric", month: "long", year: "numeric" }
   );
 
-const minutes = (v) => {
+const minutes = (v, lang) => {
   const n = Number(v);
-  return n > 0 ? `${n} dk` : "—";
+  return n > 0 ? translate(lang, "pdf.doc.minutes", { count: n }) : "—";
 };
 
 const stepsOf = (recipe) =>
@@ -422,18 +417,29 @@ const Footer = ({ bookTitle }) => (
   </View>
 );
 
-const MetaRow = ({ recipe, s }) => {
+const MetaRow = ({ recipe, s, lang }) => {
+  const tr = (key, params) => translate(lang, key, params);
   const cells = [
-    ["HAZIRLIK", minutes(recipe.prepTime)],
-    ["PİŞİRME", minutes(recipe.cookTime)],
-    ["PORSİYON", Number(recipe.servings) > 0 ? `${recipe.servings} kişilik` : "—"],
-    ["ZORLUK", DIFFICULTY_LABELS[recipe.difficulty] || "—"],
+    [tr("pdf.doc.recipe.prep"), minutes(recipe.prepTime, lang)],
+    [tr("pdf.doc.recipe.cook"), minutes(recipe.cookTime, lang)],
+    [
+      tr("pdf.doc.recipe.servings"),
+      Number(recipe.servings) > 0
+        ? tr("pdf.doc.servingsValue", { count: recipe.servings })
+        : "—",
+    ],
+    [
+      tr("pdf.doc.recipe.difficulty"),
+      ["easy", "medium", "hard"].includes(recipe.difficulty)
+        ? tr(`common.difficulty.${recipe.difficulty}`)
+        : "—",
+    ],
   ];
   return (
     <View style={s.metaRow}>
       {cells.map(([label, value], i) => (
         <View key={label} style={[s.metaCell, i === 0 && s.metaCellFirst]}>
-          <Text style={s.metaLabel}>{label}</Text>
+          <Text style={s.metaLabel}>{upperFor(label, lang)}</Text>
           <Text style={s.metaValue}>{value}</Text>
         </View>
       ))}
@@ -467,23 +473,38 @@ const StepList = ({ steps, s }) =>
     </View>
   ));
 
-const kickerFor = (recipe) =>
-  [MEAL_KICKER[recipe.mealType] || MEAL_TYPE_LABELS[recipe.mealType], recipe.category]
+const MEAL_TYPE_KEYS = ["breakfast", "lunch", "dinner"];
+
+const kickerFor = (recipe, lang) =>
+  [
+    MEAL_TYPE_KEYS.includes(recipe.mealType)
+      ? translate(lang, `pdf.doc.recipe.mealKicker.${recipe.mealType}`)
+      : null,
+    recipe.category,
+  ]
     .filter(Boolean)
-    .map(upperTr)
+    .map((text) => upperFor(text, lang))
     .join("  ·  ");
 
 /**
  * Tek bir tarif sayfası. `layout` verilmezse otomatik hesaplanır.
  */
-export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
-  const fit = layout || computeRecipeLayout(recipe);
+export const RecipePage = ({
+  recipe,
+  layout,
+  bookTitle,
+  anchorId,
+  lang = getLang(),
+}) => {
+  const tr = (key, params) => translate(lang, key, params);
+  const labels = recipeLabels(lang);
+  const fit = layout || computeRecipeLayout(recipe, lang);
   const s = scaledStyles(fit.scale);
   const ingredients = (recipe.ingredients || [])
     .map(splitIngredient)
     .filter(Boolean);
   const steps = stepsOf(recipe);
-  const kicker = kickerFor(recipe);
+  const kicker = kickerFor(recipe, lang);
   const single = fit.layout === "single-column";
   const mid = Math.ceil(ingredients.length / 2);
 
@@ -492,13 +513,13 @@ export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
       size="A4"
       style={base.page}
       wrap
-      bookmark={recipe.name || "Tarif"}
+      bookmark={recipe.name || tr("pdf.doc.recipeBookmark")}
     >
       <View id={anchorId}>
         {kicker ? <Text style={s.kicker}>{kicker}</Text> : null}
-        <Text style={s.title}>{recipe.name || "İsimsiz tarif"}</Text>
+        <Text style={s.title}>{recipe.name || labels.untitled}</Text>
       </View>
-      <MetaRow recipe={recipe} s={s} />
+      <MetaRow recipe={recipe} s={s} lang={lang} />
       {recipe.description ? (
         <Text style={s.description}>{recipe.description}</Text>
       ) : null}
@@ -506,7 +527,7 @@ export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
       {single ? (
         <>
           <View style={s.singleSection}>
-            <SectionTitle s={s}>Malzemeler</SectionTitle>
+            <SectionTitle s={s}>{tr("pdf.doc.recipe.ingredients")}</SectionTitle>
             <View style={s.ingGrid}>
               <View style={s.ingHalf}>
                 <IngredientList items={ingredients.slice(0, mid)} s={s} />
@@ -517,26 +538,26 @@ export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
             </View>
           </View>
           <View style={s.stepsSection}>
-            <SectionTitle s={s}>Hazırlanışı</SectionTitle>
+            <SectionTitle s={s}>{tr("pdf.doc.recipe.method")}</SectionTitle>
             <StepList steps={steps} s={s} />
           </View>
         </>
       ) : (
         <View style={s.columns}>
           <View style={s.left}>
-            <SectionTitle s={s}>Malzemeler</SectionTitle>
+            <SectionTitle s={s}>{tr("pdf.doc.recipe.ingredients")}</SectionTitle>
             {ingredients.length ? (
               <IngredientList items={ingredients} s={s} />
             ) : (
-              <Text style={s.ingText}>Malzeme eklenmemiş.</Text>
+              <Text style={s.ingText}>{labels.noIngredients}</Text>
             )}
           </View>
           <View style={s.right}>
-            <SectionTitle s={s}>Hazırlanışı</SectionTitle>
+            <SectionTitle s={s}>{tr("pdf.doc.recipe.method")}</SectionTitle>
             {steps.length ? (
               <StepList steps={steps} s={s} />
             ) : (
-              <Text style={s.stepText}>Hazırlanış adımı eklenmemiş.</Text>
+              <Text style={s.stepText}>{labels.noSteps}</Text>
             )}
           </View>
         </View>
@@ -544,7 +565,7 @@ export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
 
       {recipe.notes && String(recipe.notes).trim() ? (
         <View style={s.notes} wrap={false}>
-          <Text style={s.notesTitle}>Notlar</Text>
+          <Text style={s.notesTitle}>{tr("pdf.doc.recipe.notes")}</Text>
           <Text style={s.notesText}>{recipe.notes}</Text>
         </View>
       ) : null}
@@ -554,12 +575,14 @@ export const RecipePage = ({ recipe, layout, bookTitle, anchorId }) => {
   );
 };
 
-const CoverPage = ({ title, author, date, count }) => (
+const CoverPage = ({ title, author, date, count, lang }) => (
   <Page size="A4" style={base.coverPage}>
     <View style={base.coverFrame} fixed />
     <View style={base.coverFrameInner} fixed />
     <View style={base.coverBody}>
-      <Text style={base.coverKicker}>KİŞİSEL TARİF KOLEKSİYONU</Text>
+      <Text style={base.coverKicker}>
+        {upperFor(translate(lang, "pdf.doc.cover.kicker"), lang)}
+      </Text>
       <Text style={base.coverTitle}>{title}</Text>
       <View style={base.ornament}>
         <View style={base.ornamentLine} />
@@ -567,23 +590,29 @@ const CoverPage = ({ title, author, date, count }) => (
         <View style={base.ornamentLine} />
       </View>
       <Text style={base.coverSubtitle}>
-        Mutfağımdan, sevdiklerimle paylaştığım lezzetler
+        {translate(lang, "pdf.doc.cover.tagline")}
       </Text>
       {author ? (
         <>
-          <Text style={base.coverAuthorLabel}>HAZIRLAYAN</Text>
+          <Text style={base.coverAuthorLabel}>
+            {upperFor(translate(lang, "pdf.doc.cover.preparedBy"), lang)}
+          </Text>
           <Text style={base.coverAuthor}>{author}</Text>
         </>
       ) : null}
     </View>
     <View style={base.coverBottom}>
-      <Text style={base.coverMeta}>{upperTr(formatDateTr(date))}</Text>
-      <Text style={base.coverMeta}>{count} TARİF</Text>
+      <Text style={base.coverMeta}>
+        {upperFor(formatLongDate(date, lang), lang)}
+      </Text>
+      <Text style={base.coverMeta}>
+        {upperFor(translate(lang, "pdf.doc.cover.recipeCount", { count }), lang)}
+      </Text>
     </View>
   </Page>
 );
 
-const TocPages = ({ entries, tocPages, bookTitle }) => {
+const TocPages = ({ entries, tocPages, bookTitle, lang }) => {
   const chunks = [];
   let index = 0;
   for (let p = 0; p < tocPages; p += 1) {
@@ -596,16 +625,20 @@ const TocPages = ({ entries, tocPages, bookTitle }) => {
     <Page key={`toc-${p}`} size="A4" style={base.page}>
       {p === 0 ? (
         <View>
-          <Text style={base.tocKicker}>{upperTr(bookTitle)}</Text>
-          <Text style={base.tocTitle}>İçindekiler</Text>
+          <Text style={base.tocKicker}>{upperFor(bookTitle, lang)}</Text>
+          <Text style={base.tocTitle}>{translate(lang, "pdf.doc.toc.title")}</Text>
           <View style={base.tocRuleShort} />
         </View>
       ) : (
-        <Text style={base.tocContinued}>İçindekiler (devam)</Text>
+        <Text style={base.tocContinued}>
+          {translate(lang, "pdf.doc.toc.continued")}
+        </Text>
       )}
       {chunk.map((entry) => {
         counter += 1;
-        const type = MEAL_TYPE_LABELS[entry.recipe.mealType];
+        const type = MEAL_TYPE_KEYS.includes(entry.recipe.mealType)
+          ? translate(lang, `common.mealTypes.${entry.recipe.mealType}`)
+          : null;
         return (
           <Link
             key={`${entry.anchorId}`}
@@ -614,10 +647,10 @@ const TocPages = ({ entries, tocPages, bookTitle }) => {
           >
             <Text style={base.tocIndex}>{pad2(counter)}</Text>
             <Text style={base.tocName} maxLines={1}>
-              {entry.recipe.name || "İsimsiz tarif"}
+              {entry.recipe.name || translate(lang, "pdf.doc.untitledRecipe")}
             </Text>
             {type ? (
-              <Text style={base.tocMealType}>{upperTr(type)}</Text>
+              <Text style={base.tocMealType}>{upperFor(type, lang)}</Text>
             ) : null}
             <View style={base.tocLeader} />
             <Text style={base.tocPage}>{entry.startPage}</Text>
@@ -635,23 +668,25 @@ const TocPages = ({ entries, tocPages, bookTitle }) => {
  * @param {object} props
  * @param {Array}  props.recipes  Tarif listesi (sıralı). İsteğe bağlı
  *                                `mealType` alanı başlık/İçindekiler'de gösterilir.
- * @param {string} [props.title="Tarif Kitabım"]
+ * @param {string} [props.title]  varsayılan: dile göre "Tarif Kitabım" / "My Recipe Book"
  * @param {string} [props.author]
  * @param {Date}   [props.date]
  * @param {boolean} [props.cover=true]  Kapak sayfası
  * @param {boolean} [props.toc=true]    İçindekiler
+ * @param {"tr"|"en"} [props.lang]      Belge dili (varsayılan: arayüz dili)
  */
 const CookbookDocument = ({
   recipes = [],
-  title = "Tarif Kitabım",
+  title,
   author,
   date,
   cover = true,
   toc = true,
+  lang = getLang(),
 }) => {
   ensurePdfFonts();
-  const bookTitle = title || "Tarif Kitabım";
-  const plan = planCookbook(recipes, { cover, toc });
+  const bookTitle = title || translate(lang, "pdf.doc.defaultBookTitle");
+  const plan = planCookbook(recipes, { cover, toc, lang });
   const entries = plan.entries.map((e, i) => ({
     ...e,
     anchorId: `tarif-${i + 1}`,
@@ -661,10 +696,10 @@ const CookbookDocument = ({
     <Document
       title={bookTitle}
       author={author || undefined}
-      subject="Tarif kitabı"
-      creator="Haftalık Yemek Planlayıcı"
-      producer="Haftalık Yemek Planlayıcı"
-      language="tr-TR"
+      subject={translate(lang, "pdf.doc.subject")}
+      creator={translate(lang, "pdf.doc.creator")}
+      producer={translate(lang, "pdf.doc.creator")}
+      language={localeOf(lang)}
       pageMode={toc ? "useOutlines" : undefined}
     >
       {cover ? (
@@ -673,6 +708,7 @@ const CookbookDocument = ({
           author={author}
           date={date}
           count={recipes.length}
+          lang={lang}
         />
       ) : null}
       {toc && plan.tocPages ? (
@@ -680,6 +716,7 @@ const CookbookDocument = ({
           entries={entries}
           tocPages={plan.tocPages}
           bookTitle={bookTitle}
+          lang={lang}
         />
       ) : null}
       {entries.map((entry) => (
@@ -689,6 +726,7 @@ const CookbookDocument = ({
           layout={entry}
           bookTitle={bookTitle}
           anchorId={entry.anchorId}
+          lang={lang}
         />
       ))}
     </Document>

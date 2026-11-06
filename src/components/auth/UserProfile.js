@@ -24,6 +24,7 @@ import ProfileRecipeGrid from "./profile/ProfileRecipeGrid";
 import RecipePreviewDialog from "./profile/RecipePreviewDialog";
 import EditProfileDialog from "./profile/EditProfileDialog";
 import AccountSection from "./profile/AccountSection";
+import { useI18n } from "../../i18n";
 
 const countOf = (value) => (Array.isArray(value) ? value.length : 0);
 const recipeHref = (recipe) => `/recipes/${recipe.id}`;
@@ -31,6 +32,7 @@ const recipeHref = (recipe) => `/recipes/${recipe.id}`;
 const UserProfile = () => {
   const { userId } = useParams();
   const { user, authLoading } = useMeals();
+  const { t } = useI18n();
   const { userRecipes, savedRecipes, saveRecipe, unsaveRecipe, isRecipeSaved } =
     useRecipes();
 
@@ -75,10 +77,16 @@ const UserProfile = () => {
   const handleToggleFollow = async () => {
     try {
       const nowFollowing = await toggleFollow();
-      notify(nowFollowing ? "Takip edildi" : "Takipten çıkıldı");
+      notify(
+        t(
+          nowFollowing
+            ? "auth.profile.snackbar.followed"
+            : "auth.profile.snackbar.unfollowed",
+        ),
+      );
     } catch (error) {
       console.error("Takip işlemi sırasında hata oluştu:", error);
-      notify("Takip işlemi sırasında bir hata oluştu", "error");
+      notify(t("auth.profile.snackbar.followError"), "error");
     }
   };
 
@@ -92,10 +100,10 @@ const UserProfile = () => {
       }
       patchProfile({ displayName, about });
       setEditOpen(false);
-      notify("Profil güncellendi");
+      notify(t("auth.profile.snackbar.profileUpdated"));
     } catch (error) {
       console.error("Profil güncellenirken hata oluştu:", error);
-      notify("Profil güncellenirken bir hata oluştu", "error");
+      notify(t("auth.profile.snackbar.profileUpdateError"), "error");
     }
   };
 
@@ -111,16 +119,16 @@ const UserProfile = () => {
         createdByUid: profile?.uid || "",
       });
       setSavingId(null);
-      if (result) notify("Tarif kaydedilenlere eklendi");
-      else notify("Tarif kaydedilemedi", "error");
+      if (result) notify(t("auth.profile.snackbar.recipeSaved"));
+      else notify(t("auth.profile.snackbar.recipeSaveError"), "error");
     },
-    [saveRecipe, user, profile],
+    [saveRecipe, user, profile, t],
   );
 
   const handleUnsave = async (recipe) => {
     const ok = await unsaveRecipe(user.uid, recipe.id);
-    if (ok) notify("Tarif kaydedilenlerden kaldırıldı");
-    else notify("Tarif kaldırılamadı", "error");
+    if (ok) notify(t("auth.profile.snackbar.recipeUnsaved"));
+    else notify(t("auth.profile.snackbar.recipeUnsaveError"), "error");
   };
 
   if (authLoading) {
@@ -136,13 +144,13 @@ const UserProfile = () => {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
         <Typography variant="h5" component="h1" gutterBottom>
-          Kullanıcı bulunamadı
+          {t("auth.profile.notFound.title")}
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 3 }}>
-          Aradığınız profil silinmiş ya da hiç var olmamış olabilir.
+          {t("auth.profile.notFound.text")}
         </Typography>
         <Button component={RouterLink} to="/" variant="contained">
-          Ana sayfaya dön
+          {t("auth.profile.notFound.home")}
         </Button>
       </Box>
     );
@@ -167,12 +175,15 @@ const UserProfile = () => {
       <Tabs
         value={activeTab}
         onChange={(_e, value) => setTab(value)}
-        aria-label="Profil sekmeleri"
+        aria-label={t("auth.profile.tabsLabel")}
         sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}
       >
-        <Tab value="recipes" label={`Tarifler (${stats.recipes})`} />
+        <Tab value="recipes" label={t("auth.profile.tabs.recipes", { count: stats.recipes })} />
         {isOwnProfile && (
-          <Tab value="saved" label={`Kaydedilenler (${stats.saved})`} />
+          <Tab
+            value="saved"
+            label={t("auth.profile.tabs.saved", { count: stats.saved })}
+          />
         )}
       </Tabs>
 
@@ -181,7 +192,7 @@ const UserProfile = () => {
           <ProfileRecipeGrid
             recipes={recipes}
             getHref={recipeHref}
-            emptyText="Henüz kendi tarifinizi eklemediniz."
+            emptyText={t("auth.profile.empty.ownRecipes")}
             emptyAction={
               <Button
                 component={RouterLink}
@@ -189,7 +200,7 @@ const UserProfile = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
               >
-                Tarif Kitabına git
+                {t("auth.profile.empty.goToRecipes")}
               </Button>
             }
           />
@@ -197,7 +208,9 @@ const UserProfile = () => {
           <ProfileRecipeGrid
             recipes={recipes}
             onOpen={setPreviewRecipe}
-            emptyText={`${firstName || "Bu kullanıcı"} henüz tarif paylaşmadı.`}
+            emptyText={t("auth.profile.empty.othersRecipes", {
+              name: firstName || t("auth.profile.empty.thisUser"),
+            })}
           />
         ))}
 
@@ -205,7 +218,7 @@ const UserProfile = () => {
         <ProfileRecipeGrid
           recipes={savedRecipes}
           getHref={recipeHref}
-          emptyText="Henüz hiç tarif kaydetmediniz."
+          emptyText={t("auth.profile.empty.saved")}
           action={(recipe) => (
             <Button
               size="small"
@@ -213,7 +226,7 @@ const UserProfile = () => {
               startIcon={<BookmarkRemoveIcon />}
               onClick={() => handleUnsave(recipe)}
             >
-              Kayıttan Kaldır
+              {t("auth.profile.unsave")}
             </Button>
           )}
         />
@@ -260,10 +273,13 @@ const UserProfile = () => {
   );
 };
 
-const CenteredSpinner = () => (
-  <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-    <CircularProgress aria-label="Yükleniyor" />
-  </Box>
-);
+const CenteredSpinner = () => {
+  const { t } = useI18n();
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+      <CircularProgress aria-label={t("auth.profile.loading")} />
+    </Box>
+  );
+};
 
 export default UserProfile;

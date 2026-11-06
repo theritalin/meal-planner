@@ -21,8 +21,9 @@ import {
   Close as CloseIcon,
   Restaurant as RestaurantIcon,
 } from "@mui/icons-material";
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from "../../../constants";
+import { DIFFICULTY_COLORS } from "../../../constants";
 import { formatIngredient } from "../../../utils/recipes";
+import { useI18n } from "../../../i18n";
 
 /**
  * Başka bir kullanıcının tarifini satır içi gösterir; "Kaydet" ile
@@ -30,6 +31,7 @@ import { formatIngredient } from "../../../utils/recipes";
  */
 const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
   const theme = useTheme();
+  const { t } = useI18n();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const open = Boolean(recipe);
 
@@ -49,7 +51,7 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
             sx={{ display: "flex", alignItems: "center", gap: 1, pr: 1 }}
           >
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>{recipe.name}</Box>
-            <IconButton aria-label="Kapat" onClick={onClose}>
+            <IconButton aria-label={t("common.actions.close")} onClick={onClose}>
               <CloseIcon />
             </IconButton>
           </DialogTitle>
@@ -71,7 +73,7 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                   size="small"
                   variant="outlined"
                   icon={<AccessTimeIcon />}
-                  label={`Hazırlık: ${recipe.prepTime} dk`}
+                  label={t("auth.profile.preview.prep", { count: recipe.prepTime })}
                 />
               ) : null}
               {recipe.cookTime ? (
@@ -79,7 +81,7 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                   size="small"
                   variant="outlined"
                   icon={<AccessTimeIcon />}
-                  label={`Pişirme: ${recipe.cookTime} dk`}
+                  label={t("auth.profile.preview.cook", { count: recipe.cookTime })}
                 />
               ) : null}
               {recipe.servings ? (
@@ -87,21 +89,21 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                   size="small"
                   variant="outlined"
                   icon={<RestaurantIcon />}
-                  label={`${recipe.servings} kişilik`}
+                  label={t("common.servings", { count: recipe.servings })}
                 />
               ) : null}
-              {recipe.difficulty && DIFFICULTY_LABELS[recipe.difficulty] && (
+              {recipe.difficulty && DIFFICULTY_COLORS[recipe.difficulty] && (
                 <Chip
                   size="small"
                   variant="outlined"
                   color={DIFFICULTY_COLORS[recipe.difficulty]}
-                  label={DIFFICULTY_LABELS[recipe.difficulty]}
+                  label={t(`common.difficulty.${recipe.difficulty}`)}
                 />
               )}
             </Stack>
 
             <Typography variant="h6" component="h2" gutterBottom>
-              Malzemeler
+              {t("auth.profile.preview.ingredients")}
             </Typography>
             {recipe.ingredients?.length ? (
               <Box component="ul" sx={{ pl: 2.5, mt: 0, mb: 3 }}>
@@ -113,12 +115,12 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
               </Box>
             ) : (
               <Typography color="text.secondary" sx={{ mb: 3 }}>
-                Malzeme eklenmemiş.
+                {t("auth.profile.preview.noIngredients")}
               </Typography>
             )}
 
             <Typography variant="h6" component="h2" gutterBottom>
-              Hazırlanışı
+              {t("auth.profile.preview.instructions")}
             </Typography>
             {recipe.instructions?.length ? (
               <Box component="ol" sx={{ pl: 2.5, mt: 0 }}>
@@ -130,7 +132,7 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
               </Box>
             ) : (
               <Typography color="text.secondary">
-                Hazırlanış adımı eklenmemiş.
+                {t("auth.profile.preview.noInstructions")}
               </Typography>
             )}
 
@@ -142,7 +144,7 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                   gutterBottom
                   sx={{ mt: 2 }}
                 >
-                  Notlar
+                  {t("auth.profile.preview.notes")}
                 </Typography>
                 <Typography sx={{ whiteSpace: "pre-line" }}>
                   {recipe.notes}
@@ -151,7 +153,7 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
             )}
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button onClick={onClose}>Kapat</Button>
+            <Button onClick={onClose}>{t("common.actions.close")}</Button>
             <Button
               variant="contained"
               onClick={() => onSave(recipe)}
@@ -166,7 +168,9 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                 )
               }
             >
-              {isSaved ? "Kaydedildi" : "Kaydet"}
+              {isSaved
+                ? t("auth.profile.preview.saved")
+                : t("auth.profile.preview.save")}
             </Button>
           </DialogActions>
         </>

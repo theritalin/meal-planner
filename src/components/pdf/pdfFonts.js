@@ -6,6 +6,7 @@
 // registerPdfFonts("/abs/path/public/fonts") ile yerel dosya yolu verilebilir.
 
 import { Font } from "@react-pdf/renderer";
+import { localeOf } from "../../i18n/core";
 
 export const FONT_SANS = "Inter";
 export const FONT_SERIF = "Playfair Display";
@@ -65,6 +66,10 @@ export const ensurePdfFonts = () => {
 /** Türkçe'ye uygun büyük harf (i → İ). */
 export const upperTr = (text) =>
   (text || "").toString().toLocaleUpperCase("tr-TR");
+
+/** Dile uygun büyük harf: tr → "i" → "İ", en → "i" → "I". */
+export const upperFor = (text, lang) =>
+  (text || "").toString().toLocaleUpperCase(localeOf(lang));
 
 /** PDF'lerde ortak renkler (theme.js paletiyle uyumlu, baskı dostu). */
 export const PDF_COLORS = {
