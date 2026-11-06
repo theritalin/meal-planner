@@ -22,7 +22,8 @@ const auth = {
     privacy: "Privacy Policy",
     faqTitle: "Frequently Asked Questions",
     errors: {
-      popupClosed: "The sign-in window was closed. Tap the button to try again.",
+      popupClosed:
+        "The sign-in window was closed. Tap the button to try again.",
       popupBlocked:
         "Your browser blocked the sign-in window. Allow pop-ups and try again.",
       network:

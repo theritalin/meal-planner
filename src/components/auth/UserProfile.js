@@ -178,7 +178,10 @@ const UserProfile = () => {
         aria-label={t("auth.profile.tabsLabel")}
         sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}
       >
-        <Tab value="recipes" label={t("auth.profile.tabs.recipes", { count: stats.recipes })} />
+        <Tab
+          value="recipes"
+          label={t("auth.profile.tabs.recipes", { count: stats.recipes })}
+        />
         {isOwnProfile && (
           <Tab
             value="saved"

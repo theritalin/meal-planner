@@ -51,7 +51,10 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
             sx={{ display: "flex", alignItems: "center", gap: 1, pr: 1 }}
           >
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>{recipe.name}</Box>
-            <IconButton aria-label={t("common.actions.close")} onClick={onClose}>
+            <IconButton
+              aria-label={t("common.actions.close")}
+              onClick={onClose}
+            >
               <CloseIcon />
             </IconButton>
           </DialogTitle>
@@ -73,7 +76,9 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                   size="small"
                   variant="outlined"
                   icon={<AccessTimeIcon />}
-                  label={t("auth.profile.preview.prep", { count: recipe.prepTime })}
+                  label={t("auth.profile.preview.prep", {
+                    count: recipe.prepTime,
+                  })}
                 />
               ) : null}
               {recipe.cookTime ? (
@@ -81,7 +86,9 @@ const RecipePreviewDialog = ({ recipe, onClose, isSaved, saving, onSave }) => {
                   size="small"
                   variant="outlined"
                   icon={<AccessTimeIcon />}
-                  label={t("auth.profile.preview.cook", { count: recipe.cookTime })}
+                  label={t("auth.profile.preview.cook", {
+                    count: recipe.cookTime,
+                  })}
                 />
               ) : null}
               {recipe.servings ? (

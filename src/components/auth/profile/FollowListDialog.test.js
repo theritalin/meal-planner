@@ -41,3 +41,22 @@ test("takipçileri listeler ve tıklanınca profile gider", async () => {
   expect(onClose).toHaveBeenCalled();
   expect(screen.getByText("profil:a1")).toBeTruthy();
 });
+
+test("İngilizcede (you) etiketi ve Kapat düğmesi çevrilir", async () => {
+  const { LanguageProvider } = require("../../../i18n");
+  render(
+    <LanguageProvider initialLang="en">
+      <MemoryRouter>
+        <FollowListDialog
+          open
+          onClose={() => {}}
+          title="Followers"
+          uids={["me"]}
+          currentUid="me"
+        />
+      </MemoryRouter>
+    </LanguageProvider>
+  );
+  expect(await screen.findByText("Kişi me (you)")).toBeTruthy();
+  expect(screen.getByLabelText("Close")).toBeTruthy();
+});

@@ -60,7 +60,9 @@ const EditProfileDialog = ({ open, profile, onClose, onSave }) => {
             fullWidth
             autoFocus
             error={!trimmedName}
-            helperText={!trimmedName ? t("auth.profile.edit.nameRequired") : " "}
+            helperText={
+              !trimmedName ? t("auth.profile.edit.nameRequired") : " "
+            }
           />
           <TextField
             label={t("auth.profile.edit.about")}
