@@ -25,6 +25,7 @@ import {
   createEmptyWeekPlan,
 } from "../constants";
 import { normalizeText } from "../utils/recipes";
+import { tStatic as t } from "../i18n";
 
 const MealContext = createContext();
 
@@ -84,13 +85,11 @@ export function MealProvider({ children }) {
         const firebaseMeals = await getMealsFromFirestore();
         setMeals(firebaseMeals);
         if (firebaseMeals.length === 0) {
-          setError("Yemek listesi şu anda boş görünüyor.");
+          setError(t("common.errors.mealsEmpty"));
         }
       } catch (err) {
         console.error("Yemekleri yüklerken hata oluştu:", err);
-        setError(
-          "Yemekler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
-        );
+        setError(t("common.errors.loadFailed"));
       } finally {
         setLoading(false);
       }

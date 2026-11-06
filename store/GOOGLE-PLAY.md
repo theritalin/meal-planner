@@ -86,6 +86,7 @@ Tarif Kitabım, haftalık yemek planınızı dakikalar içinde hazırlamanızı 
 🔒 GÜVENLİ VE KOLAY
 • Google hesabınızla tek dokunuşla giriş
 • Tarifleriniz ve planlarınız hesabınıza bağlı olarak güvenle saklanır
+• Türkçe ve İngilizce dil desteği — giriş ekranından değiştirin
 • Web sürümü: haftalikyemek.space
 
 Tarif Kitabım ücretsizdir ve reklamlarla desteklenir.
@@ -238,7 +239,7 @@ Recipe Book (Tarif Kitabım) is a free weekly meal planner and personal recipe b
 • Follow other cooks and save their recipes
 • Sign in with Google; your data syncs across phone, tablet and web (haftalikyemek.space)
 
-The app interface is in Turkish. Free, supported by ads.
+Available in English and Turkish — switch anytime from the sign-in screen. Free, supported by ads.
 Contact: bsckbilgi@gmail.com
 ```
 

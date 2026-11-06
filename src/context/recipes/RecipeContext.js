@@ -21,6 +21,7 @@ import {
 } from "../../services/firebase";
 import default_recipes from "../../data/recipes";
 import { dedupeById, recipeMatches } from "../../utils/recipes";
+import { tStatic as t } from "../../i18n";
 
 const RecipeContext = createContext();
 
@@ -60,9 +61,7 @@ export function RecipeProvider({ children }) {
       } catch (err) {
         console.error("Verileri yüklerken hata oluştu:", err);
         if (!cancelled) {
-          setError(
-            "Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
-          );
+          setError(t("common.errors.loadFailed"));
         }
       } finally {
         if (!cancelled) setLoading(false);

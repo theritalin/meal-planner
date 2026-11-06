@@ -50,6 +50,7 @@ const common = {
   default: "Hazır",
   errors: {
     generic: "Bir hata oluştu. Lütfen tekrar deneyin.",
+    mealsEmpty: "Yemek listesi şu anda boş görünüyor.",
     loadFailed:
       "Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
   },

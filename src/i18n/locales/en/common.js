@@ -47,6 +47,7 @@ const common = {
   default: "Built-in",
   errors: {
     generic: "Something went wrong. Please try again.",
+    mealsEmpty: "The meal list is empty right now.",
     loadFailed: "Couldn't load data. Please try again later.",
   },
   language: "Language",
