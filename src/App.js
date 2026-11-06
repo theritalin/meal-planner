@@ -13,13 +13,16 @@ import theme from "./theme";
 import { MealProvider, useMeals } from "./context/MealContext";
 import { RecipeProvider } from "./context/recipes/RecipeContext";
 import AppShell from "./components/layout/AppShell";
+import { LanguageProvider } from "./i18n";
 
 // Sayfalar ihtiyaç anında yüklenir (PDF kütüphanesi gibi ağır modüller
 // yalnızca ilgili sayfa açıldığında indirilir).
 const MealPlannerPage = lazy(() => import("./components/MealPlannerPage"));
-const RecipeBookPage = lazy(() => import("./components/recipes/RecipeBookPage"));
-const RecipeDetailPage = lazy(() =>
-  import("./components/recipes/RecipeDetailPage")
+const RecipeBookPage = lazy(
+  () => import("./components/recipes/RecipeBookPage"),
+);
+const RecipeDetailPage = lazy(
+  () => import("./components/recipes/RecipeDetailPage"),
 );
 const ExportPage = lazy(() => import("./components/pdf/ExportPage"));
 const UserProfile = lazy(() => import("./components/auth/UserProfile"));
@@ -77,18 +80,20 @@ const AppContent = () => (
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <MealProvider>
-          <RecipeProvider>
-            <DndProvider backend={HTML5Backend}>
-              <AppContent />
-            </DndProvider>
-          </RecipeProvider>
-        </MealProvider>
-      </Router>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <MealProvider>
+            <RecipeProvider>
+              <DndProvider backend={HTML5Backend}>
+                <AppContent />
+              </DndProvider>
+            </RecipeProvider>
+          </MealProvider>
+        </Router>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

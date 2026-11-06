@@ -37,33 +37,39 @@ import ConsentBanner from "../ads/ConsentBanner";
 import { useNativeBanner } from "../ads/AdBanner";
 import { initAds } from "../../services/ads";
 import { isNativeApp } from "../../services/platform";
+import { useI18n } from "../../i18n";
+import LanguageSwitcher from "../common/LanguageSwitcher";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
-const SITE_NAME = "Tarif Kitabım";
 const PAGE_TITLES = [
-  ["/recipes/", "Tarif"],
-  ["/recipes", "Tarif Kitabım"],
-  ["/export", "PDF Olarak Dışa Aktar"],
-  ["/profile", "Profil"],
-  ["/privacy", "Gizlilik Politikası"],
-  ["/login", "Giriş Yap — Ücretsiz Haftalık Yemek Planlayıcı"],
+  ["/recipes/", "recipe"],
+  ["/recipes", "recipes"],
+  ["/export", "export"],
+  ["/profile", "profile"],
+  ["/privacy", "privacy"],
+  ["/login", "login"],
 ];
 
-/** Sayfa başlığını (sekme adı) rotaya göre ayarlar. */
+/** Sayfa başlığını (sekme adı) rotaya ve dile göre ayarlar. */
 const usePageTitle = (pathname) => {
+  const { t } = useI18n();
   useEffect(() => {
     const match = PAGE_TITLES.find(([prefix]) => pathname.startsWith(prefix));
-    document.title = match
-      ? `${match[1]} | ${SITE_NAME}`
-      : `Haftalık Plan | ${SITE_NAME}`;
-  }, [pathname]);
+    const page = t(`shell.pageTitles.${match ? match[1] : "planner"}`);
+    document.title = `${page} | ${t("common.appName")}`;
+  }, [pathname, t]);
 };
 
 const NAV_ITEMS = [
-  { to: "/", label: "Planlayıcı", icon: <CalendarMonthRoundedIcon /> },
-  { to: "/recipes", label: "Tarif Kitabım", icon: <MenuBookRoundedIcon /> },
-  { to: "/export", label: "PDF", icon: <PictureAsPdfRoundedIcon /> },
+  { to: "/", key: "planner", icon: <CalendarMonthRoundedIcon /> },
+  {
+    to: "/recipes",
+    key: "recipes",
+    short: "recipesShort",
+    icon: <MenuBookRoundedIcon />,
+  },
+  { to: "/export", key: "pdf", icon: <PictureAsPdfRoundedIcon /> },
 ];
 
 /** Aktif menü öğesini mevcut yola göre belirler. */
@@ -75,38 +81,41 @@ const activeIndex = (pathname) => {
   return false;
 };
 
-const Logo = () => (
-  <Box
-    component={Link}
-    to="/"
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      gap: 1,
-      textDecoration: "none",
-      color: "text.primary",
-      mr: 3,
-    }}
-  >
+const Logo = () => {
+  const { t } = useI18n();
+  return (
     <Box
-      component="img"
-      src={`${process.env.PUBLIC_URL}/icon.svg`}
-      alt=""
-      sx={{ width: 34, height: 34 }}
-    />
-    <Typography
-      variant="h6"
-      sx={{ fontFamily: '"Playfair Display", Georgia, serif', lineHeight: 1 }}
+      component={Link}
+      to="/"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        textDecoration: "none",
+        color: "text.primary",
+        mr: 3,
+      }}
     >
-      Tarif Kitabım
-    </Typography>
-  </Box>
-);
+      <Box
+        component="img"
+        src={`${process.env.PUBLIC_URL}/icon.svg`}
+        alt=""
+        sx={{ width: 34, height: 34 }}
+      />
+      <Typography
+        variant="h6"
+        sx={{ fontFamily: '"Playfair Display", Georgia, serif', lineHeight: 1 }}
+      >
+        {t("common.appName")}
+      </Typography>
+    </Box>
+  );
+};
 
 const UserAvatar = ({ user, size = 32 }) => (
   <Avatar
     src={user?.photoURL || undefined}
-    alt={user?.displayName || "Kullanıcı"}
+    alt={user?.displayName || ""}
     sx={{ width: size, height: size, bgcolor: "primary.main", fontSize: 14 }}
   >
     {(user?.displayName || "K").charAt(0).toUpperCase()}
@@ -115,11 +124,15 @@ const UserAvatar = ({ user, size = 32 }) => (
 
 /** Küçük ekranlarda kullanıcı arama: üst çubuktaki ikon + tam ekran arama. */
 const MobileSearch = () => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   return (
     <>
-      <IconButton aria-label="Kullanıcı ara" onClick={() => setOpen(true)}>
+      <IconButton
+        aria-label={t("shell.searchUsers")}
+        onClick={() => setOpen(true)}
+      >
         <SearchRoundedIcon />
       </IconButton>
       <Dialog
@@ -131,8 +144,8 @@ const MobileSearch = () => {
         <DialogTitle
           sx={{ display: "flex", alignItems: "center", gap: 1, pr: 1 }}
         >
-          <Box sx={{ flexGrow: 1 }}>Kullanıcı Ara</Box>
-          <IconButton aria-label="Kapat" onClick={close}>
+          <Box sx={{ flexGrow: 1 }}>{t("shell.searchUsersTitle")}</Box>
+          <IconButton aria-label={t("common.actions.close")} onClick={close}>
             <CloseRoundedIcon />
           </IconButton>
         </DialogTitle>
@@ -143,7 +156,7 @@ const MobileSearch = () => {
             color="text.secondary"
             sx={{ mt: 2, textAlign: "center" }}
           >
-            İsim ya da e-posta ile arayın (en az 2 harf).
+            {t("shell.searchHint")}
           </Typography>
         </DialogContent>
       </Dialog>
@@ -152,6 +165,7 @@ const MobileSearch = () => {
 };
 
 const UserMenu = ({ user }) => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [anchor, setAnchor] = useState(null);
   const close = () => setAnchor(null);
@@ -162,10 +176,10 @@ const UserMenu = ({ user }) => {
 
   return (
     <>
-      <Tooltip title="Hesabım">
+      <Tooltip title={t("shell.account")}>
         <IconButton
           onClick={(e) => setAnchor(e.currentTarget)}
-          aria-label="Hesap menüsü"
+          aria-label={t("shell.accountMenu")}
           size="small"
         >
           <UserAvatar user={user} />
@@ -181,7 +195,7 @@ const UserMenu = ({ user }) => {
       >
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="subtitle2" noWrap>
-            {user.displayName || "Kullanıcı"}
+            {user.displayName || t("shell.user")}
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
             {user.email}
@@ -192,14 +206,26 @@ const UserMenu = ({ user }) => {
           <ListItemIcon>
             <PersonRoundedIcon fontSize="small" />
           </ListItemIcon>
-          Profilim
+          {t("shell.myProfile")}
         </MenuItem>
         <MenuItem onClick={() => go("/privacy")}>
           <ListItemIcon>
             <PrivacyTipOutlinedIcon fontSize="small" />
           </ListItemIcon>
-          Gizlilik Politikası
+          {t("shell.privacy")}
         </MenuItem>
+        <Box
+          sx={{ px: 2, py: 1, display: "flex", alignItems: "center", gap: 1.5 }}
+        >
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ flexGrow: 1 }}
+          >
+            {t("common.language")}
+          </Typography>
+          <LanguageSwitcher />
+        </Box>
         <Divider />
         <SignOutButton variant="menuItem" onDone={close} />
       </Menu>
@@ -213,6 +239,7 @@ const UserMenu = ({ user }) => {
  */
 const AppShell = ({ children }) => {
   const { user } = useMeals();
+  const { t } = useI18n();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
@@ -234,7 +261,7 @@ const AppShell = ({ children }) => {
         App.addListener("backButton", ({ canGoBack }) => {
           if (canGoBack && window.history.length > 1) window.history.back();
           else App.exitApp();
-        })
+        }),
       )
       .then((h) => {
         handle = h;
@@ -281,7 +308,10 @@ const AppShell = ({ children }) => {
         sx={{ pt: "env(safe-area-inset-top)" }}
       >
         <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ gap: 1, minHeight: { xs: 56, md: 68 } }}>
+          <Toolbar
+            disableGutters
+            sx={{ gap: 1, minHeight: { xs: 56, md: 68 } }}
+          >
             <Logo />
             {!isMobile && (
               <Box sx={{ display: "flex", gap: 0.5 }}>
@@ -293,10 +323,11 @@ const AppShell = ({ children }) => {
                     startIcon={item.icon}
                     color={current === i ? "primary" : "inherit"}
                     sx={{
-                      bgcolor: current === i ? "rgba(194,65,12,0.08)" : "transparent",
+                      bgcolor:
+                        current === i ? "rgba(194,65,12,0.08)" : "transparent",
                     }}
                   >
-                    {item.label}
+                    {t(`shell.nav.${item.key}`)}
                   </Button>
                 ))}
               </Box>
@@ -357,11 +388,14 @@ const AppShell = ({ children }) => {
             {NAV_ITEMS.map((item) => (
               <BottomNavigationAction
                 key={item.to}
-                label={item.label === "Tarif Kitabım" ? "Tarifler" : item.label}
+                label={t(`shell.nav.${item.short || item.key}`)}
                 icon={item.icon}
               />
             ))}
-            <BottomNavigationAction label="Profil" icon={<PersonRoundedIcon />} />
+            <BottomNavigationAction
+              label={t("shell.nav.profile")}
+              icon={<PersonRoundedIcon />}
+            />
           </BottomNavigation>
         </Paper>
       ) : (
@@ -375,16 +409,19 @@ const AppShell = ({ children }) => {
             sx={{ display: "flex", justifyContent: "space-between" }}
           >
             <Typography variant="body2" color="text.secondary">
-              © {new Date().getFullYear()} Tarif Kitabım
+              © {new Date().getFullYear()} {t("common.appName")}
             </Typography>
             <Typography
               variant="body2"
               component={Link}
               to="/privacy"
               color="text.secondary"
-              sx={{ textDecoration: "none", "&:hover": { color: "primary.main" } }}
+              sx={{
+                textDecoration: "none",
+                "&:hover": { color: "primary.main" },
+              }}
             >
-              Gizlilik Politikası
+              {t("shell.privacy")}
             </Typography>
           </Container>
         </Box>
