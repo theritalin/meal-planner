@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useMeals } from "../../context/MealContext";
 import { normalizeText } from "../../utils/recipes";
+import { t as tStatic } from "../../i18n/core";
 
 /** Varsayılan + kişisel yemekler (id'ye göre tekilleştirilmiş). */
 export const useAllMeals = () => {
@@ -24,10 +25,15 @@ export const mealMatchesQuery = (meal, query) => {
   );
 };
 
-export const formatMealMeta = (meal) =>
+/**
+ * "280 kcal · 10 dk" biçiminde kısa yemek bilgisi.
+ * React bileşenleri dil değişiminde yeniden çizilmek için kendi `t`'sini geçmeli;
+ * verilmezse modül düzeyindeki (geçerli dil) çeviri kullanılır.
+ */
+export const formatMealMeta = (meal, t = tStatic) =>
   [
-    meal.calories ? `${meal.calories} kcal` : null,
-    meal.prepTime ? `${meal.prepTime} dk` : null,
+    meal.calories ? t("common.kcal", { count: meal.calories }) : null,
+    meal.prepTime ? t("common.minutes", { count: meal.prepTime }) : null,
   ]
     .filter(Boolean)
     .join(" · ");

@@ -21,17 +21,14 @@ import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartmentOutl
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { palette } from "../../theme";
-import { MEAL_TYPES, MEAL_TYPE_LABELS } from "../../constants";
+import { MEAL_TYPES } from "../../constants";
+import { useI18n } from "../../i18n";
 import { useMeals } from "../../context/MealContext";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import { useMealDrag } from "../calendar/dnd";
 import ConfirmDialog from "./ConfirmDialog";
 
-const SOURCE_OPTIONS = [
-  { value: "all", label: "Tümü" },
-  { value: "default", label: "Varsayılan" },
-  { value: "personal", label: "Kişisel" },
-];
+const SOURCE_OPTIONS = ["all", "default", "personal"];
 
 const MetaItem = ({ icon: Icon, children }) => (
   <Stack
@@ -47,6 +44,7 @@ const MetaItem = ({ icon: Icon, children }) => (
 
 /** Kütüphanedeki sürüklenebilir yemek kartı. */
 const MealCard = ({ meal, recipeCount, onClick, onDelete }) => {
+  const { t } = useI18n();
   const { dragRef, isDragging } = useMealDrag(meal);
   const accent = palette[meal.type] || palette.primary;
 
@@ -87,9 +85,11 @@ const MealCard = ({ meal, recipeCount, onClick, onDelete }) => {
             {meal.name}
           </Typography>
           {recipeCount > 0 && (
-            <Tooltip title={`${recipeCount} tarif`}>
+            <Tooltip
+              title={t("planner.library.recipeCount", { count: recipeCount })}
+            >
               <MenuBookIcon
-                aria-label="Tarifi var"
+                aria-label={t("planner.library.hasRecipe")}
                 sx={{ fontSize: 15, color: "secondary.main", flexShrink: 0 }}
               />
             </Tooltip>
@@ -102,19 +102,21 @@ const MealCard = ({ meal, recipeCount, onClick, onDelete }) => {
           sx={{ mt: 0.25 }}
         >
           <Typography variant="caption" sx={{ color: accent, fontWeight: 600 }}>
-            {MEAL_TYPE_LABELS[meal.type]}
+            {t(`common.mealTypes.${meal.type}`)}
           </Typography>
           {meal.calories ? (
             <MetaItem icon={LocalFireDepartmentIcon}>
-              {meal.calories} kcal
+              {t("common.kcal", { count: meal.calories })}
             </MetaItem>
           ) : null}
           {meal.prepTime ? (
-            <MetaItem icon={ScheduleIcon}>{meal.prepTime} dk</MetaItem>
+            <MetaItem icon={ScheduleIcon}>
+              {t("common.minutes", { count: meal.prepTime })}
+            </MetaItem>
           ) : null}
           {meal.isPersonal && (
             <Chip
-              label="Kişisel"
+              label={t("planner.library.personal")}
               size="small"
               variant="outlined"
               sx={{ height: 18, fontSize: 10 }}
@@ -123,11 +125,11 @@ const MealCard = ({ meal, recipeCount, onClick, onDelete }) => {
         </Stack>
       </Box>
       {meal.isPersonal && onDelete && (
-        <Tooltip title="Sil">
+        <Tooltip title={t("planner.library.delete")}>
           <IconButton
             className="meal-delete"
             size="small"
-            aria-label={`${meal.name} yemeğini sil`}
+            aria-label={t("planner.library.deleteMeal", { name: meal.name })}
             onClick={(e) => {
               e.stopPropagation();
               onDelete(meal);
@@ -143,6 +145,7 @@ const MealCard = ({ meal, recipeCount, onClick, onDelete }) => {
 };
 
 const MealListFilters = () => {
+  const { t } = useI18n();
   const {
     searchTerm,
     setSearchTerm,
@@ -156,10 +159,10 @@ const MealListFilters = () => {
     <Stack spacing={1.25}>
       <TextField
         fullWidth
-        placeholder="Yemek ara…"
+        placeholder={t("planner.library.searchPlaceholder")}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        inputProps={{ "aria-label": "Yemek ara" }}
+        inputProps={{ "aria-label": t("planner.library.searchLabel") }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -170,7 +173,7 @@ const MealListFilters = () => {
             <InputAdornment position="end">
               <IconButton
                 size="small"
-                aria-label="Aramayı temizle"
+                aria-label={t("planner.library.clearSearch")}
                 onClick={() => setSearchTerm("")}
               >
                 <ClearIcon fontSize="small" />
@@ -191,7 +194,11 @@ const MealListFilters = () => {
             <Chip
               key={type}
               size="small"
-              label={type === "all" ? "Hepsi" : MEAL_TYPE_LABELS[type]}
+              label={
+                type === "all"
+                  ? t("planner.library.allTypes")
+                  : t(`common.mealTypes.${type}`)
+              }
               onClick={() => setMealTypeFilter(type)}
               variant={selected ? "filled" : "outlined"}
               sx={
@@ -215,15 +222,11 @@ const MealListFilters = () => {
         size="small"
         value={mealFilter}
         onChange={(_, v) => v && setMealFilter(v)}
-        aria-label="Yemek kaynağı"
+        aria-label={t("planner.library.sourceLabel")}
       >
-        {SOURCE_OPTIONS.map((o) => (
-          <ToggleButton
-            key={o.value}
-            value={o.value}
-            sx={{ py: 0.4, fontSize: 12 }}
-          >
-            {o.label}
+        {SOURCE_OPTIONS.map((value) => (
+          <ToggleButton key={value} value={value} sx={{ py: 0.4, fontSize: 12 }}>
+            {t(`planner.library.source.${value}`)}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
@@ -237,6 +240,7 @@ const MealListFilters = () => {
  * Kapsayıcının yüksekliğini doldurur; liste kendi içinde kayar.
  */
 const MealList = ({ onMealClick, onNotify }) => {
+  const { t, lang } = useI18n();
   const { filteredMeals, loading, deletePersonalMeal } = useMeals();
   const { getRecipesForMeal } = useRecipes();
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -244,9 +248,9 @@ const MealList = ({ onMealClick, onNotify }) => {
   const sortedMeals = useMemo(
     () =>
       [...filteredMeals].sort((a, b) =>
-        (a.name || "").localeCompare(b.name || "", "tr"),
+        (a.name || "").localeCompare(b.name || "", lang),
       ),
-    [filteredMeals],
+    [filteredMeals, lang],
   );
 
   const handleConfirmDelete = async () => {
@@ -256,8 +260,8 @@ const MealList = ({ onMealClick, onNotify }) => {
     const ok = await deletePersonalMeal(meal.id);
     onNotify?.(
       ok
-        ? `"${meal.name}" silindi`
-        : "Yemek silinemedi. Lütfen tekrar deneyin.",
+        ? t("planner.snackbar.mealDeleted", { name: meal.name })
+        : t("planner.snackbar.deleteFailed"),
       ok ? "success" : "error",
     );
   };
@@ -279,10 +283,12 @@ const MealList = ({ onMealClick, onNotify }) => {
           sx={{ mb: 1.5 }}
         >
           <Typography variant="h6" component="h2">
-            Yemekler
+            {t("planner.library.title")}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {loading ? "" : `${sortedMeals.length} yemek`}
+            {loading
+              ? ""
+              : t("planner.library.count", { count: sortedMeals.length })}
           </Typography>
         </Stack>
         <MealListFilters />
@@ -314,7 +320,7 @@ const MealList = ({ onMealClick, onNotify }) => {
             color="text.secondary"
             sx={{ textAlign: "center", py: 4 }}
           >
-            Eşleşen yemek bulunamadı.
+            {t("planner.library.empty")}
           </Typography>
         ) : (
           sortedMeals.map((meal) => (
@@ -341,18 +347,20 @@ const MealList = ({ onMealClick, onNotify }) => {
           textAlign: "center",
         }}
       >
-        Yemekleri sürükleyip haftalık plana bırakın
+        {t("planner.library.dragHint")}
       </Typography>
 
       <ConfirmDialog
         open={!!pendingDelete}
-        title="Yemeği sil"
+        title={t("planner.library.deleteDialog.title")}
         message={
           pendingDelete
-            ? `"${pendingDelete.name}" kişisel yemeklerinizden silinsin mi?`
+            ? t("planner.library.deleteDialog.message", {
+                name: pendingDelete.name,
+              })
             : ""
         }
-        confirmLabel="Sil"
+        confirmLabel={t("planner.library.deleteDialog.confirm")}
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDelete(null)}
       />

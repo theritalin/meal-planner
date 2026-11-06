@@ -4,12 +4,14 @@ import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { palette } from "../../theme";
 import { useMealDrag } from "./dnd";
+import { useI18n } from "../../i18n";
 
 /**
  * Plandaki tek bir yemek (kompakt kart). Başka bir slota sürüklenerek
  * taşınabilir, tıklanınca tarif önizlemesi açılır.
  */
 const MealSlot = ({ meal, day, type, onRemove, onClick, draggable = true }) => {
+  const { t } = useI18n();
   const from = useMemo(() => ({ day, type }), [day, type]);
   const { dragRef, isDragging } = useMealDrag(meal, from);
   const accent = palette[type] || palette.primary;
@@ -68,14 +70,14 @@ const MealSlot = ({ meal, day, type, onRemove, onClick, draggable = true }) => {
             color="text.secondary"
             sx={{ fontSize: 10.5, lineHeight: 1.2 }}
           >
-            {meal.calories} kcal
+            {t("common.kcal", { count: meal.calories })}
           </Typography>
         ) : null}
       </Box>
-      <Tooltip title="Kaldır">
+      <Tooltip title={t("planner.calendar.remove")}>
         <IconButton
           size="small"
-          aria-label={`${meal.name} yemeğini kaldır`}
+          aria-label={t("planner.calendar.removeMeal", { name: meal.name })}
           onClick={(e) => {
             e.stopPropagation();
             onRemove?.(meal);

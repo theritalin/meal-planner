@@ -1,3 +1,122 @@
-const planner = {};
+const plural = (count, one, many) => (Number(count) === 1 ? one : many);
+
+const planner = {
+  header: {
+    title: "Weekly Plan",
+    addMeal: "Add Meal",
+    shuffle: "Shuffle",
+    clear: "Clear",
+  },
+  summary: {
+    planned: "meals planned",
+    kcal: "kcal",
+    progressLabel: "Plan progress",
+  },
+  save: {
+    idle: "Save",
+    saving: "Saving…",
+    success: "Saved",
+    error: "Not saved",
+  },
+  snackbar: {
+    slotFull: "You can add up to {max} meals per slot",
+    shuffled: "Random plan created",
+    cleared: "Plan cleared",
+    saved: "Plan saved",
+    saveFailed: "Couldn't save the plan. Please try again.",
+    mealAdded: "\"{name}\" added",
+    mealDeleted: "\"{name}\" deleted",
+    deleteFailed: "Couldn't delete the meal. Please try again.",
+  },
+  clearDialog: {
+    title: "Clear plan",
+    message: "All meals will be removed from your weekly plan. Are you sure?",
+    confirm: "Clear",
+  },
+  confirm: {
+    confirm: "Confirm",
+    cancel: "Cancel",
+  },
+  calendar: {
+    weekRegion: "Weekly meal plan",
+    daySelector: "Select day",
+    dayWithToday: "{day} · Today",
+    slotLabel: "{day} {type}",
+    addToSlot: ({ day, type }) =>
+      `Add meal to ${day} ${String(type).toLowerCase()}`,
+    addMealTooltip: "Add meal",
+    addToType: ({ type }) => `Add meal to ${String(type).toLowerCase()}`,
+    add: "Add",
+    full: "Full",
+    emptySlot: "No meals added yet.",
+    remove: "Remove",
+    removeMeal: "Remove {name}",
+  },
+  library: {
+    region: "Meal library",
+    title: "Meals",
+    count: ({ count }) => `${count} ${plural(count, "meal", "meals")}`,
+    searchPlaceholder: "Search meals…",
+    searchLabel: "Search meals",
+    clearSearch: "Clear search",
+    allTypes: "All",
+    sourceLabel: "Meal source",
+    source: {
+      all: "All",
+      default: "Built-in",
+      personal: "Personal",
+    },
+    personal: "Personal",
+    recipeCount: ({ count }) => `${count} ${plural(count, "recipe", "recipes")}`,
+    hasRecipe: "Has recipe",
+    delete: "Delete",
+    deleteMeal: "Delete {name}",
+    empty: "No matching meals found.",
+    dragHint: "Drag meals onto your weekly plan",
+    deleteDialog: {
+      title: "Delete meal",
+      message: "Delete \"{name}\" from your personal meals?",
+      confirm: "Delete",
+    },
+  },
+  picker: {
+    titleForType: ({ type }) =>
+      `Choose a meal for ${String(type).toLowerCase()}`,
+    title: "Choose a meal",
+    close: "Close",
+    searchPlaceholder: "Search meals…",
+    searchLabel: "Search meals",
+    allTypes: "All meals",
+    empty: "No matching meals found.",
+    added: "Added",
+    personal: "Personal",
+  },
+  addMeal: {
+    title: "Add a new meal",
+    close: "Close",
+    name: "Meal name",
+    description: "Description",
+    type: "Meal",
+    typeLabel: "Meal type",
+    calories: "Calories",
+    prepTime: "Prep time",
+    kcalUnit: "kcal",
+    minUnit: "min",
+    cancel: "Cancel",
+    save: "Save",
+    submitError:
+      "Couldn't save the meal. Make sure you're signed in and try again.",
+    errors: {
+      nameRequired: "Meal name is required",
+      nameTooShort: "Must be at least 2 characters",
+      nameTooLong: "Must be 80 characters or fewer",
+      descriptionTooLong: "Must be 300 characters or fewer",
+      typeRequired: "Choose a meal type",
+      invalidCalories: "Enter a valid calorie amount",
+      invalidPrepTime: "Enter a valid time",
+      max: "Can't be more than {max}",
+    },
+  },
+};
 
 export default planner;

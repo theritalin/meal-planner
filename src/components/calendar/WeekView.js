@@ -2,41 +2,41 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { palette } from "../../theme";
-import {
-  DAYS,
-  DAY_LABELS,
-  MEAL_TYPES,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { DAYS, MEAL_TYPES } from "../../constants";
+import { useI18n } from "../../i18n";
 import { useMeals } from "../../context/MealContext";
 import DayCell from "./DayCell";
 import { getTodayKey, slotMeals } from "./planUtils";
 
 const LABEL_COL = 84;
 
-const DayHeader = ({ day, isToday }) => (
-  <Box
-    sx={{
-      textAlign: "center",
-      py: 1,
-      borderRadius: 2.5,
-      bgcolor: isToday ? "primary.main" : "transparent",
-      color: isToday ? "primary.contrastText" : "text.primary",
-    }}
-  >
-    <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-      {DAY_LABELS[day]}
-    </Typography>
-    <Typography
-      variant="caption"
-      sx={{ opacity: isToday ? 0.9 : 0.6, fontSize: 11 }}
+const DayHeader = ({ day, isToday }) => {
+  const { t } = useI18n();
+  return (
+    <Box
+      sx={{
+        textAlign: "center",
+        py: 1,
+        borderRadius: 2.5,
+        bgcolor: isToday ? "primary.main" : "transparent",
+        color: isToday ? "primary.contrastText" : "text.primary",
+      }}
     >
-      {isToday ? "Bugün" : " "}
-    </Typography>
-  </Box>
-);
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+        {t(`common.days.${day}`)}
+      </Typography>
+      <Typography
+        variant="caption"
+        sx={{ opacity: isToday ? 0.9 : 0.6, fontSize: 11 }}
+      >
+        {isToday ? t("common.today") : "\u00a0"}
+      </Typography>
+    </Box>
+  );
+};
 
 const MealTypeLabel = ({ type }) => {
+  const { t } = useI18n();
   const accent = palette[type];
   return (
     <Box
@@ -52,7 +52,7 @@ const MealTypeLabel = ({ type }) => {
       }}
     >
       <Typography variant="subtitle2" sx={{ fontWeight: 700, color: accent }}>
-        {MEAL_TYPE_LABELS[type]}
+        {t(`common.mealTypes.${type}`)}
       </Typography>
     </Box>
   );
@@ -63,6 +63,7 @@ const MealTypeLabel = ({ type }) => {
  * Dar ekranlarda yatay kaydırılabilir.
  */
 const WeekView = ({ onAddClick, onMealClick }) => {
+  const { t } = useI18n();
   const { weekPlan, updateMealPlan } = useMeals();
   const todayKey = getTodayKey();
   const handleRemove = (day, type, meal) =>
@@ -72,7 +73,7 @@ const WeekView = ({ onAddClick, onMealClick }) => {
     <Box sx={{ overflowX: "auto", pb: 0.5 }}>
       <Box
         role="region"
-        aria-label="Haftalık yemek planı"
+        aria-label={t("planner.calendar.weekRegion")}
         sx={{
           display: "grid",
           gridTemplateColumns: `${LABEL_COL}px repeat(${DAYS.length}, minmax(112px, 1fr))`,

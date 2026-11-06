@@ -30,16 +30,17 @@ import DayView from "./calendar/DayView";
 import { getPlanSummary, getTodayKey, slotMeals } from "./calendar/planUtils";
 import RecipeQuickView from "./recipes/RecipeQuickView";
 import AdBanner from "./ads/AdBanner";
+import { useI18n } from "../i18n";
 
 const SAVE_BUTTON = {
   saving: {
-    label: "Kaydediliyor…",
+    labelKey: "planner.save.saving",
     icon: <CircularProgress size={16} color="inherit" />,
     color: "primary",
   },
-  success: { label: "Kaydedildi", icon: <CheckIcon />, color: "secondary" },
-  error: { label: "Kaydedilemedi", icon: <ErrorOutlineIcon />, color: "error" },
-  idle: { label: "Kaydet", icon: <SaveIcon />, color: "primary" },
+  success: { labelKey: "planner.save.success", icon: <CheckIcon />, color: "secondary" },
+  error: { labelKey: "planner.save.error", icon: <ErrorOutlineIcon />, color: "error" },
+  idle: { labelKey: "planner.save.idle", icon: <SaveIcon />, color: "primary" },
 };
 
 const useSnackbar = () => {
@@ -61,6 +62,7 @@ const useSnackbar = () => {
 };
 
 const WeekSummary = ({ weekPlan }) => {
+  const { t, formatNumber } = useI18n();
   const { plannedSlots, totalSlots, totalCalories } = useMemo(
     () => getPlanSummary(weekPlan),
     [weekPlan],
@@ -71,21 +73,21 @@ const WeekSummary = ({ weekPlan }) => {
         <Box component="strong" sx={{ color: "text.primary" }}>
           {plannedSlots}/{totalSlots}
         </Box>{" "}
-        öğün planlandı
+        {t("planner.summary.planned")}
         {totalCalories > 0 && (
           <>
             {" · "}
             <Box component="strong" sx={{ color: "text.primary" }}>
-              {totalCalories.toLocaleString("tr-TR")}
+              {formatNumber(totalCalories)}
             </Box>{" "}
-            kcal
+            {t("planner.summary.kcal")}
           </>
         )}
       </Typography>
       <LinearProgress
         variant="determinate"
         value={(plannedSlots / totalSlots) * 100}
-        aria-label="Plan doluluk oranı"
+        aria-label={t("planner.summary.progressLabel")}
         sx={{ mt: 0.75, height: 6, borderRadius: 3 }}
       />
     </Box>
@@ -100,6 +102,7 @@ const PageHeader = ({
   onSave,
   onAddMeal,
 }) => {
+  const { t } = useI18n();
   const save = SAVE_BUTTON[saveStatus] || SAVE_BUTTON.idle;
   return (
     <Stack
@@ -115,13 +118,13 @@ const PageHeader = ({
           component="h1"
           sx={{ mb: 1, fontSize: { xs: 28, md: 34 } }}
         >
-          Haftalık Plan
+          {t("planner.header.title")}
         </Typography>
         <WeekSummary weekPlan={weekPlan} />
       </Box>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
         <Button variant="outlined" startIcon={<AddIcon />} onClick={onAddMeal}>
-          Yemek Ekle
+          {t("planner.header.addMeal")}
         </Button>
         <Button
           variant="outlined"
@@ -129,7 +132,7 @@ const PageHeader = ({
           startIcon={<ShuffleIcon />}
           onClick={onShuffle}
         >
-          Rastgele
+          {t("planner.header.shuffle")}
         </Button>
         <Button
           variant="outlined"
@@ -137,7 +140,7 @@ const PageHeader = ({
           startIcon={<DeleteSweepIcon />}
           onClick={onClear}
         >
-          Temizle
+          {t("planner.header.clear")}
         </Button>
         <Button
           variant="contained"
@@ -147,7 +150,7 @@ const PageHeader = ({
           disabled={saveStatus === "saving"}
           aria-live="polite"
         >
-          {save.label}
+          {t(save.labelKey)}
         </Button>
       </Stack>
     </Stack>
@@ -164,6 +167,7 @@ const MealPlannerPage = () => {
     saveStatus,
     error,
   } = useMeals();
+  const { t } = useI18n();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const snackbar = useSnackbar();
@@ -189,7 +193,7 @@ const MealPlannerPage = () => {
   const handlePick = (meal) => {
     if (pickerSlot.length >= MAX_MEALS_PER_SLOT) {
       snackbar.notify(
-        `Bir öğüne en fazla ${MAX_MEALS_PER_SLOT} yemek eklenebilir`,
+        t("planner.snackbar.slotFull", { max: MAX_MEALS_PER_SLOT }),
         "warning",
       );
     } else {
@@ -200,19 +204,19 @@ const MealPlannerPage = () => {
 
   const handleShuffle = () => {
     generateRandomMealPlan();
-    snackbar.notify("Rastgele plan oluşturuldu");
+    snackbar.notify(t("planner.snackbar.shuffled"));
   };
 
   const handleClear = () => {
     clearMealPlan();
     setConfirmClearOpen(false);
-    snackbar.notify("Plan temizlendi", "info");
+    snackbar.notify(t("planner.snackbar.cleared"), "info");
   };
 
   const handleSave = async () => {
     const ok = await saveMealPlanToFirebase();
     snackbar.notify(
-      ok ? "Plan kaydedildi" : "Plan kaydedilemedi. Lütfen tekrar deneyin.",
+      ok ? t("planner.snackbar.saved") : t("planner.snackbar.saveFailed"),
       ok ? "success" : "error",
     );
   };
@@ -256,7 +260,7 @@ const MealPlannerPage = () => {
           <Paper
             variant="outlined"
             component="aside"
-            aria-label="Yemek kütüphanesi"
+            aria-label={t("planner.library.region")}
             sx={{
               position: "sticky",
               top: 88,
@@ -298,16 +302,20 @@ const MealPlannerPage = () => {
         {addMealOpen && (
           <AddMealForm
             onClose={() => setAddMealOpen(false)}
-            onSaved={(meal) => snackbar.notify(`"${meal.name}" eklendi`)}
+            onSaved={(meal) =>
+              snackbar.notify(
+                t("planner.snackbar.mealAdded", { name: meal.name }),
+              )
+            }
           />
         )}
       </Dialog>
 
       <ConfirmDialog
         open={confirmClearOpen}
-        title="Planı temizle"
-        message="Haftalık plandaki tüm yemekler kaldırılacak. Emin misiniz?"
-        confirmLabel="Temizle"
+        title={t("planner.clearDialog.title")}
+        message={t("planner.clearDialog.message")}
+        confirmLabel={t("planner.clearDialog.confirm")}
         onConfirm={handleClear}
         onClose={() => setConfirmClearOpen(false)}
       />

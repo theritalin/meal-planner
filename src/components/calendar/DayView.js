@@ -16,19 +16,15 @@ import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import { palette } from "../../theme";
-import {
-  DAYS,
-  DAY_LABELS,
-  MAX_MEALS_PER_SLOT,
-  MEAL_TYPES,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { DAYS, MAX_MEALS_PER_SLOT, MEAL_TYPES } from "../../constants";
+import { useI18n } from "../../i18n";
 import { useMeals } from "../../context/MealContext";
 import { getDayMealCount, getTodayKey, slotMeals } from "./planUtils";
 import { formatMealMeta } from "../meals/mealUtils";
 
 /** Yatay kaydırılabilir gün seçici. Seçili gün görünür alana kaydırılır. */
 const DaySelector = ({ selectedDay, onSelect, weekPlan }) => {
+  const { t } = useI18n();
   const todayKey = getTodayKey();
   const refs = useRef({});
 
@@ -45,7 +41,7 @@ const DaySelector = ({ selectedDay, onSelect, weekPlan }) => {
       direction="row"
       spacing={1}
       role="tablist"
-      aria-label="Gün seçimi"
+      aria-label={t("planner.calendar.daySelector")}
       sx={{
         overflowX: "auto",
         py: 0.5,
@@ -74,8 +70,10 @@ const DaySelector = ({ selectedDay, onSelect, weekPlan }) => {
               aria-selected={selected}
               label={
                 day === todayKey
-                  ? `${DAY_LABELS[day]} · Bugün`
-                  : DAY_LABELS[day]
+                  ? t("planner.calendar.dayWithToday", {
+                      day: t(`common.days.${day}`),
+                    })
+                  : t(`common.days.${day}`)
               }
               color={selected ? "primary" : "default"}
               variant={selected ? "filled" : "outlined"}
@@ -100,7 +98,9 @@ const MealTypeSection = ({
   onRemove,
   onMealClick,
 }) => {
+  const { t } = useI18n();
   const accent = palette[type];
+  const typeLabel = t(`common.mealTypes.${type}`);
   const isFull = meals.length >= MAX_MEALS_PER_SLOT;
 
   return (
@@ -112,7 +112,7 @@ const MealTypeSection = ({
         sx={{ px: 2, py: 1.25, bgcolor: alpha(accent, 0.06) }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: accent }}>
-          {MEAL_TYPE_LABELS[type]}
+          {typeLabel}
         </Typography>
         <Button
           size="small"
@@ -120,9 +120,9 @@ const MealTypeSection = ({
           disabled={isFull}
           onClick={() => onAdd(day, type)}
           sx={{ color: accent }}
-          aria-label={`${MEAL_TYPE_LABELS[type]} için yemek ekle`}
+          aria-label={t("planner.calendar.addToType", { type: typeLabel })}
         >
-          {isFull ? "Dolu" : "Ekle"}
+          {isFull ? t("planner.calendar.full") : t("planner.calendar.add")}
         </Button>
       </Stack>
       {meals.length === 0 ? (
@@ -131,7 +131,7 @@ const MealTypeSection = ({
           color="text.secondary"
           sx={{ px: 2, py: 2 }}
         >
-          Henüz yemek eklenmedi.
+          {t("planner.calendar.emptySlot")}
         </Typography>
       ) : (
         <List disablePadding>
@@ -143,7 +143,9 @@ const MealTypeSection = ({
               secondaryAction={
                 <IconButton
                   edge="end"
-                  aria-label={`${meal.name} yemeğini kaldır`}
+                  aria-label={t("planner.calendar.removeMeal", {
+                    name: meal.name,
+                  })}
                   onClick={() => onRemove(day, type, meal)}
                 >
                   <CloseIcon fontSize="small" />
@@ -153,7 +155,7 @@ const MealTypeSection = ({
               <ListItemButton onClick={() => onMealClick?.(meal)}>
                 <ListItemText
                   primary={meal.name}
-                  secondary={formatMealMeta(meal) || null}
+                  secondary={formatMealMeta(meal, t) || null}
                   primaryTypographyProps={{ fontWeight: 600 }}
                 />
               </ListItemButton>

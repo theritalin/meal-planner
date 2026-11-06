@@ -20,7 +20,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import CheckIcon from "@mui/icons-material/Check";
 import { palette } from "../../theme";
-import { MEAL_TYPE_LABELS } from "../../constants";
+import { useI18n } from "../../i18n";
 import { formatMealMeta, mealMatchesQuery, useAllMeals } from "./mealUtils";
 
 /**
@@ -35,6 +35,7 @@ const MealPickerDialog = ({
   excludeIds = [],
   title,
 }) => {
+  const { t } = useI18n();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const allMeals = useAllMeals();
@@ -60,7 +61,7 @@ const MealPickerDialog = ({
   );
 
   const accent = palette[mealType] || palette.primary;
-  const typeLabel = MEAL_TYPE_LABELS[mealType];
+  const typeLabel = mealType ? t(`common.mealTypes.${mealType}`) : null;
 
   return (
     <Dialog
@@ -100,9 +101,12 @@ const MealPickerDialog = ({
         />
       )}
       <DialogTitle id="meal-picker-title" sx={{ pr: 6, pb: 1 }}>
-        {title || (typeLabel ? `${typeLabel} için yemek seç` : "Yemek seç")}
+        {title ||
+          (typeLabel
+            ? t("planner.picker.titleForType", { type: typeLabel })
+            : t("planner.picker.title"))}
         <IconButton
-          aria-label="Kapat"
+          aria-label={t("planner.picker.close")}
           onClick={onClose}
           sx={{ position: "absolute", right: 12, top: isMobile ? 16 : 12 }}
         >
@@ -113,7 +117,7 @@ const MealPickerDialog = ({
         <TextField
           fullWidth
           autoFocus={!isMobile}
-          placeholder="Yemek ara…"
+          placeholder={t("planner.picker.searchPlaceholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           InputProps={{
@@ -123,7 +127,7 @@ const MealPickerDialog = ({
               </InputAdornment>
             ),
           }}
-          inputProps={{ "aria-label": "Yemek ara" }}
+          inputProps={{ "aria-label": t("planner.picker.searchLabel") }}
         />
         {mealType && (
           <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
@@ -140,7 +144,7 @@ const MealPickerDialog = ({
             />
             <Chip
               size="small"
-              label="Tüm öğünler"
+              label={t("planner.picker.allTypes")}
               onClick={() => setShowAllTypes(true)}
               variant={showAllTypes ? "filled" : "outlined"}
               color={showAllTypes ? "primary" : "default"}
@@ -151,7 +155,7 @@ const MealPickerDialog = ({
       <DialogContent dividers sx={{ p: 0 }}>
         {results.length === 0 ? (
           <Typography color="text.secondary" sx={{ p: 3, textAlign: "center" }}>
-            Eşleşen yemek bulunamadı.
+            {t("planner.picker.empty")}
           </Typography>
         ) : (
           <List disablePadding>
@@ -177,7 +181,7 @@ const MealPickerDialog = ({
                   />
                   <ListItemText
                     primary={meal.name}
-                    secondary={formatMealMeta(meal) || meal.description}
+                    secondary={formatMealMeta(meal, t) || meal.description}
                     primaryTypographyProps={{ fontWeight: 600 }}
                     secondaryTypographyProps={{ noWrap: true }}
                   />
@@ -185,13 +189,13 @@ const MealPickerDialog = ({
                     <CheckIcon
                       fontSize="small"
                       color="secondary"
-                      aria-label="Eklendi"
+                      aria-label={t("planner.picker.added")}
                     />
                   )}
                   {meal.isPersonal && !isAdded && (
                     <Chip
                       size="small"
-                      label="Kişisel"
+                      label={t("planner.picker.personal")}
                       variant="outlined"
                       sx={{ ml: 1 }}
                     />

@@ -17,8 +17,9 @@ import {
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { palette } from "../../theme";
-import { MEAL_TYPES, MEAL_TYPE_LABELS } from "../../constants";
+import { MEAL_TYPES } from "../../constants";
 import { useMeals } from "../../context/MealContext";
+import { useI18n } from "../../i18n";
 
 const createInitialValues = (type) => ({
   name: "",
@@ -28,25 +29,26 @@ const createInitialValues = (type) => ({
   prepTime: "",
 });
 
-const validate = (values) => {
+const validate = (values, t) => {
   const errors = {};
+  const e = (key, params) => t(`planner.addMeal.errors.${key}`, params);
   const name = values.name.trim();
-  if (!name) errors.name = "Yemek adı gerekli";
-  else if (name.length < 2) errors.name = "En az 2 karakter olmalı";
-  else if (name.length > 80) errors.name = "En fazla 80 karakter olabilir";
+  if (!name) errors.name = e("nameRequired");
+  else if (name.length < 2) errors.name = e("nameTooShort");
+  else if (name.length > 80) errors.name = e("nameTooLong");
   if (values.description.length > 300)
-    errors.description = "En fazla 300 karakter olabilir";
-  if (!MEAL_TYPES.includes(values.type)) errors.type = "Öğün seçin";
+    errors.description = e("descriptionTooLong");
+  if (!MEAL_TYPES.includes(values.type)) errors.type = e("typeRequired");
 
-  const checkNumber = (key, max, label) => {
+  const checkNumber = (key, max, invalidKey) => {
     if (values[key] === "") return;
     const n = Number(values[key]);
     if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n))
-      errors[key] = `Geçerli bir ${label} girin`;
-    else if (n > max) errors[key] = `En fazla ${max} olabilir`;
+      errors[key] = e(invalidKey);
+    else if (n > max) errors[key] = e("max", { max });
   };
-  checkNumber("calories", 5000, "kalori");
-  checkNumber("prepTime", 1440, "süre");
+  checkNumber("calories", 5000, "invalidCalories");
+  checkNumber("prepTime", 1440, "invalidPrepTime");
   return errors;
 };
 
@@ -56,13 +58,14 @@ const validate = (values) => {
  * Props: { onClose, onSaved?(meal), defaultType? }
  */
 const AddMealForm = ({ onClose, onSaved, defaultType }) => {
+  const { t } = useI18n();
   const { addPersonalMeal } = useMeals();
   const [values, setValues] = useState(() => createInitialValues(defaultType));
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  const errors = validate(values);
+  const errors = validate(values, t);
   const showError = (key) => (touched[key] ? errors[key] : undefined);
 
   const handleChange = (e) => {
@@ -95,9 +98,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
     setSubmitting(false);
 
     if (!saved) {
-      setSubmitError(
-        "Yemek kaydedilemedi. Giriş yaptığınızdan emin olup tekrar deneyin.",
-      );
+      setSubmitError(t("planner.addMeal.submitError"));
       return;
     }
     onSaved?.(saved);
@@ -107,9 +108,9 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <DialogTitle sx={{ pr: 6 }}>
-        Yeni yemek ekle
+        {t("planner.addMeal.title")}
         <IconButton
-          aria-label="Kapat"
+          aria-label={t("planner.addMeal.close")}
           onClick={onClose}
           sx={{ position: "absolute", right: 12, top: 12 }}
         >
@@ -121,7 +122,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
           {submitError && <Alert severity="error">{submitError}</Alert>}
           <TextField
             name="name"
-            label="Yemek adı"
+            label={t("planner.addMeal.name")}
             required
             autoFocus
             value={values.name}
@@ -132,7 +133,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
           />
           <TextField
             name="description"
-            label="Açıklama"
+            label={t("planner.addMeal.description")}
             multiline
             minRows={2}
             value={values.description}
@@ -149,7 +150,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
               color="text.secondary"
               sx={{ fontWeight: 600 }}
             >
-              Öğün
+              {t("planner.addMeal.type")}
             </Typography>
             <ToggleButtonGroup
               exclusive
@@ -159,7 +160,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
               onChange={(_, type) =>
                 type && setValues((prev) => ({ ...prev, type }))
               }
-              aria-label="Öğün türü"
+              aria-label={t("planner.addMeal.typeLabel")}
             >
               {MEAL_TYPES.map((type) => (
                 <ToggleButton
@@ -173,7 +174,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
                     },
                   }}
                 >
-                  {MEAL_TYPE_LABELS[type]}
+                  {t(`common.mealTypes.${type}`)}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
@@ -181,7 +182,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
           <Stack direction="row" spacing={2}>
             <TextField
               name="calories"
-              label="Kalori"
+              label={t("planner.addMeal.calories")}
               type="number"
               fullWidth
               value={values.calories}
@@ -192,13 +193,15 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
               inputProps={{ min: 0, max: 5000, inputMode: "numeric" }}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end">kcal</InputAdornment>
+                  <InputAdornment position="end">
+                    {t("planner.addMeal.kcalUnit")}
+                  </InputAdornment>
                 ),
               }}
             />
             <TextField
               name="prepTime"
-              label="Hazırlık"
+              label={t("planner.addMeal.prepTime")}
               type="number"
               fullWidth
               value={values.prepTime}
@@ -209,7 +212,9 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
               inputProps={{ min: 0, max: 1440, inputMode: "numeric" }}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end">dk</InputAdornment>
+                  <InputAdornment position="end">
+                    {t("planner.addMeal.minUnit")}
+                  </InputAdornment>
                 ),
               }}
             />
@@ -218,7 +223,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={onClose} color="inherit" disabled={submitting}>
-          Vazgeç
+          {t("planner.addMeal.cancel")}
         </Button>
         <Button
           type="submit"
@@ -228,7 +233,7 @@ const AddMealForm = ({ onClose, onSaved, defaultType }) => {
             submitting ? <CircularProgress size={16} color="inherit" /> : null
           }
         >
-          Kaydet
+          {t("planner.addMeal.save")}
         </Button>
       </DialogActions>
     </form>

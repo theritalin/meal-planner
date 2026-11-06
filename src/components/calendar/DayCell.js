@@ -3,11 +3,8 @@ import { Box, IconButton, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import { palette } from "../../theme";
-import {
-  MAX_MEALS_PER_SLOT,
-  MEAL_TYPE_LABELS,
-  DAY_LABELS,
-} from "../../constants";
+import { MAX_MEALS_PER_SLOT } from "../../constants";
+import { useI18n } from "../../i18n";
 import MealSlot from "./MealSlot";
 import { useMealDrop } from "./dnd";
 
@@ -45,14 +42,19 @@ const DayCell = ({
   onRemove,
   onMealClick,
 }) => {
+  const { t } = useI18n();
   const dropState = useMealDrop(day, type, meals);
+  const labelParams = {
+    day: t(`common.days.${day}`),
+    type: t(`common.mealTypes.${type}`),
+  };
   const accent = palette[type] || palette.primary;
   const isFull = meals.length >= MAX_MEALS_PER_SLOT;
 
   return (
     <Box
       ref={dropState.dropRef}
-      aria-label={`${DAY_LABELS[day]} ${MEAL_TYPE_LABELS[type]}`}
+      aria-label={t("planner.calendar.slotLabel", labelParams)}
       sx={{
         minHeight: 104,
         p: 0.75,
@@ -85,10 +87,10 @@ const DayCell = ({
             minHeight: 28,
           }}
         >
-          <Tooltip title="Yemek ekle">
+          <Tooltip title={t("planner.calendar.addMealTooltip")}>
             <IconButton
               size="small"
-              aria-label={`${DAY_LABELS[day]} ${MEAL_TYPE_LABELS[type]} için yemek ekle`}
+              aria-label={t("planner.calendar.addToSlot", labelParams)}
               onClick={() => onAdd(day, type)}
               sx={{
                 color: alpha(accent, 0.8),
