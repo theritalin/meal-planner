@@ -1,4 +1,9 @@
-import { buildShoppingList, parseAmount, summarizePlan } from "./shoppingList";
+import {
+  buildShoppingList,
+  formatAmount,
+  parseAmount,
+  summarizePlan,
+} from "./shoppingList";
 import { createEmptyWeekPlan } from "../../constants";
 
 describe("parseAmount", () => {
@@ -75,5 +80,12 @@ describe("buildShoppingList", () => {
       activeDays: 3,
       uniqueMeals: 3,
     });
+  });
+});
+
+describe("formatAmount", () => {
+  it("dile göre ondalık ayırıcı kullanır", () => {
+    expect(formatAmount(1.5, "tr")).toBe("1,5");
+    expect(formatAmount(1.5, "en")).toBe("1.5");
   });
 });

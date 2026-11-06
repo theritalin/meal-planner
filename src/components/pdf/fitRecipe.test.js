@@ -7,6 +7,7 @@ import {
   SCALE_PRESETS,
   MIN_SCALE,
   TOC,
+  recipeLabels,
 } from "./fitRecipe";
 
 const sentence =
@@ -119,5 +120,30 @@ describe("planCookbook", () => {
     const plan = planCookbook(many);
     expect(plan.tocPages).toBe(tocPageCount(60));
     expect(plan.entries[0].startPage).toBe(1 + plan.tocPages + 1);
+  });
+});
+
+describe("dil desteği", () => {
+  it("İngilizce tarif için de geçerli bir düzen hesaplar", () => {
+    const recipe = makeRecipe(6, 4);
+    expect(computeRecipeLayout(recipe, "en")).toMatchObject({
+      scale: 1,
+      layout: "two-column",
+      estimatedPages: 1,
+    });
+    const plan = planCookbook([recipe, makeRecipe(40, 45)], { lang: "en" });
+    expect(plan.entries[0].startPage).toBe(3);
+    expect(plan.entries[1].layout).toBe("single-column");
+  });
+
+  it("yer tutucu metinler belge diliyle aynıdır", () => {
+    expect(recipeLabels("en")).toEqual({
+      untitled: "Untitled recipe",
+      noIngredients: "No ingredients added.",
+      noSteps: "No steps added.",
+    });
+    expect(recipeLabels("tr").untitled).toBe("İsimsiz tarif");
+    // İsimsiz tarifte yükseklik, ilgili dildeki yer tutucu başlıkla ölçülür.
+    expect(estimateTwoColumnHeight({}, 1, "en")).toBeGreaterThan(0);
   });
 });

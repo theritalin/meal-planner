@@ -6,9 +6,13 @@
 
 import React from "react";
 import { isNativeApp } from "../../services/platform";
+import { getLang, translate } from "../../i18n/core";
 
 /** Türkçe karakterleri sadeleştirerek güvenli dosya adı üretir. */
-export const slugify = (text, fallback = "tarif") => {
+export const slugify = (
+  text,
+  fallback = translate(getLang(), "pdf.files.recipe")
+) => {
   const map = { ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u" };
   const slug = (text || "")
     .toString()
@@ -50,7 +54,11 @@ const saveBlobNative = async (blob, filename) => {
     recursive: true,
   });
   try {
-    await Share.share({ title: filename, files: [uri], dialogTitle: "PDF'i paylaş" });
+    await Share.share({
+      title: filename,
+      files: [uri],
+      dialogTitle: translate(getLang(), "pdf.files.shareTitle"),
+    });
   } catch (err) {
     // Kullanıcı paylaşımı iptal ettiyse sessizce geç.
     if (!/cancel/i.test(err?.message || "")) throw err;
@@ -104,7 +112,10 @@ const showInterstitialAfterExport = () => {
  * @param {() => Promise<Blob>} makeBlob
  * @returns {Promise<void>}
  */
-export const previewPdf = async (makeBlob, filename = "onizleme.pdf") => {
+export const previewPdf = async (
+  makeBlob,
+  filename = `${translate(getLang(), "pdf.files.preview")}.pdf`
+) => {
   if (isNativeApp()) {
     // WebView'da yeni sekme yok: PDF'i paylaşım sayfasıyla bir PDF
     // görüntüleyicide açtır.
@@ -130,12 +141,14 @@ export const previewPdf = async (makeBlob, filename = "onizleme.pdf") => {
 /**
  * Tarif kitabı PDF blob'u üretir.
  * @param {{ recipes: Array, title?: string, author?: string,
- *           cover?: boolean, toc?: boolean }} options
+ *           cover?: boolean, toc?: boolean, lang?: string }} options
+ *        `lang` verilmezse geçerli arayüz dili kullanılır.
  * @returns {Promise<Blob>}
  */
 export const generateCookbookBlob = async ({
   recipes,
-  title = "Tarif Kitabım",
+  lang = getLang(),
+  title = translate(lang, "pdf.doc.defaultBookTitle"),
   author,
   cover = true,
   toc = true,
@@ -152,6 +165,7 @@ export const generateCookbookBlob = async ({
       cover={cover}
       toc={toc}
       date={new Date()}
+      lang={lang}
     />
   ).toBlob();
 };
@@ -159,13 +173,14 @@ export const generateCookbookBlob = async ({
 /**
  * Haftalık plan + alışveriş listesi PDF blob'u üretir.
  * @param {{ weekPlan: object, getRecipesForMeal?: Function,
- *           author?: string }} options
+ *           author?: string, lang?: string }} options
  * @returns {Promise<Blob>}
  */
 export const generatePlanBlob = async ({
   weekPlan,
   getRecipesForMeal,
   author,
+  lang = getLang(),
 }) => {
   const [{ pdf }, { default: PlanDocument }] = await Promise.all([
     loadRenderer(),
@@ -177,6 +192,7 @@ export const generatePlanBlob = async ({
       getRecipesForMeal={getRecipesForMeal}
       author={author}
       date={new Date()}
+      lang={lang}
     />
   ).toBlob();
 };
@@ -186,17 +202,22 @@ export const generatePlanBlob = async ({
  * Tarif detay sayfası tarafından kullanılır.
  *
  * @param {object} recipe  Tarif nesnesi (bkz. veri modeli)
- * @param {{ bookTitle?: string, mealType?: string }} [options]
+ * @param {{ bookTitle?: string, mealType?: string, lang?: string }} [options]
  * @returns {Promise<void>}
  */
 export const downloadRecipePdf = async (recipe, options = {}) => {
   if (!recipe) throw new Error("Tarif bulunamadı");
+  const lang = options.lang || getLang();
   const data = options.mealType ? { ...recipe, mealType: options.mealType } : recipe;
   const blob = await generateCookbookBlob({
     recipes: [data],
-    title: options.bookTitle || "Tarif Kitabım",
+    title: options.bookTitle || translate(lang, "pdf.doc.defaultBookTitle"),
     cover: false,
     toc: false,
+    lang,
   });
-  await saveBlob(blob, `${slugify(recipe.name)}.pdf`);
+  await saveBlob(
+    blob,
+    `${slugify(recipe.name, translate(lang, "pdf.files.recipe"))}.pdf`
+  );
 };

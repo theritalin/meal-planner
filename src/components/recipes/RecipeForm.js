@@ -24,9 +24,9 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import { useMeals } from "../../context/MealContext";
-import { DIFFICULTY_LABELS, MEAL_TYPE_LABELS } from "../../constants";
-import { COMMON_UNITS, parseIngredientLines } from "./ingredientParsing";
-import { recipeTextLength } from "./recipeHelpers";
+import { useI18n } from "../../i18n";
+import { getCommonUnits, parseIngredientLines } from "./ingredientParsing";
+import { DIFFICULTIES, recipeTextLength } from "./recipeHelpers";
 
 const LONG_RECIPE_CHARS = 2500;
 
@@ -67,34 +67,35 @@ const toFormState = (recipe) => {
 
 const isBlankIngredient = (i) => !i.name.trim() && !i.amount.trim() && !i.unit.trim();
 
+// Hata değerleri çeviri anahtarlarıdır (dil değişince yeniden çevrilir).
 const validate = (form) => {
   const errors = {};
-  if (!form.name.trim()) errors.name = "Tarif adı gerekli";
-  else if (form.name.trim().length > 120) errors.name = "Tarif adı çok uzun";
+  if (!form.name.trim()) errors.name = "recipes.form.errors.nameRequired";
+  else if (form.name.trim().length > 120) errors.name = "recipes.form.errors.nameTooLong";
 
   ["prepTime", "cookTime"].forEach((field) => {
     const v = form[field].trim();
     if (v && (!/^\d+$/.test(v) || Number(v) > 1440)) {
-      errors[field] = "0–1440 arası dakika girin";
+      errors[field] = "recipes.form.errors.minutes";
     }
   });
   const s = form.servings.trim();
   if (s && (!/^\d+$/.test(s) || Number(s) < 1 || Number(s) > 100)) {
-    errors.servings = "1–100 arası bir sayı girin";
+    errors.servings = "recipes.form.errors.servings";
   }
 
   const filled = form.ingredients.filter((i) => !isBlankIngredient(i));
   const rowErrors = {};
   form.ingredients.forEach((i) => {
     if (!isBlankIngredient(i) && !i.name.trim()) {
-      rowErrors[i._key] = "Malzeme adı gerekli";
+      rowErrors[i._key] = "recipes.form.errors.ingredientName";
     }
   });
   if (Object.keys(rowErrors).length) errors.ingredientRows = rowErrors;
-  if (!filled.length) errors.ingredients = "En az bir malzeme ekleyin";
+  if (!filled.length) errors.ingredients = "recipes.form.errors.ingredientsRequired";
 
   if (!form.instructions.some((i) => i.text.trim())) {
-    errors.instructions = "En az bir adım ekleyin";
+    errors.instructions = "recipes.form.errors.stepsRequired";
   }
   return errors;
 };
@@ -143,7 +144,10 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
   const { addPersonalRecipe, updatePersonalRecipe, defaultMeals = [] } =
     useRecipes();
   const { user, meals = [], userMeals = [] } = useMeals();
+  const { t, lang } = useI18n();
   const isEdit = Boolean(initialRecipe?.id);
+  const tErr = (key) => (key ? t(key) : key);
+  const units = getCommonUnits(lang);
 
   const [form, setForm] = useState(() => toFormState(initialRecipe));
   const [errors, setErrors] = useState({});
@@ -162,9 +166,9 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
       seen.add(m.id);
       return true;
     });
-    const byName = (a, b) => (a.name || "").localeCompare(b.name || "", "tr");
+    const byName = (a, b) => (a.name || "").localeCompare(b.name || "", lang);
     return { personal: personal.sort(byName), defaults: defaults.sort(byName) };
-  }, [meals, userMeals, defaultMeals]);
+  }, [meals, userMeals, defaultMeals, lang]);
 
   const knownMealIds = useMemo(
     () => new Set([...mealGroups.personal, ...mealGroups.defaults].map((m) => m.id)),
@@ -216,7 +220,7 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
     });
 
   const applyPaste = () => {
-    const parsed = parseIngredientLines(pasteText).map((i) => ({
+    const parsed = parseIngredientLines(pasteText, lang).map((i) => ({
       ...i,
       _key: nextKey(),
     }));
@@ -273,11 +277,11 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
     const hasErrors = Object.values(found).some(Boolean);
     setErrors(found);
     if (hasErrors) {
-      setSubmitError("Lütfen işaretli alanları kontrol edin.");
+      setSubmitError("recipes.form.errors.checkFields");
       return;
     }
     if (!user?.uid) {
-      setSubmitError("Tarif kaydetmek için giriş yapmalısınız.");
+      setSubmitError("recipes.form.errors.loginToSave");
       return;
     }
 
@@ -292,7 +296,7 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
       onClose?.();
     } catch (err) {
       console.error("Tarif kaydedilemedi:", err);
-      setSubmitError("Tarif kaydedilemedi. Lütfen tekrar deneyin.");
+      setSubmitError("recipes.form.errors.saveFailed");
     } finally {
       setSaving(false);
     }
@@ -305,7 +309,7 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
       </Box>
       {meal.type && (
         <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-          {MEAL_TYPE_LABELS[meal.type]}
+          {t(`common.mealTypes.${meal.type}`)}
         </Typography>
       )}
     </MenuItem>
@@ -315,84 +319,84 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
     <Box component="form" noValidate onSubmit={handleSubmit} sx={{ pt: 1 }}>
       {!user && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Tarif kitabınıza tarif eklemek için giriş yapmanız gerekiyor.
+          {t("recipes.form.loginRequired")}
         </Alert>
       )}
 
       <Stack spacing={2}>
         <TextField
-          label="Tarif adı"
+          label={t("recipes.form.name")}
           value={form.name}
           onChange={setField("name")}
           required
           fullWidth
           autoFocus={!isEdit}
           error={Boolean(errors.name)}
-          helperText={errors.name}
+          helperText={tErr(errors.name)}
           inputProps={{ maxLength: 140 }}
         />
         <TextField
-          label="Kısa açıklama"
+          label={t("recipes.form.description")}
           value={form.description}
           onChange={setField("description")}
           fullWidth
           multiline
           minRows={2}
-          placeholder="Bu tarifi özel kılan ne?"
+          placeholder={t("recipes.form.descriptionPlaceholder")}
         />
         <TextField
           select
-          label="Bağlı yemek (isteğe bağlı)"
+          label={t("recipes.form.meal")}
           value={form.mealId && knownMealIds.has(form.mealId) ? form.mealId : form.mealId ? "__current" : ""}
           onChange={(e) => {
             if (e.target.value === "__current") return;
             setForm((prev) => ({ ...prev, mealId: e.target.value }));
           }}
           fullWidth
-          helperText="Planlayıcıda bu yemeğe tıklandığında tarif gösterilir."
+          helperText={t("recipes.form.mealHelper")}
         >
           <MenuItem value="">
-            <em>Yemeğe bağlama</em>
+            <em>{t("recipes.form.noMeal")}</em>
           </MenuItem>
           {form.mealId && !knownMealIds.has(form.mealId) && (
-            <MenuItem value="__current">Mevcut bağlantı</MenuItem>
+            <MenuItem value="__current">{t("recipes.form.currentLink")}</MenuItem>
           )}
           {mealGroups.personal.length > 0 && (
-            <ListSubheader>Benim Yemeklerim</ListSubheader>
+            <ListSubheader>{t("recipes.form.myMeals")}</ListSubheader>
           )}
           {mealGroups.personal.map(renderMealOption)}
           {mealGroups.defaults.length > 0 && (
-            <ListSubheader>Hazır Yemekler</ListSubheader>
+            <ListSubheader>{t("recipes.form.defaultMeals")}</ListSubheader>
           )}
           {mealGroups.defaults.map(renderMealOption)}
         </TextField>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <TextField
-            label="Hazırlık (dk)"
+            label={t("recipes.form.prepTime")}
             value={form.prepTime}
             onChange={setField("prepTime")}
             inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             error={Boolean(errors.prepTime)}
-            helperText={errors.prepTime}
+            helperText={tErr(errors.prepTime)}
             fullWidth
           />
           <TextField
-            label="Pişirme (dk)"
+            label={t("recipes.form.cookTime")}
             value={form.cookTime}
             onChange={setField("cookTime")}
             inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             error={Boolean(errors.cookTime)}
-            helperText={errors.cookTime}
+            helperText={tErr(errors.cookTime)}
             fullWidth
           />
           <TextField
-            label="Porsiyon"
+            label={t("recipes.form.servings")}
             value={form.servings}
             onChange={setField("servings")}
             inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             error={Boolean(errors.servings)}
-            helperText={errors.servings}
+            helperText={tErr(errors.servings)}
             fullWidth
           />
         </Stack>
@@ -404,7 +408,7 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
             sx={{ mb: 0.75 }}
             id="recipe-difficulty-label"
           >
-            Zorluk
+            {t("recipes.form.difficulty")}
           </Typography>
           <ToggleButtonGroup
             exclusive
@@ -414,9 +418,9 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
             onChange={(_, v) => v && setForm((prev) => ({ ...prev, difficulty: v }))}
             aria-labelledby="recipe-difficulty-label"
           >
-            {Object.entries(DIFFICULTY_LABELS).map(([value, label]) => (
+            {DIFFICULTIES.map((value) => (
               <ToggleButton key={value} value={value} sx={{ px: 2.5 }}>
-                {label}
+                {t(`common.difficulty.${value}`)}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
@@ -432,11 +436,11 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
             onClick={() => setPasteOpen((o) => !o)}
             aria-expanded={pasteOpen}
           >
-            Toplu yapıştır
+            {t("recipes.form.bulkPaste")}
           </Button>
         }
       >
-        Malzemeler
+        {t("recipes.form.ingredients")}
       </SectionTitle>
 
       <Collapse in={pasteOpen} unmountOnExit>
@@ -451,23 +455,23 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
           }}
         >
           <TextField
-            label="Her satıra bir malzeme"
-            placeholder={"2 su bardağı un\n1 tatlı kaşığı tuz\n3 adet yumurta"}
+            label={t("recipes.form.pasteLabel")}
+            placeholder={t("recipes.form.pastePlaceholder")}
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             multiline
             minRows={4}
             fullWidth
-            helperText="Miktar ve birim otomatik ayrılır; boş satırlar atlanır."
+            helperText={t("recipes.form.pasteHelper")}
           />
           <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1.5 }}>
-            <Button onClick={() => setPasteOpen(false)}>Vazgeç</Button>
+            <Button onClick={() => setPasteOpen(false)}>{t("recipes.form.cancel")}</Button>
             <Button
               variant="contained"
               onClick={applyPaste}
               disabled={!pasteText.trim()}
             >
-              Ekle
+              {t("recipes.form.add")}
             </Button>
           </Stack>
         </Box>
@@ -475,7 +479,7 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
 
       {errors.ingredients && (
         <Alert severity="error" sx={{ mb: 1.5 }}>
-          {errors.ingredients}
+          {tErr(errors.ingredients)}
         </Alert>
       )}
 
@@ -492,15 +496,15 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
               useFlexGap
             >
               <TextField
-                label="Miktar"
+                label={t("recipes.form.amount")}
                 value={ing.amount}
                 onChange={(e) => updateIngredient(ing._key, "amount", e.target.value)}
                 sx={{ width: { xs: "calc(40% - 4px)", sm: 96 }, flexShrink: 0 }}
-                inputProps={{ "aria-label": `Malzeme ${index + 1} miktar` }}
+                inputProps={{ "aria-label": t("recipes.form.amountAria", { n: index + 1 }) }}
               />
               <Autocomplete
                 freeSolo
-                options={COMMON_UNITS}
+                options={units}
                 value={ing.unit}
                 onChange={(_, v) => updateIngredient(ing._key, "unit", v || "")}
                 onInputChange={(_, v) => updateIngredient(ing._key, "unit", v || "")}
@@ -508,25 +512,25 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Birim"
+                    label={t("recipes.form.unit")}
                     inputProps={{
                       ...params.inputProps,
-                      "aria-label": `Malzeme ${index + 1} birim`,
+                      "aria-label": t("recipes.form.unitAria", { n: index + 1 }),
                     }}
                   />
                 )}
               />
               <TextField
-                label="Malzeme"
+                label={t("recipes.form.ingredient")}
                 value={ing.name}
                 onChange={(e) => updateIngredient(ing._key, "name", e.target.value)}
                 error={Boolean(rowError)}
-                helperText={rowError}
+                helperText={tErr(rowError)}
                 sx={{ flexGrow: 1, minWidth: { xs: "calc(100% - 48px)", sm: 0 } }}
               />
               <IconButton
                 onClick={() => removeIngredient(ing._key)}
-                aria-label={`Malzeme ${index + 1} sil`}
+                aria-label={t("recipes.form.removeIngredientAria", { n: index + 1 })}
                 size="small"
                 sx={{ mt: 0.5 }}
               >
@@ -537,14 +541,14 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
         })}
       </Stack>
       <Button startIcon={<AddIcon />} onClick={addIngredient} sx={{ mt: 1.5 }}>
-        Malzeme ekle
+        {t("recipes.form.addIngredient")}
       </Button>
 
       {/* Adımlar */}
-      <SectionTitle>Hazırlanışı</SectionTitle>
+      <SectionTitle>{t("recipes.form.steps")}</SectionTitle>
       {errors.instructions && (
         <Alert severity="error" sx={{ mb: 1.5 }}>
-          {errors.instructions}
+          {tErr(errors.instructions)}
         </Alert>
       )}
       <Stack spacing={1.5}>
@@ -571,21 +575,21 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
             <TextField
               value={step.text}
               onChange={(e) => updateInstruction(step._key, e.target.value)}
-              placeholder={`${index + 1}. adımı yazın`}
+              placeholder={t("recipes.form.stepPlaceholder", { n: index + 1 })}
               multiline
               minRows={2}
               fullWidth
               inputRef={(el) => {
                 instructionRefs.current[step._key] = el;
               }}
-              inputProps={{ "aria-label": `Adım ${index + 1}` }}
+              inputProps={{ "aria-label": t("recipes.form.stepAria", { n: index + 1 }) }}
             />
             <Stack spacing={0.25}>
               <IconButton
                 size="small"
                 onClick={() => moveInstruction(index, -1)}
                 disabled={index === 0}
-                aria-label={`Adım ${index + 1} yukarı taşı`}
+                aria-label={t("recipes.form.moveUpAria", { n: index + 1 })}
               >
                 <ArrowUpwardIcon fontSize="small" />
               </IconButton>
@@ -593,14 +597,14 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
                 size="small"
                 onClick={() => moveInstruction(index, 1)}
                 disabled={index === form.instructions.length - 1}
-                aria-label={`Adım ${index + 1} aşağı taşı`}
+                aria-label={t("recipes.form.moveDownAria", { n: index + 1 })}
               >
                 <ArrowDownwardIcon fontSize="small" />
               </IconButton>
               <IconButton
                 size="small"
                 onClick={() => removeInstruction(step._key)}
-                aria-label={`Adım ${index + 1} sil`}
+                aria-label={t("recipes.form.removeStepAria", { n: index + 1 })}
               >
                 <DeleteOutlineIcon fontSize="small" />
               </IconButton>
@@ -609,29 +613,29 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
         ))}
       </Stack>
       <Button startIcon={<AddIcon />} onClick={addInstruction} sx={{ mt: 1.5 }}>
-        Adım ekle
+        {t("recipes.form.addStep")}
       </Button>
 
       {/* Notlar */}
-      <SectionTitle>Notlar</SectionTitle>
+      <SectionTitle>{t("recipes.form.notes")}</SectionTitle>
       <TextField
         value={form.notes}
         onChange={setField("notes")}
         multiline
         minRows={2}
         fullWidth
-        placeholder="Püf noktaları, servis önerileri, saklama koşulları…"
-        inputProps={{ "aria-label": "Notlar" }}
+        placeholder={t("recipes.form.notesPlaceholder")}
+        inputProps={{ "aria-label": t("recipes.form.notes") }}
       />
 
       {isLong && (
         <Alert severity="warning" variant="outlined" sx={{ mt: 2 }}>
-          Tarif PDF'de tek sayfaya sığmayabilir. Adımları kısaltmayı düşünebilirsiniz.
+          {t("recipes.form.longRecipe")}
         </Alert>
       )}
       {submitError && (
         <Alert severity="error" sx={{ mt: 2 }} role="alert">
-          {submitError}
+          {tErr(submitError)}
         </Alert>
       )}
 
@@ -649,9 +653,9 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
         }}
       >
         <Button onClick={onClose} disabled={saving}>
-          Vazgeç
+          {t("recipes.form.cancel")}
         </Button>
-        <Tooltip title={!user ? "Giriş yapmalısınız" : ""}>
+        <Tooltip title={!user ? t("recipes.form.loginTooltip") : ""}>
           <span>
             <Button
               type="submit"
@@ -659,7 +663,11 @@ const RecipeForm = ({ onClose, initialRecipe, onSaved }) => {
               disabled={saving || !user}
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              {saving ? "Kaydediliyor…" : isEdit ? "Değişiklikleri Kaydet" : "Tarifi Kaydet"}
+              {saving
+                ? t("recipes.form.saving")
+                : isEdit
+                  ? t("recipes.form.saveChanges")
+                  : t("recipes.form.save")}
             </Button>
           </span>
         </Tooltip>

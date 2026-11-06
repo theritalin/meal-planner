@@ -20,11 +20,8 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useRecipes } from "../../context/recipes/RecipeContext";
-import {
-  DIFFICULTY_COLORS,
-  DIFFICULTY_LABELS,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { DIFFICULTY_COLORS } from "../../constants";
+import { useI18n } from "../../i18n";
 import { formatIngredient, totalTime } from "../../utils/recipes";
 import { mealTypeColor } from "./recipeHelpers";
 
@@ -37,6 +34,7 @@ const MAX_INGREDIENTS = 8;
  */
 const RecipeQuickView = ({ open, onClose, meal }) => {
   const theme = useTheme();
+  const { t } = useI18n();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const { getRecipesForMeal } = useRecipes();
 
@@ -73,7 +71,7 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
             component="div"
             sx={{ color: accent, fontWeight: 700, lineHeight: 1.6 }}
           >
-            {MEAL_TYPE_LABELS[meal.type]}
+            {t(`common.mealTypes.${meal.type}`)}
           </Typography>
         )}
         <Box
@@ -84,7 +82,7 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
         </Box>
         <IconButton
           onClick={onClose}
-          aria-label="Kapat"
+          aria-label={t("recipes.quickView.close")}
           sx={{ position: "absolute", right: 12, top: 12 }}
         >
           <CloseIcon />
@@ -99,13 +97,13 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
         {recipes.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 3 }}>
             <Typography sx={{ fontWeight: 600 }} gutterBottom>
-              Bu yemek için henüz tarif yok
+              {t("recipes.quickView.noRecipesTitle")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Tarif Kitabım'dan yeni bir tarif ekleyip bu yemeğe bağlayabilirsiniz.
+              {t("recipes.quickView.noRecipesText")}
             </Typography>
             <Button component={RouterLink} to="/recipes" variant="outlined" onClick={onClose}>
-              Tarif Kitabım'a git
+              {t("recipes.quickView.goToBook")}
             </Button>
           </Box>
         ) : (
@@ -122,29 +120,29 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
                   )}
                   <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mb: 1.5 }}>
                     {minutes > 0 && (
-                      <Chip size="small" variant="outlined" icon={<AccessTimeIcon />} label={`${minutes} dk`} />
+                      <Chip size="small" variant="outlined" icon={<AccessTimeIcon />} label={t("common.minutes", { count: minutes })} />
                     )}
                     {Number(recipe.servings) > 0 && (
                       <Chip
                         size="small"
                         variant="outlined"
                         icon={<PeopleAltOutlinedIcon />}
-                        label={`${recipe.servings} kişilik`}
+                        label={t("common.servings", { count: recipe.servings })}
                       />
                     )}
-                    {DIFFICULTY_LABELS[recipe.difficulty] && (
+                    {DIFFICULTY_COLORS[recipe.difficulty] && (
                       <Chip
                         size="small"
                         variant="outlined"
                         color={DIFFICULTY_COLORS[recipe.difficulty]}
-                        label={DIFFICULTY_LABELS[recipe.difficulty]}
+                        label={t(`common.difficulty.${recipe.difficulty}`)}
                       />
                     )}
                   </Stack>
                   {ings.length > 0 && (
                     <>
                       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                        Malzemeler
+                        {t("recipes.quickView.ingredients")}
                       </Typography>
                       <Box component="ul" sx={{ pl: 2.5, my: 0, "& li": { mb: 0.25 } }}>
                         {ings.slice(0, MAX_INGREDIENTS).map((ing, i) => (
@@ -155,7 +153,9 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
                       </Box>
                       {ings.length > MAX_INGREDIENTS && (
                         <Typography variant="caption" color="text.secondary">
-                          +{ings.length - MAX_INGREDIENTS} malzeme daha
+                          {t("recipes.quickView.moreIngredients", {
+                            count: ings.length - MAX_INGREDIENTS,
+                          })}
                         </Typography>
                       )}
                     </>
@@ -168,7 +168,7 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
                       endIcon={<ArrowForwardIcon />}
                       variant={recipes.length === 1 ? "contained" : "text"}
                     >
-                      Tarifin tamamını gör
+                      {t("recipes.quickView.viewFull")}
                     </Button>
                   </Box>
                 </Box>
@@ -179,7 +179,7 @@ const RecipeQuickView = ({ open, onClose, meal }) => {
       </DialogContent>
       {!fullScreen && (
         <DialogActions>
-          <Button onClick={onClose}>Kapat</Button>
+          <Button onClick={onClose}>{t("recipes.quickView.close")}</Button>
         </DialogActions>
       )}
     </Dialog>

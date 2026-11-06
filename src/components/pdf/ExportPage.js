@@ -35,12 +35,9 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { useMeals } from "../../context/MealContext";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import AdBanner from "../ads/AdBanner";
-import {
-  DAYS,
-  DAY_SHORT_LABELS,
-  MEAL_TYPES,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { DAYS, MEAL_TYPES } from "../../constants";
+import { useI18n } from "../../i18n";
+import { translate } from "../../i18n/core";
 import { dedupeById, recipeMatches } from "../../utils/recipes";
 import { palette } from "../../theme";
 import { buildShoppingList, summarizePlan } from "./shoppingList";
@@ -107,51 +104,65 @@ const ActionButtons = ({
   onPreview,
   downloadKey,
   previewKey,
-  downloadLabel = "PDF İndir",
-}) => (
-  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-    <Button
-      variant="contained"
-      size="large"
-      onClick={onDownload}
-      disabled={disabled || Boolean(busy)}
-      startIcon={
-        busy === downloadKey ? (
-          <CircularProgress size={18} color="inherit" />
-        ) : (
-          <DownloadRoundedIcon />
-        )
-      }
-    >
-      {busy === downloadKey ? "Hazırlanıyor…" : downloadLabel}
-    </Button>
-    <Button
-      variant="outlined"
-      size="large"
-      onClick={onPreview}
-      disabled={disabled || Boolean(busy)}
-      startIcon={
-        busy === previewKey ? (
-          <CircularProgress size={18} color="inherit" />
-        ) : (
-          <VisibilityOutlinedIcon />
-        )
-      }
-    >
-      Önizle
-    </Button>
-  </Stack>
+  downloadLabel,
+}) => {
+  const { t } = useI18n();
+  return (
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+      <Button
+        variant="contained"
+        size="large"
+        onClick={onDownload}
+        disabled={disabled || Boolean(busy)}
+        startIcon={
+          busy === downloadKey ? (
+            <CircularProgress size={18} color="inherit" />
+          ) : (
+            <DownloadRoundedIcon />
+          )
+        }
+      >
+        {busy === downloadKey
+          ? t("pdf.export.preparing")
+          : downloadLabel || t("pdf.export.download")}
+      </Button>
+      <Button
+        variant="outlined"
+        size="large"
+        onClick={onPreview}
+        disabled={disabled || Boolean(busy)}
+        startIcon={
+          busy === previewKey ? (
+            <CircularProgress size={18} color="inherit" />
+          ) : (
+            <VisibilityOutlinedIcon />
+          )
+        }
+      >
+        {t("pdf.export.preview")}
+      </Button>
+    </Stack>
+  );
+};
+
+// Varsayılan kitap adı (her iki dilde); kullanıcı değiştirmediyse dosya adı
+// ve başlık geçerli dile göre verilir.
+const DEFAULT_TITLES = ["tr", "en"].map((code) =>
+  translate(code, "pdf.doc.defaultBookTitle")
 );
 
 /** /export — haftalık plan ve tarif kitabı PDF dışa aktarma sayfası. */
 const ExportPage = () => {
+  const { t, lang, locale } = useI18n();
   const { weekPlan, meals, user } = useMeals();
   const { cookbookRecipes, recipes, getRecipesForMeal, loading } =
     useRecipes();
 
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState("");
-  const [bookTitle, setBookTitle] = useState("Tarif Kitabım");
+  // null = kullanıcı değiştirmedi → geçerli dildeki varsayılan ad gösterilir
+  const [customTitle, setCustomTitle] = useState(null);
+  const bookTitle = customTitle ?? t("pdf.doc.defaultBookTitle");
   const [includeDefaults, setIncludeDefaults] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("az");
@@ -164,8 +175,8 @@ const ExportPage = () => {
   // ---- Haftalık plan ----
   const planSummary = useMemo(() => summarizePlan(weekPlan), [weekPlan]);
   const shoppingCount = useMemo(
-    () => buildShoppingList(weekPlan, getRecipesForMeal).length,
-    [weekPlan, getRecipesForMeal]
+    () => buildShoppingList(weekPlan, getRecipesForMeal, lang).length,
+    [weekPlan, getRecipesForMeal, lang]
   );
 
   // ---- Tarif kitabı ----
@@ -184,7 +195,7 @@ const ExportPage = () => {
       mealType: r.mealType || mealTypeById.get(r.mealId) || undefined,
     }));
     const byName = (a, b) =>
-      (a.name || "").localeCompare(b.name || "", "tr", {
+      (a.name || "").localeCompare(b.name || "", locale, {
         sensitivity: "base",
       });
     return withType.sort((a, b) => {
@@ -195,7 +206,7 @@ const ExportPage = () => {
       }
       return byName(a, b);
     });
-  }, [includeDefaults, cookbookRecipes, recipes, mealTypeById, sort]);
+  }, [includeDefaults, cookbookRecipes, recipes, mealTypeById, sort, locale]);
 
   const selectedIds = useMemo(
     () => selection ?? new Set(available.map((r) => r.id)),
@@ -215,10 +226,10 @@ const ExportPage = () => {
   const pageEstimate = useMemo(() => {
     const layouts = new Map();
     selectedRecipes.forEach((r) =>
-      layouts.set(r.id, computeRecipeLayout(r).estimatedPages)
+      layouts.set(r.id, computeRecipeLayout(r, lang).estimatedPages)
     );
     return layouts;
-  }, [selectedRecipes]);
+  }, [selectedRecipes, lang]);
 
   const totalRecipePages = [...pageEstimate.values()].reduce(
     (a, b) => a + b,
@@ -252,38 +263,43 @@ const ExportPage = () => {
       await task();
     } catch (err) {
       console.error("PDF oluşturma hatası:", err);
-      setError("PDF oluşturulamadı. Lütfen tekrar deneyin.");
+      setError("pdf.export.error");
     } finally {
       setBusy(null);
     }
   }, []);
 
   const makePlanBlob = () =>
-    generatePlanBlob({ weekPlan, getRecipesForMeal, author });
+    generatePlanBlob({ weekPlan, getRecipesForMeal, author, lang });
 
   const makeBookBlob = () =>
     generateCookbookBlob({
       recipes: selectedRecipes,
-      title: bookTitle.trim() || "Tarif Kitabım",
+      title: bookTitle.trim() || t("pdf.doc.defaultBookTitle"),
       author,
+      lang,
     });
+
+  const previewName = `${t("pdf.files.preview")}.pdf`;
 
   const handlePlanDownload = () =>
     run("plan-download", async () =>
-      saveBlob(await makePlanBlob(), "haftalik-yemek-plani.pdf")
+      saveBlob(await makePlanBlob(), `${t("pdf.files.plan")}.pdf`)
     );
   const handlePlanPreview = () =>
-    run("plan-preview", () => previewPdf(makePlanBlob));
+    run("plan-preview", () => previewPdf(makePlanBlob, previewName));
 
   const handleBookDownload = () =>
     run("book-download", async () => {
       const name = bookTitle.trim();
       const file =
-        !name || name === "Tarif Kitabım" ? "tarif-kitabim" : slugify(name);
+        !name || DEFAULT_TITLES.includes(name)
+          ? t("pdf.files.cookbook")
+          : slugify(name, t("pdf.files.cookbook"));
       await saveBlob(await makeBookBlob(), `${file}.pdf`);
     });
   const handleBookPreview = () =>
-    run("book-preview", () => previewPdf(makeBookBlob));
+    run("book-preview", () => previewPdf(makeBookBlob, previewName));
 
   const planEmpty = planSummary.mealCount === 0;
   const visibleSelected = visible.filter((r) => selectedIds.has(r.id)).length;
@@ -292,12 +308,9 @@ const ExportPage = () => {
     <Box sx={{ py: { xs: 2, md: 4 } }}>
       <Box sx={{ mb: { xs: 3, md: 4 } }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Dışa Aktar
+          {t("pdf.export.title")}
         </Typography>
-        <Typography color="text.secondary">
-          Haftalık planınızı ve tarif kitabınızı yazdırmaya hazır, şık PDF'ler
-          olarak indirin.
-        </Typography>
+        <Typography color="text.secondary">{t("pdf.export.subtitle")}</Typography>
       </Box>
 
       <Stack spacing={3}>
@@ -306,8 +319,8 @@ const ExportPage = () => {
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <SectionHeader
               icon={<CalendarMonthOutlinedIcon />}
-              title="Haftalık Plan"
-              subtitle="Yatay A4 plan tablosu ve malzemeleri birleştirilmiş alışveriş listesi"
+              title={t("pdf.export.plan.title")}
+              subtitle={t("pdf.export.plan.subtitle")}
             />
 
             <Stack
@@ -317,9 +330,22 @@ const ExportPage = () => {
               useFlexGap
               flexWrap="wrap"
             >
-              <Stat value={planSummary.mealCount} label="yemek" />
-              <Stat value={`${planSummary.activeDays}/7`} label="gün" />
-              <Stat value={shoppingCount} label="malzeme" />
+              <Stat
+                value={planSummary.mealCount}
+                label={t("pdf.export.plan.statMeals", {
+                  count: planSummary.mealCount,
+                })}
+              />
+              <Stat
+                value={`${planSummary.activeDays}/7`}
+                label={t("pdf.export.plan.statDays", { count: 7 })}
+              />
+              <Stat
+                value={shoppingCount}
+                label={t("pdf.export.plan.statIngredients", {
+                  count: shoppingCount,
+                })}
+              />
             </Stack>
 
             <Box
@@ -329,7 +355,7 @@ const ExportPage = () => {
                 gap: { xs: 0.5, sm: 1 },
                 mb: 3,
               }}
-              aria-label="Haftalık plan özeti"
+              aria-label={t("pdf.export.plan.summaryAria")}
             >
               {DAYS.map((day) => (
                 <Box
@@ -347,7 +373,7 @@ const ExportPage = () => {
                     variant="caption"
                     sx={{ fontWeight: 600, display: "block" }}
                   >
-                    {DAY_SHORT_LABELS[day]}
+                    {t(`common.daysShort.${day}`)}
                   </Typography>
                   <Stack
                     spacing={0.5}
@@ -359,7 +385,10 @@ const ExportPage = () => {
                       return (
                         <Tooltip
                           key={type}
-                          title={`${MEAL_TYPE_LABELS[type]}: ${count} yemek`}
+                          title={t("pdf.export.plan.slotTooltip", {
+                            meal: t(`common.mealTypes.${type}`),
+                            count,
+                          })}
                         >
                           <Box
                             sx={{
@@ -386,11 +415,11 @@ const ExportPage = () => {
                 sx={{ mb: 2 }}
                 action={
                   <Button component={RouterLink} to="/" color="inherit">
-                    Plana git
+                    {t("pdf.export.plan.goToPlan")}
                   </Button>
                 }
               >
-                Planınız henüz boş. Önce haftanıza birkaç yemek ekleyin.
+                {t("pdf.export.plan.empty")}
               </Alert>
             ) : null}
 
@@ -415,15 +444,15 @@ const ExportPage = () => {
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <SectionHeader
               icon={<MenuBookOutlinedIcon />}
-              title="Tarif Kitabı"
-              subtitle="Kapak, içindekiler ve her tarif için tek sayfa — otomatik sığdırma ile"
+              title={t("pdf.export.book.title")}
+              subtitle={t("pdf.export.book.subtitle")}
             />
 
             <Stack spacing={2}>
               <TextField
-                label="Kitap adı"
+                label={t("pdf.export.book.titleLabel")}
                 value={bookTitle}
-                onChange={(e) => setBookTitle(e.target.value)}
+                onChange={(e) => setCustomTitle(e.target.value)}
                 inputProps={{ maxLength: 60 }}
                 fullWidth
               />
@@ -434,11 +463,11 @@ const ExportPage = () => {
                 alignItems={{ sm: "center" }}
               >
                 <TextField
-                  placeholder="Tariflerde ara"
+                  placeholder={t("pdf.export.book.search")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   sx={{ flex: 1 }}
-                  inputProps={{ "aria-label": "Tariflerde ara" }}
+                  inputProps={{ "aria-label": t("pdf.export.book.search") }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -449,13 +478,15 @@ const ExportPage = () => {
                 />
                 <TextField
                   select
-                  label="Sıralama"
+                  label={t("pdf.export.book.sortLabel")}
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                   sx={{ minWidth: 180 }}
                 >
-                  <MenuItem value="az">A–Z</MenuItem>
-                  <MenuItem value="type">Öğün türüne göre</MenuItem>
+                  <MenuItem value="az">{t("pdf.export.book.sortAz")}</MenuItem>
+                  <MenuItem value="type">
+                    {t("pdf.export.book.sortType")}
+                  </MenuItem>
                 </TextField>
               </Stack>
 
@@ -466,7 +497,7 @@ const ExportPage = () => {
                     onChange={(e) => setIncludeDefaults(e.target.checked)}
                   />
                 }
-                label="Hazır tarifleri de ekle"
+                label={t("pdf.export.book.includeDefaults")}
               />
             </Stack>
 
@@ -480,9 +511,14 @@ const ExportPage = () => {
               spacing={1}
             >
               <Typography variant="body2" color="text.secondary">
-                {selectedRecipes.length} / {available.length} tarif seçili
+                {t("pdf.export.book.selected", {
+                  selected: selectedRecipes.length,
+                  total: available.length,
+                })}
                 {selectedRecipes.length
-                  ? ` · yaklaşık ${totalRecipePages + 2} sayfa`
+                  ? t("pdf.export.book.pageEstimate", {
+                      count: totalRecipePages + 2,
+                    })
                   : ""}
               </Typography>
               <Stack direction="row" spacing={0.5}>
@@ -491,14 +527,14 @@ const ExportPage = () => {
                   onClick={selectAll}
                   disabled={!visible.length || visibleSelected === visible.length}
                 >
-                  Tümünü seç
+                  {t("pdf.export.book.selectAll")}
                 </Button>
                 <Button
                   size="small"
                   onClick={selectNone}
                   disabled={!visibleSelected}
                 >
-                  Hiçbiri
+                  {t("pdf.export.book.selectNone")}
                 </Button>
               </Stack>
             </Stack>
@@ -519,16 +555,15 @@ const ExportPage = () => {
               ) : !available.length ? (
                 <Box sx={{ p: 3, textAlign: "center" }}>
                   <Typography color="text.secondary" sx={{ mb: 1.5 }}>
-                    Tarif kitabınızda henüz tarif yok. Kendi tarifinizi ekleyin
-                    veya hazır tarifleri dahil edin.
+                    {t("pdf.export.book.empty")}
                   </Typography>
                   <Button component={RouterLink} to="/recipes" variant="outlined">
-                    Tariflere git
+                    {t("pdf.export.book.goToRecipes")}
                   </Button>
                 </Box>
               ) : !visible.length ? (
                 <Typography color="text.secondary" sx={{ p: 3 }}>
-                  “{search}” ile eşleşen tarif bulunamadı.
+                  {t("pdf.export.book.noMatch", { query: search })}
                 </Typography>
               ) : (
                 <List dense disablePadding>
@@ -548,7 +583,7 @@ const ExportPage = () => {
                             <Chip
                               size="small"
                               variant="outlined"
-                              label={MEAL_TYPE_LABELS[recipe.mealType]}
+                              label={t(`common.mealTypes.${recipe.mealType}`)}
                               sx={{
                                 borderColor: alpha(
                                   palette[recipe.mealType] || palette.border,
@@ -574,12 +609,16 @@ const ExportPage = () => {
                           </ListItemIcon>
                           <ListItemText
                             id={labelId}
-                            primary={recipe.name || "İsimsiz tarif"}
+                            primary={
+                              recipe.name || t("pdf.doc.untitledRecipe")
+                            }
                             secondary={
                               pages > 1
-                                ? `Uzun tarif · ~${pages} sayfa`
+                                ? t("pdf.export.book.longRecipe", {
+                                    count: pages,
+                                  })
                                 : recipe.isPersonal
-                                ? "Kendi tarifim"
+                                ? t("pdf.export.book.personal")
                                 : null
                             }
                             primaryTypographyProps={{ noWrap: true }}
@@ -609,7 +648,9 @@ const ExportPage = () => {
                     color="text.secondary"
                     sx={{ display: "block", mt: 1 }}
                   >
-                    {selectedRecipes.length} tarif sayfaya yerleştiriliyor…
+                    {t("pdf.export.book.placing", {
+                      count: selectedRecipes.length,
+                    })}
                   </Typography>
                 </Box>
               ) : null}
@@ -626,7 +667,7 @@ const ExportPage = () => {
         sx={{ mb: { xs: 9, md: 0 } }}
       >
         <Alert severity="error" onClose={() => setError("")} variant="filled">
-          {error}
+          {error ? t(error) : null}
         </Alert>
       </Snackbar>
     </Box>

@@ -40,11 +40,8 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import { useMeals } from "../../context/MealContext";
-import {
-  DIFFICULTY_COLORS,
-  DIFFICULTY_LABELS,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { DIFFICULTY_COLORS } from "../../constants";
+import { useI18n } from "../../i18n";
 import { formatIngredient, totalTime } from "../../utils/recipes";
 import AdBanner from "../ads/AdBanner";
 import RecipeFormDialog from "./RecipeFormDialog";
@@ -88,39 +85,46 @@ const MetaChip = ({ icon, label, color, variant = "outlined" }) => (
   />
 );
 
-const DetailSkeleton = () => (
-  <Box aria-busy="true" aria-label="Tarif yükleniyor">
-    <Skeleton variant="text" width={120} />
-    <Skeleton variant="text" sx={{ fontSize: 48 }} width="70%" />
-    <Stack direction="row" spacing={1} sx={{ my: 2 }}>
-      {[80, 96, 72].map((w) => (
-        <Skeleton key={w} variant="rounded" width={w} height={32} />
-      ))}
-    </Stack>
-    <Skeleton variant="rounded" height={320} />
-  </Box>
-);
+const DetailSkeleton = () => {
+  const { t } = useI18n();
+  return (
+    <Box aria-busy="true" aria-label={t("recipes.detail.loadingAria")}>
+      <Skeleton variant="text" width={120} />
+      <Skeleton variant="text" sx={{ fontSize: 48 }} width="70%" />
+      <Stack direction="row" spacing={1} sx={{ my: 2 }}>
+        {[80, 96, 72].map((w) => (
+          <Skeleton key={w} variant="rounded" width={w} height={32} />
+        ))}
+      </Stack>
+      <Skeleton variant="rounded" height={320} />
+    </Box>
+  );
+};
 
-const NotFound = () => (
-  <Paper
-    variant="outlined"
-    sx={{ textAlign: "center", py: 8, px: 3, borderStyle: "dashed", bgcolor: "transparent" }}
-  >
-    <MenuBookOutlinedIcon sx={{ fontSize: 56, color: "primary.main", opacity: 0.6, mb: 1 }} />
-    <Typography variant="h5" component="h1" gutterBottom>
-      Tarif bulunamadı
-    </Typography>
-    <Typography color="text.secondary" sx={{ mb: 3 }}>
-      Bu tarif silinmiş ya da bağlantı hatalı olabilir.
-    </Typography>
-    <Button component={RouterLink} to="/recipes" variant="contained">
-      Tarif Kitabıma dön
-    </Button>
-  </Paper>
-);
+const NotFound = () => {
+  const { t } = useI18n();
+  return (
+    <Paper
+      variant="outlined"
+      sx={{ textAlign: "center", py: 8, px: 3, borderStyle: "dashed", bgcolor: "transparent" }}
+    >
+      <MenuBookOutlinedIcon sx={{ fontSize: 56, color: "primary.main", opacity: 0.6, mb: 1 }} />
+      <Typography variant="h5" component="h1" gutterBottom>
+        {t("recipes.detail.notFoundTitle")}
+      </Typography>
+      <Typography color="text.secondary" sx={{ mb: 3 }}>
+        {t("recipes.detail.notFoundText")}
+      </Typography>
+      <Button component={RouterLink} to="/recipes" variant="contained">
+        {t("recipes.detail.backToBook")}
+      </Button>
+    </Paper>
+  );
+};
 
 const RecipeDetailView = ({ recipe }) => {
   const navigate = useNavigate();
+  const { t, lang } = useI18n();
   const {
     userRecipes,
     isRecipeSaved,
@@ -149,8 +153,8 @@ const RecipeDetailView = ({ recipe }) => {
 
   const factor = getScaleFactor(baseServings, servings);
   const ingredients = useMemo(
-    () => scaleIngredients(recipe.ingredients || [], factor),
-    [recipe.ingredients, factor]
+    () => scaleIngredients(recipe.ingredients || [], factor, lang),
+    [recipe.ingredients, factor, lang]
   );
   const instructions = (recipe.instructions || []).filter(Boolean);
 
@@ -166,7 +170,7 @@ const RecipeDetailView = ({ recipe }) => {
 
   const handleToggleSave = async () => {
     if (!user) {
-      setToast({ message: "Tarif kaydetmek için giriş yapın.", login: true });
+      setToast({ message: t("recipes.toast.loginToSave"), login: true });
       return;
     }
     setBusy("save");
@@ -177,9 +181,9 @@ const RecipeDetailView = ({ recipe }) => {
     setToast({
       message: ok
         ? saved
-          ? "Tarif kitabınızdan çıkarıldı."
-          : "Tarif kitabınıza kaydedildi."
-        : "İşlem başarısız oldu.",
+          ? t("recipes.toast.removed")
+          : t("recipes.toast.saved")
+        : t("recipes.toast.failed"),
     });
   };
 
@@ -190,7 +194,7 @@ const RecipeDetailView = ({ recipe }) => {
       await downloadRecipePdf(recipe);
     } catch (err) {
       console.error("PDF oluşturulamadı:", err);
-      setToast({ message: "PDF oluşturulamadı. Lütfen tekrar deneyin." });
+      setToast({ message: t("recipes.toast.pdfFailed") });
     } finally {
       setBusy(null);
     }
@@ -204,7 +208,7 @@ const RecipeDetailView = ({ recipe }) => {
       navigate("/recipes", { replace: true });
     } catch (err) {
       console.error("Tarif silinemedi:", err);
-      setToast({ message: "Tarif silinemedi." });
+      setToast({ message: t("recipes.toast.deleteFailed") });
       setBusy(null);
       setConfirmDelete(false);
     }
@@ -228,15 +232,17 @@ const RecipeDetailView = ({ recipe }) => {
         sx={{ mb: 2, flexWrap: "wrap", rowGap: 1 }}
       >
         <Button startIcon={<ArrowBackIcon />} onClick={goBack} sx={{ mr: "auto" }}>
-          Geri
+          {t("recipes.detail.back")}
         </Button>
         {!recipe.isPersonal && (
-          <Tooltip title={saved ? "Kitabımdan çıkar" : "Kitabıma kaydet"}>
+          <Tooltip title={saved ? t("recipes.bookmark.unsave") : t("recipes.bookmark.save")}>
             <span>
               <IconButton
                 onClick={handleToggleSave}
                 disabled={busy === "save"}
-                aria-label={saved ? "Tarifi kaydedilenlerden çıkar" : "Tarifi kaydet"}
+                aria-label={
+                  saved ? t("recipes.bookmark.unsaveAria") : t("recipes.bookmark.saveAria")
+                }
                 aria-pressed={saved}
                 color={saved ? "primary" : "default"}
               >
@@ -247,15 +253,18 @@ const RecipeDetailView = ({ recipe }) => {
         )}
         {own && (
           <>
-            <Tooltip title="Düzenle">
-              <IconButton onClick={() => setEditOpen(true)} aria-label="Tarifi düzenle">
+            <Tooltip title={t("recipes.detail.edit")}>
+              <IconButton
+                onClick={() => setEditOpen(true)}
+                aria-label={t("recipes.detail.editAria")}
+              >
                 <EditOutlinedIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Sil">
+            <Tooltip title={t("recipes.detail.delete")}>
               <IconButton
                 onClick={() => setConfirmDelete(true)}
-                aria-label="Tarifi sil"
+                aria-label={t("recipes.detail.deleteAria")}
                 color="error"
               >
                 <DeleteOutlineIcon />
@@ -263,8 +272,8 @@ const RecipeDetailView = ({ recipe }) => {
             </Tooltip>
           </>
         )}
-        <Tooltip title="Yazdır">
-          <IconButton onClick={() => window.print()} aria-label="Tarifi yazdır">
+        <Tooltip title={t("recipes.detail.print")}>
+          <IconButton onClick={() => window.print()} aria-label={t("recipes.detail.printAria")}>
             <PrintOutlinedIcon />
           </IconButton>
         </Tooltip>
@@ -280,7 +289,7 @@ const RecipeDetailView = ({ recipe }) => {
           onClick={handlePdf}
           disabled={busy === "pdf"}
         >
-          PDF
+          {t("recipes.detail.pdf")}
         </Button>
       </Stack>
 
@@ -300,13 +309,14 @@ const RecipeDetailView = ({ recipe }) => {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           {mealType && (
             <Typography variant="overline" sx={{ color: accent, fontWeight: 700 }}>
-              {MEAL_TYPE_LABELS[mealType]}
+              {t(`common.mealTypes.${mealType}`)}
               {meal?.name && meal.name !== recipe.name ? ` · ${meal.name}` : ""}
             </Typography>
           )}
           {recipe.isPersonal && (
             <Typography variant="overline" color="text.secondary">
-              {mealType ? "· " : ""}Benim tarifim
+              {mealType ? "· " : ""}
+              {t("recipes.detail.myRecipe")}
             </Typography>
           )}
         </Stack>
@@ -327,20 +337,20 @@ const RecipeDetailView = ({ recipe }) => {
 
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 3 }}>
           {Number(recipe.prepTime) > 0 && (
-            <MetaChip icon={<TimerOutlinedIcon />} label={`Hazırlık ${recipe.prepTime} dk`} />
+            <MetaChip icon={<TimerOutlinedIcon />} label={t("recipes.detail.prep", { count: recipe.prepTime })} />
           )}
           {Number(recipe.cookTime) > 0 && (
             <MetaChip
               icon={<LocalFireDepartmentOutlinedIcon />}
-              label={`Pişirme ${recipe.cookTime} dk`}
+              label={t("recipes.detail.cook", { count: recipe.cookTime })}
             />
           )}
           {minutes > 0 && (
-            <MetaChip icon={<AccessTimeIcon />} label={`Toplam ${minutes} dk`} />
+            <MetaChip icon={<AccessTimeIcon />} label={t("recipes.detail.total", { count: minutes })} />
           )}
-          {DIFFICULTY_LABELS[recipe.difficulty] && (
+          {DIFFICULTY_COLORS[recipe.difficulty] && (
             <MetaChip
-              label={DIFFICULTY_LABELS[recipe.difficulty]}
+              label={t(`common.difficulty.${recipe.difficulty}`)}
               color={DIFFICULTY_COLORS[recipe.difficulty]}
             />
           )}
@@ -383,7 +393,7 @@ const RecipeDetailView = ({ recipe }) => {
                 component="h2"
                 sx={{ fontFamily: serif }}
               >
-                Malzemeler
+                {t("recipes.detail.ingredients")}
               </Typography>
             </Stack>
 
@@ -400,7 +410,7 @@ const RecipeDetailView = ({ recipe }) => {
               }}
             >
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Porsiyon
+                {t("recipes.detail.servings")}
               </Typography>
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <IconButton
@@ -408,7 +418,7 @@ const RecipeDetailView = ({ recipe }) => {
                   size="small"
                   onClick={() => setServings((s) => Math.max(1, s - 1))}
                   disabled={servings <= 1}
-                  aria-label="Porsiyonu azalt"
+                  aria-label={t("recipes.detail.decreaseServings")}
                 >
                   <RemoveIcon fontSize="small" />
                 </IconButton>
@@ -416,23 +426,23 @@ const RecipeDetailView = ({ recipe }) => {
                   aria-live="polite"
                   sx={{ minWidth: 72, textAlign: "center", fontWeight: 700 }}
                 >
-                  {servings} kişilik
+                  {t("common.servings", { count: servings })}
                 </Typography>
                 <IconButton
                   className="no-print"
                   size="small"
                   onClick={() => setServings((s) => Math.min(100, s + 1))}
-                  aria-label="Porsiyonu artır"
+                  aria-label={t("recipes.detail.increaseServings")}
                 >
                   <AddIcon fontSize="small" />
                 </IconButton>
                 {servings !== baseServings && (
-                  <Tooltip title="Orijinal porsiyona dön">
+                  <Tooltip title={t("recipes.detail.resetServings")}>
                     <IconButton
                       className="no-print"
                       size="small"
                       onClick={() => setServings(baseServings)}
-                      aria-label="Orijinal porsiyona dön"
+                      aria-label={t("recipes.detail.resetServings")}
                     >
                       <RestartAltIcon fontSize="small" />
                     </IconButton>
@@ -442,7 +452,9 @@ const RecipeDetailView = ({ recipe }) => {
             </Paper>
 
             {ingredients.length === 0 ? (
-              <Typography color="text.secondary">Malzeme eklenmemiş.</Typography>
+              <Typography color="text.secondary">
+                {t("recipes.detail.noIngredients")}
+              </Typography>
             ) : (
               <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
                 {ingredients.map((ing, index) => {
@@ -511,7 +523,7 @@ const RecipeDetailView = ({ recipe }) => {
               sx={{ mb: 1.5 }}
             >
               <Typography id="steps-heading" variant="h5" component="h2" sx={{ fontFamily: serif }}>
-                Hazırlanışı
+                {t("recipes.detail.steps")}
               </Typography>
               {doneSteps.size > 0 && (
                 <Button
@@ -520,12 +532,12 @@ const RecipeDetailView = ({ recipe }) => {
                   onClick={() => setDoneSteps(new Set())}
                   startIcon={<RestartAltIcon />}
                 >
-                  Sıfırla
+                  {t("recipes.detail.resetSteps")}
                 </Button>
               )}
             </Stack>
             {instructions.length === 0 ? (
-              <Typography color="text.secondary">Adım eklenmemiş.</Typography>
+              <Typography color="text.secondary">{t("recipes.detail.noSteps")}</Typography>
             ) : (
               <Box component="ol" sx={{ listStyle: "none", p: 0, m: 0 }}>
                 {instructions.map((step, index) => {
@@ -537,7 +549,10 @@ const RecipeDetailView = ({ recipe }) => {
                       role="button"
                       tabIndex={0}
                       aria-pressed={done}
-                      aria-label={`Adım ${index + 1}${done ? " (tamamlandı)" : ""}`}
+                      aria-label={t(
+                        done ? "recipes.detail.stepDoneAria" : "recipes.detail.stepAria",
+                        { n: index + 1 }
+                      )}
                       onClick={() => toggleStep(index)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -613,7 +628,7 @@ const RecipeDetailView = ({ recipe }) => {
               }}
             >
               <Typography variant="h6" component="h2" sx={{ fontFamily: serif, mb: 0.5 }}>
-                Notlar
+                {t("recipes.detail.notes")}
               </Typography>
               <Typography sx={{ fontSize: 16, lineHeight: 1.7, whiteSpace: "pre-line" }}>
                 {recipe.notes}
@@ -632,20 +647,20 @@ const RecipeDetailView = ({ recipe }) => {
           open={editOpen}
           onClose={() => setEditOpen(false)}
           initialRecipe={recipe}
-          onSaved={() => setToast({ message: "Tarif güncellendi." })}
+          onSaved={() => setToast({ message: t("recipes.toast.recipeUpdated") })}
         />
       )}
 
       <Dialog open={confirmDelete} onClose={() => busy !== "delete" && setConfirmDelete(false)}>
-        <DialogTitle>Tarif silinsin mi?</DialogTitle>
+        <DialogTitle>{t("recipes.detail.confirmDelete.title")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            “{recipe.name}” tarif kitabınızdan kalıcı olarak silinecek. Bu işlem geri alınamaz.
+            {t("recipes.detail.confirmDelete.text", { name: recipe.name })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDelete(false)} disabled={busy === "delete"}>
-            Vazgeç
+            {t("recipes.detail.confirmDelete.cancel")}
           </Button>
           <Button
             color="error"
@@ -654,7 +669,7 @@ const RecipeDetailView = ({ recipe }) => {
             disabled={busy === "delete"}
             startIcon={busy === "delete" ? <CircularProgress size={16} color="inherit" /> : null}
           >
-            Sil
+            {t("recipes.detail.confirmDelete.confirm")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -668,7 +683,7 @@ const RecipeDetailView = ({ recipe }) => {
         action={
           toast?.login ? (
             <Button color="inherit" size="small" onClick={() => navigate("/login")}>
-              Giriş yap
+              {t("recipes.toast.login")}
             </Button>
           ) : null
         }

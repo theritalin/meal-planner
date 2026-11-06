@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
+import { useI18n } from "../../i18n";
 import RecipeForm from "./RecipeForm";
 
 /**
@@ -16,6 +17,7 @@ import RecipeForm from "./RecipeForm";
  */
 const RecipeFormDialog = ({ open, onClose, initialRecipe, onSaved }) => {
   const theme = useTheme();
+  const { t } = useI18n();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isEdit = Boolean(initialRecipe?.id);
 
@@ -37,10 +39,10 @@ const RecipeFormDialog = ({ open, onClose, initialRecipe, onSaved }) => {
           pr: 6,
         }}
       >
-        {isEdit ? "Tarifi Düzenle" : "Yeni Tarif"}
+        {isEdit ? t("recipes.form.editTitle") : t("recipes.form.newTitle")}
         <IconButton
           onClick={onClose}
-          aria-label="Kapat"
+          aria-label={t("recipes.form.close")}
           sx={{ position: "absolute", right: 12, top: 12 }}
         >
           <CloseIcon />

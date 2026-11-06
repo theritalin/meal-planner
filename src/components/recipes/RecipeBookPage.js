@@ -28,22 +28,14 @@ import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import { useMeals } from "../../context/MealContext";
-import {
-  DIFFICULTY_LABELS,
-  MEAL_TYPES,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { MEAL_TYPES } from "../../constants";
+import { useI18n } from "../../i18n";
 import AdBanner from "../ads/AdBanner";
 import RecipeCard from "./RecipeCard";
 import RecipeFormDialog from "./RecipeFormDialog";
-import { useMealIndex } from "./recipeHelpers";
+import { DIFFICULTIES, useMealIndex } from "./recipeHelpers";
 
-const FILTERS = [
-  { value: "all", label: "Tümü" },
-  { value: "personal", label: "Benim Tariflerim" },
-  { value: "saved", label: "Kaydedilenler" },
-  { value: "default", label: "Hazır Tarifler" },
-];
+const FILTERS = ["all", "personal", "saved", "default"];
 
 const StatPill = ({ value, label }) => (
   <Box sx={{ minWidth: 72 }}>
@@ -119,6 +111,7 @@ const EmptyState = ({ icon: Icon, title, text, action }) => (
 /** /recipes — Tarif Kitabım */
 const RecipeBookPage = () => {
   const navigate = useNavigate();
+  const { t, lang } = useI18n();
   const {
     allRecipes,
     userRecipes,
@@ -154,9 +147,9 @@ const RecipeBookPage = () => {
         ? filteredRecipes
         : filteredRecipes.filter((r) => mealTypeOf(r) === mealTypeFilter);
     return [...list].sort((a, b) =>
-      (a.name || "").localeCompare(b.name || "", "tr")
+      (a.name || "").localeCompare(b.name || "", lang)
     );
-  }, [filteredRecipes, mealTypeFilter, mealTypeOf]);
+  }, [filteredRecipes, mealTypeFilter, mealTypeOf, lang]);
 
   const hasActiveFilters =
     Boolean(searchTerm) || difficultyFilter !== "all" || mealTypeFilter !== "all";
@@ -170,7 +163,7 @@ const RecipeBookPage = () => {
   const openForm = () => {
     if (!user) {
       setToast({
-        message: "Tarif eklemek için giriş yapın.",
+        message: t("recipes.toast.loginToAdd"),
         action: "login",
       });
       return;
@@ -180,18 +173,18 @@ const RecipeBookPage = () => {
 
   const handleToggleSave = async (recipe) => {
     if (!user) {
-      setToast({ message: "Tarif kaydetmek için giriş yapın.", action: "login" });
+      setToast({ message: t("recipes.toast.loginToSave"), action: "login" });
       return;
     }
     if (isRecipeSaved(recipe.id)) {
       const ok = await unsaveRecipe(user.uid, recipe.id);
       setToast({
-        message: ok ? "Tarif kitabınızdan çıkarıldı." : "İşlem başarısız oldu.",
+        message: ok ? t("recipes.toast.removed") : t("recipes.toast.failed"),
       });
     } else {
       const ok = await saveRecipe(user.uid, recipe);
       setToast({
-        message: ok ? "Tarif kitabınıza kaydedildi." : "İşlem başarısız oldu.",
+        message: ok ? t("recipes.toast.saved") : t("recipes.toast.failed"),
       });
     }
   };
@@ -201,11 +194,11 @@ const RecipeBookPage = () => {
       return (
         <EmptyState
           icon={SearchOffIcon}
-          title="Eşleşen tarif bulunamadı"
-          text="Aramanızı veya filtrelerinizi değiştirerek tekrar deneyin."
+          title={t("recipes.book.empty.noMatchTitle")}
+          text={t("recipes.book.empty.noMatchText")}
           action={
             <Button variant="outlined" onClick={resetFilters}>
-              Filtreleri temizle
+              {t("recipes.book.empty.clearFilters")}
             </Button>
           }
         />
@@ -215,11 +208,11 @@ const RecipeBookPage = () => {
       return (
         <EmptyState
           icon={MenuBookOutlinedIcon}
-          title="Tarif kitabınız sizi bekliyor"
-          text="Annenizin dolması, en sevdiğiniz kek… İlk tarifinizi ekleyin, PDF olarak saklayın ve dilediğinizle paylaşın."
+          title={t("recipes.book.empty.personalTitle")}
+          text={t("recipes.book.empty.personalText")}
           action={
             <Button variant="contained" startIcon={<AddIcon />} onClick={openForm}>
-              İlk tarifimi ekle
+              {t("recipes.book.empty.personalAction")}
             </Button>
           }
         />
@@ -229,11 +222,11 @@ const RecipeBookPage = () => {
       return (
         <EmptyState
           icon={BookmarkBorderIcon}
-          title="Henüz kaydedilmiş tarif yok"
-          text="Hazır tariflerde beğendiklerinizi yer imi simgesiyle kitabınıza ekleyebilirsiniz."
+          title={t("recipes.book.empty.savedTitle")}
+          text={t("recipes.book.empty.savedText")}
           action={
             <Button variant="outlined" onClick={() => setRecipeFilter("default")}>
-              Hazır tariflere göz at
+              {t("recipes.book.empty.savedAction")}
             </Button>
           }
         />
@@ -242,11 +235,11 @@ const RecipeBookPage = () => {
     return (
       <EmptyState
         icon={MenuBookOutlinedIcon}
-        title="Burada henüz tarif yok"
-        text="Yeni bir tarif ekleyerek kitabınızı oluşturmaya başlayın."
+        title={t("recipes.book.empty.noneTitle")}
+        text={t("recipes.book.empty.noneText")}
         action={
           <Button variant="contained" startIcon={<AddIcon />} onClick={openForm}>
-            Yeni Tarif
+            {t("recipes.book.newRecipe")}
           </Button>
         }
       />
@@ -293,16 +286,15 @@ const RecipeBookPage = () => {
         >
           <Box>
             <Typography variant="h3" component="h1" sx={{ fontSize: { xs: 32, sm: 42 } }}>
-              Tarif Kitabım
+              {t("recipes.book.title")}
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 0.5, mb: 2.5, maxWidth: 520 }}>
-              Kendi tariflerinizi yazın, beğendiklerinizi saklayın ve kitabınızı
-              PDF olarak dışa aktarın.
+              {t("recipes.book.subtitle")}
             </Typography>
             <Stack direction="row" spacing={{ xs: 2.5, sm: 4 }}>
-              <StatPill value={userRecipes.length} label="Benim tariflerim" />
-              <StatPill value={savedRecipes.length} label="Kaydedilen" />
-              <StatPill value={allRecipes.length} label="Toplam tarif" />
+              <StatPill value={userRecipes.length} label={t("recipes.book.stats.mine")} />
+              <StatPill value={savedRecipes.length} label={t("recipes.book.stats.saved")} />
+              <StatPill value={allRecipes.length} label={t("recipes.book.stats.total")} />
             </Stack>
           </Box>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ width: { xs: "100%", md: "auto" } }}>
@@ -313,7 +305,7 @@ const RecipeBookPage = () => {
               onClick={openForm}
               sx={{ display: { xs: "none", sm: "inline-flex" } }}
             >
-              Yeni Tarif
+              {t("recipes.book.newRecipe")}
             </Button>
             <Button
               component={RouterLink}
@@ -323,7 +315,7 @@ const RecipeBookPage = () => {
               startIcon={<PictureAsPdfOutlinedIcon />}
               sx={{ bgcolor: "background.paper" }}
             >
-              PDF Olarak Dışa Aktar
+              {t("recipes.book.exportPdf")}
             </Button>
           </Stack>
         </Stack>
@@ -336,8 +328,8 @@ const RecipeBookPage = () => {
           size="medium"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Tarif, açıklama veya malzeme ara…"
-          inputProps={{ "aria-label": "Tariflerde ara" }}
+          placeholder={t("recipes.book.searchPlaceholder")}
+          inputProps={{ "aria-label": t("recipes.book.searchAria") }}
           sx={{ "& .MuiOutlinedInput-root": { bgcolor: "background.paper" } }}
           InputProps={{
             startAdornment: (
@@ -350,7 +342,7 @@ const RecipeBookPage = () => {
                 <IconButton
                   size="small"
                   onClick={() => setSearchTerm("")}
-                  aria-label="Aramayı temizle"
+                  aria-label={t("recipes.book.clearSearch")}
                 >
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -371,47 +363,47 @@ const RecipeBookPage = () => {
             scrollbarWidth: "none",
           }}
           role="group"
-          aria-label="Tarif kaynağı"
+          aria-label={t("recipes.book.sourceAria")}
         >
           {FILTERS.map((f) => (
             <Chip
-              key={f.value}
-              label={f.label}
+              key={f}
+              label={t(`recipes.book.filters.${f}`)}
               clickable
-              color={recipeFilter === f.value ? "primary" : "default"}
-              variant={recipeFilter === f.value ? "filled" : "outlined"}
-              onClick={() => setRecipeFilter(f.value)}
-              aria-pressed={recipeFilter === f.value}
-              sx={{ flexShrink: 0, bgcolor: recipeFilter === f.value ? undefined : "background.paper" }}
+              color={recipeFilter === f ? "primary" : "default"}
+              variant={recipeFilter === f ? "filled" : "outlined"}
+              onClick={() => setRecipeFilter(f)}
+              aria-pressed={recipeFilter === f}
+              sx={{ flexShrink: 0, bgcolor: recipeFilter === f ? undefined : "background.paper" }}
             />
           ))}
         </Stack>
         <Stack direction="row" spacing={1.5}>
           <TextField
             select
-            label="Zorluk"
+            label={t("recipes.book.difficulty")}
             value={difficultyFilter}
             onChange={(e) => setDifficultyFilter(e.target.value)}
             sx={{ minWidth: 140, flex: { xs: 1, sm: "0 0 auto" }, bgcolor: "background.paper" }}
           >
-            <MenuItem value="all">Tümü</MenuItem>
-            {Object.entries(DIFFICULTY_LABELS).map(([v, l]) => (
+            <MenuItem value="all">{t("recipes.book.all")}</MenuItem>
+            {DIFFICULTIES.map((v) => (
               <MenuItem key={v} value={v}>
-                {l}
+                {t(`common.difficulty.${v}`)}
               </MenuItem>
             ))}
           </TextField>
           <TextField
             select
-            label="Öğün"
+            label={t("recipes.book.mealType")}
             value={mealTypeFilter}
             onChange={(e) => setMealTypeFilter(e.target.value)}
             sx={{ minWidth: 140, flex: { xs: 1, sm: "0 0 auto" }, bgcolor: "background.paper" }}
           >
-            <MenuItem value="all">Tümü</MenuItem>
-            {MEAL_TYPES.map((t) => (
-              <MenuItem key={t} value={t}>
-                {MEAL_TYPE_LABELS[t]}
+            <MenuItem value="all">{t("recipes.book.all")}</MenuItem>
+            {MEAL_TYPES.map((type) => (
+              <MenuItem key={type} value={type}>
+                {t(`common.mealTypes.${type}`)}
               </MenuItem>
             ))}
           </TextField>
@@ -432,11 +424,13 @@ const RecipeBookPage = () => {
         sx={{ mb: 1.5 }}
       >
         <Typography variant="h6" component="h2">
-          {FILTERS.find((f) => f.value === recipeFilter)?.label || "Tarifler"}
+          {FILTERS.includes(recipeFilter)
+            ? t(`recipes.book.filters.${recipeFilter}`)
+            : t("recipes.book.gridTitle")}
         </Typography>
         {!loading && (
           <Typography variant="body2" color="text.secondary" aria-live="polite">
-            {visibleRecipes.length} tarif
+            {t("recipes.book.count", { count: visibleRecipes.length })}
           </Typography>
         )}
       </Stack>
@@ -445,7 +439,7 @@ const RecipeBookPage = () => {
 
       <Box sx={{ mt: 2 }}>
         {loading ? (
-          <Grid container spacing={2} aria-busy="true" aria-label="Tarifler yükleniyor">
+          <Grid container spacing={2} aria-busy="true" aria-label={t("recipes.book.loadingAria")}>
             {Array.from({ length: 6 }).map((_, i) => (
               <Grid item xs={12} sm={6} md={4} key={i}>
                 <CardSkeleton />
@@ -475,7 +469,7 @@ const RecipeBookPage = () => {
         color="primary"
         variant="extended"
         onClick={openForm}
-        aria-label="Yeni tarif ekle"
+        aria-label={t("recipes.book.newRecipeAria")}
         sx={{
           display: { xs: "inline-flex", sm: "none" },
           position: "fixed",
@@ -485,14 +479,14 @@ const RecipeBookPage = () => {
         }}
       >
         <AddIcon sx={{ mr: 0.5 }} />
-        Yeni Tarif
+        {t("recipes.book.newRecipe")}
       </Fab>
 
       <RecipeFormDialog
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSaved={(recipe) => {
-          setToast({ message: "Tarif kaydedildi.", recipeId: recipe?.id });
+          setToast({ message: t("recipes.toast.recipeSaved"), recipeId: recipe?.id });
         }}
       />
 
@@ -506,7 +500,7 @@ const RecipeBookPage = () => {
         action={
           toast?.action === "login" ? (
             <Button color="inherit" size="small" onClick={() => navigate("/login")}>
-              Giriş yap
+              {t("recipes.toast.login")}
             </Button>
           ) : toast?.recipeId ? (
             <Button
@@ -514,7 +508,7 @@ const RecipeBookPage = () => {
               size="small"
               onClick={() => navigate(`/recipes/${toast.recipeId}`)}
             >
-              Görüntüle
+              {t("recipes.toast.view")}
             </Button>
           ) : null
         }

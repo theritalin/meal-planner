@@ -16,22 +16,21 @@ import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import {
-  DIFFICULTY_COLORS,
-  DIFFICULTY_LABELS,
-  MEAL_TYPE_LABELS,
-} from "../../constants";
+import { DIFFICULTY_COLORS } from "../../constants";
+import { useI18n } from "../../i18n";
 import { totalTime } from "../../utils/recipes";
 import { mealTypeColor } from "./recipeHelpers";
 
-const summaryText = (recipe) => {
+const summaryText = (recipe, t) => {
   if (recipe.description) return recipe.description;
   const names = (recipe.ingredients || [])
     .map((i) => (typeof i === "string" ? i : i?.name))
     .filter(Boolean);
-  if (!names.length) return "Henüz açıklama eklenmemiş.";
+  if (!names.length) return t("recipes.card.noDescription");
   const head = names.slice(0, 4).join(", ");
-  return names.length > 4 ? `${head} ve ${names.length - 4} malzeme daha` : head;
+  return names.length > 4
+    ? t("recipes.card.moreIngredients", { head, count: names.length - 4 })
+    : head;
 };
 
 /**
@@ -44,6 +43,7 @@ const summaryText = (recipe) => {
  */
 const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const accent = mealTypeColor(mealType);
   const minutes = totalTime(recipe);
   const showBookmark = Boolean(onToggleSave) && !recipe.isPersonal;
@@ -74,7 +74,7 @@ const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
           p: 2,
           pr: showBookmark ? 6 : 2,
         }}
-        aria-label={`${recipe.name} tarifini aç`}
+        aria-label={t("recipes.card.openAria", { name: recipe.name })}
       >
         <Stack direction="row" spacing={0.75} sx={{ mb: 1 }} flexWrap="wrap">
           {mealType && (
@@ -82,7 +82,7 @@ const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
               variant="overline"
               sx={{ color: accent, fontWeight: 700, lineHeight: 1.6 }}
             >
-              {MEAL_TYPE_LABELS[mealType]}
+              {t(`common.mealTypes.${mealType}`)}
             </Typography>
           )}
           {recipe.isPersonal && (
@@ -96,7 +96,7 @@ const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
                 lineHeight: 1.6,
               }}
             >
-              <PersonOutlineIcon sx={{ fontSize: 14 }} /> Benim
+              <PersonOutlineIcon sx={{ fontSize: 14 }} /> {t("recipes.card.mine")}
             </Typography>
           )}
         </Stack>
@@ -122,7 +122,7 @@ const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
             mb: 2,
           }}
         >
-          {summaryText(recipe)}
+          {summaryText(recipe, t)}
         </Typography>
         <Stack
           direction="row"
@@ -136,7 +136,7 @@ const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
               size="small"
               variant="outlined"
               icon={<AccessTimeIcon />}
-              label={`${minutes} dk`}
+              label={t("common.minutes", { count: minutes })}
             />
           )}
           {Number(recipe.servings) > 0 && (
@@ -144,24 +144,26 @@ const RecipeCard = ({ recipe, mealType, isSaved = false, onToggleSave }) => {
               size="small"
               variant="outlined"
               icon={<PeopleAltOutlinedIcon />}
-              label={`${recipe.servings} kişilik`}
+              label={t("common.servings", { count: recipe.servings })}
             />
           )}
-          {recipe.difficulty && DIFFICULTY_LABELS[recipe.difficulty] && (
+          {recipe.difficulty && DIFFICULTY_COLORS[recipe.difficulty] && (
             <Chip
               size="small"
               color={DIFFICULTY_COLORS[recipe.difficulty]}
               variant="outlined"
-              label={DIFFICULTY_LABELS[recipe.difficulty]}
+              label={t(`common.difficulty.${recipe.difficulty}`)}
             />
           )}
         </Stack>
       </CardActionArea>
       {showBookmark && (
-        <Tooltip title={isSaved ? "Kitabımdan çıkar" : "Kitabıma kaydet"}>
+        <Tooltip title={isSaved ? t("recipes.bookmark.unsave") : t("recipes.bookmark.save")}>
           <IconButton
             onClick={() => onToggleSave(recipe)}
-            aria-label={isSaved ? "Tarifi kaydedilenlerden çıkar" : "Tarifi kaydet"}
+            aria-label={
+              isSaved ? t("recipes.bookmark.unsaveAria") : t("recipes.bookmark.saveAria")
+            }
             aria-pressed={isSaved}
             sx={{
               position: "absolute",

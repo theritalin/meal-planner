@@ -3,6 +3,9 @@ import { useMeals } from "../../context/MealContext";
 import { useRecipes } from "../../context/recipes/RecipeContext";
 import { palette } from "../../theme";
 
+/** Zorluk seviyeleri (etiketler: t(`common.difficulty.${d}`)). */
+export const DIFFICULTIES = ["easy", "medium", "hard"];
+
 /** Öğün tipine göre vurgu rengi (bilinmiyorsa ana renk). */
 export const mealTypeColor = (type) => palette[type] || palette.primary;
 
