@@ -37,7 +37,7 @@ import { useRecipes } from "../../context/recipes/RecipeContext";
 import AdBanner from "../ads/AdBanner";
 import {
   DAYS,
-  DAY_LABELS,
+  DAY_SHORT_LABELS,
   MEAL_TYPES,
   MEAL_TYPE_LABELS,
 } from "../../constants";
@@ -347,7 +347,7 @@ const ExportPage = () => {
                     variant="caption"
                     sx={{ fontWeight: 600, display: "block" }}
                   >
-                    {DAY_LABELS[day].slice(0, 3)}
+                    {DAY_SHORT_LABELS[day]}
                   </Typography>
                   <Stack
                     spacing={0.5}

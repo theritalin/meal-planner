@@ -27,6 +27,7 @@ on:
     paths-ignore:
       - "**.md"
       - "docs/**"
+      - "store/**"
 
 concurrency:
   group: android-${{ github.ref }}

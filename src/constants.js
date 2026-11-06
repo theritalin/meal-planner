@@ -20,6 +20,16 @@ export const DAY_LABELS = {
   sunday: "Pazar",
 };
 
+export const DAY_SHORT_LABELS = {
+  monday: "Pzt",
+  tuesday: "Sal",
+  wednesday: "Çar",
+  thursday: "Per",
+  friday: "Cum",
+  saturday: "Cmt",
+  sunday: "Paz",
+};
+
 export const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
 
 export const MEAL_TYPE_LABELS = {

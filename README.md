@@ -19,6 +19,7 @@ Capacitor ile Android (Google Play) uygulamasına dönüştürülmeye hazırdır
 - **Reklamlar** — web'de AdSense, Android'de AdMob; onay (consent) akışı ve
   sıklık sınırlı geçiş reklamı. Varsayılan olarak kapalı. Bkz. [`docs/ADS.md`](docs/ADS.md).
 - **SEO / GEO / AEO** — yapılandırılmış veri, SSS, `llms.txt`, yapay zekâ botlarına açık `robots.txt`, analitik. Bkz. [`docs/SEO.md`](docs/SEO.md).
+- **Google Play mağaza paketi** — metinler, görseller ve form cevapları: [`store/GOOGLE-PLAY.md`](store/GOOGLE-PLAY.md).
 - **Google Play hazırlığı** — `capacitor.config.json`, gizlilik politikası (`/privacy`),
   adım adım rehber: [`docs/ANDROID.md`](docs/ANDROID.md).
 - Google ile giriş, profil, kullanıcı arama/takip, Firestore senkronizasyonu.

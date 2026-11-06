@@ -84,15 +84,10 @@ olduğu yazar.
 
 ## 4. Play Console'a yükleme
 
-1. https://play.google.com/console → **Uygulama oluştur** (ad: Tarif Kitabım, dil: Türkçe,
-   Uygulama, Ücretsiz).
-2. *Test ve yayınlama → Test → Dahili test* → **Yeni sürüm oluştur** → `.aab` dosyasını yükleyin.
-   **Play Uygulama İmzalama**'yı kabul edin (varsayılan).
-3. Ardından 1. adımdaki notu uygulayın (Google'ın imzalama SHA'larını Firebase'e ekleyin).
-4. Mağaza girişi: kısa/uzun açıklama, 512×512 ikon (`public/icon-512.png`), 1024×500 öne
-   çıkan görsel, en az 2 telefon ekran görüntüsü.
-5. Yeni kişisel geliştirici hesaplarında üretime çıkmadan önce **en az 12 test kullanıcısıyla
-   14 gün kapalı test** zorunludur.
+Mağaza metinleri, görseller ve tüm form cevapları hazır: **[store/GOOGLE-PLAY.md](../store/GOOGLE-PLAY.md)**
+(görseller: `store/graphics/`). Eski geliştirici hesaplarında 14 günlük kapalı test zorunlu
+değildir; oradaki "Yayın sırası" ile önce dahili teste (imzalama anahtarı için), sonra doğrudan
+üretime yayınlayın.
 
 ## 5. app-ads.txt
 
