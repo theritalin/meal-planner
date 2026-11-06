@@ -81,10 +81,25 @@ const errorMessage = (err, t) => {
     case "auth/operation-not-allowed":
       return t("auth.login.errors.operationNotAllowed");
     default:
-      return `${t("auth.login.errors.generic")}${
-        err?.code ? ` (${err.code})` : ""
-      }`;
+      break;
   }
+
+  // Android (yerel Google girişi) hataları Firebase kodu taşımaz; mesajdan tanı.
+  const msg = String(err?.message || "");
+  if (!err?.code) {
+    if (/cancel/i.test(msg)) return t("auth.login.errors.popupClosed");
+    if (/28444|developer console|developer_error|\b10:/i.test(msg)) {
+      return t("auth.login.errors.nativeConfig");
+    }
+    if (/no credential|nocredential/i.test(msg)) {
+      return t("auth.login.errors.noAccount");
+    }
+    if (/network|internet/i.test(msg)) return t("auth.login.errors.network");
+  }
+  const detail = err?.code || msg;
+  return `${t("auth.login.errors.generic")}${
+    detail ? ` (${detail.slice(0, 160)})` : ""
+  }`;
 };
 
 /** Sık sorulan sorular (arama motorları ve yapay zekâ yanıtları için de görünür). */

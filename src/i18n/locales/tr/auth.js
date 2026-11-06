@@ -34,6 +34,10 @@ const auth = {
         "Firebase API anahtarı eksik veya hatalı. Ortam değişkenlerini (REACT_APP_FIREBASE_*) kontrol edin.",
       operationNotAllowed:
         "Google ile giriş Firebase'de etkin değil. Firebase Console > Authentication > Sign-in method bölümünden Google'ı etkinleştirin.",
+      nativeConfig:
+        "Google ile giriş bu uygulama sürümü için yapılandırılmamış. Uygulamanın imza parmak izleri (SHA-1/SHA-256) Firebase'e eklenmeli ve google-services.json güncellenmeli.",
+      noAccount:
+        "Cihazda Google hesabı bulunamadı. Ayarlar > Hesaplar bölümünden bir Google hesabı ekleyip tekrar deneyin.",
       generic:
         "Google ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.",
     },

@@ -34,6 +34,10 @@ const auth = {
         "The Firebase API key is missing or invalid. Check the environment variables (REACT_APP_FIREBASE_*).",
       operationNotAllowed:
         "Google sign-in isn't enabled in Firebase. Enable Google under Firebase Console > Authentication > Sign-in method.",
+      nativeConfig:
+        "Google sign-in isn't configured for this app build. The app's signing fingerprints (SHA-1/SHA-256) must be added in Firebase and google-services.json updated.",
+      noAccount:
+        "No Google account found on this device. Add one under Settings > Accounts and try again.",
       generic: "Something went wrong signing in with Google. Please try again.",
     },
   },
