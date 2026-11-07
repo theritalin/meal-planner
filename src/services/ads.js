@@ -110,6 +110,7 @@ const storage = {
 const KEYS = {
   consent: 'mp_ads_consent', // 'granted' | 'denied'
   lastInterstitial: 'mp_ads_last_interstitial', // epoch ms
+  signedIn: 'mp_signed_in', // '1' oturum açıkken (services/firebase.js yazar)
 };
 
 /* -------------------------------------------------------------------------- */
@@ -168,6 +169,28 @@ export const openConsentPreferences = async () => {
 let adsenseScriptPromise = null;
 
 /**
+ * AdSense'in yüklenebileceği sayfalar (yayıncı içeriği olan herkese açık sayfalar):
+ * oturum açmamış ziyaretçi için "/", "/tarifler*", "/rehberler*", "/hakkimizda".
+ * /login, /privacy ve oturum açılmış uygulama ekranlarında ASLA yüklenmez.
+ * public/index.html'deki satır içi betik aynı kuralı uygular.
+ *
+ * @param {string} [pathname] varsayılan: location.pathname
+ * @param {boolean} [signedIn] varsayılan: localStorage.mp_signed_in === '1'
+ */
+export const isAdEligiblePath = (pathname, signedIn) => {
+  const raw =
+    pathname !== undefined
+      ? pathname
+      : typeof window !== 'undefined' && window.location
+      ? window.location.pathname
+      : '';
+  const path = String(raw || '').replace(/\/+$/, '') || '/';
+  const isSignedIn = signedIn !== undefined ? !!signedIn : storage.get(KEYS.signedIn) === '1';
+  if (path === '/') return !isSignedIn;
+  return /^\/(tarifler|rehberler|hakkimizda)(\/|$)/.test(path);
+};
+
+/**
  * adsbygoogle.js'i yalnızca bir kez, tembel olarak yükler.
  * Onay verilmediyse kişiselleştirilmemiş reklam ister.
  * Başarılıysa true, aksi halde false döner (asla reject etmez).
@@ -175,6 +198,8 @@ let adsenseScriptPromise = null;
 export const loadAdSense = () => {
   if (!isWebAdsActive() || typeof document === 'undefined') return Promise.resolve(false);
   if (adsenseScriptPromise) return adsenseScriptPromise;
+  // İçeriksiz / oturum açılmış ekranlarda betik eklenmez (sonraki uygun sayfada eklenir).
+  if (!isAdEligiblePath()) return Promise.resolve(false);
 
   adsenseScriptPromise = new Promise((resolve) => {
     try {

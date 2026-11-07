@@ -7,6 +7,7 @@ import pdf from "./pdf";
 import auth from "./auth";
 import legal from "./legal";
 import ads from "./ads";
+import publicNs from "./public";
 
-const dict = { common, shell, planner, recipes, pdf, auth, legal, ads };
+const dict = { common, shell, planner, recipes, pdf, auth, legal, ads, public: publicNs };
 export default dict;

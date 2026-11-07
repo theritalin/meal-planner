@@ -30,6 +30,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import PrivacyTipOutlinedIcon from "@mui/icons-material/PrivacyTipOutlined";
+import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import { useMeals } from "../../context/MealContext";
 import UserSearch from "../auth/UserSearch";
 import SignOutButton from "../auth/SignOut";
@@ -39,6 +40,7 @@ import { initAds } from "../../services/ads";
 import { isNativeApp } from "../../services/platform";
 import { useI18n } from "../../i18n";
 import LanguageSwitcher from "../common/LanguageSwitcher";
+import PublicLayout, { isPublicContentPath } from "../public/PublicLayout";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
@@ -52,13 +54,15 @@ const PAGE_TITLES = [
 ];
 
 /** Sayfa başlığını (sekme adı) rotaya ve dile göre ayarlar. */
-const usePageTitle = (pathname) => {
+const usePageTitle = (pathname, skip) => {
   const { t } = useI18n();
   useEffect(() => {
+    // Herkese açık içerik sayfaları kendi başlıklarını ayarlar.
+    if (skip) return;
     const match = PAGE_TITLES.find(([prefix]) => pathname.startsWith(prefix));
     const page = t(`shell.pageTitles.${match ? match[1] : "planner"}`);
     document.title = `${page} | ${t("common.appName")}`;
-  }, [pathname, t]);
+  }, [pathname, t, skip]);
 };
 
 const NAV_ITEMS = [
@@ -208,6 +212,12 @@ const UserMenu = ({ user }) => {
           </ListItemIcon>
           {t("shell.myProfile")}
         </MenuItem>
+        <MenuItem onClick={() => go("/tarifler")}>
+          <ListItemIcon>
+            <RestaurantMenuRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          {t("public.nav.publicRecipes")}
+        </MenuItem>
         <MenuItem onClick={() => go("/privacy")}>
           <ListItemIcon>
             <PrivacyTipOutlinedIcon fontSize="small" />
@@ -238,15 +248,21 @@ const UserMenu = ({ user }) => {
  * Android'de (Capacitor) alttaki AdMob bandı için yer açar.
  */
 const AppShell = ({ children }) => {
-  const { user } = useMeals();
+  const { user, authLoading } = useMeals();
   const { t } = useI18n();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
   const navigate = useNavigate();
   const current = activeIndex(location.pathname);
-  const showChrome = Boolean(user) && location.pathname !== "/login";
-  usePageTitle(location.pathname);
+  const { pathname } = location;
+  const showChrome = Boolean(user) && pathname !== "/login";
+  const isContentPath = isPublicContentPath(pathname);
+  // Oturum açmamış ziyaretçiler: içerik sayfalarında ve (oturum durumu
+  // belli olunca) ana sayfada herkese açık üst menü + alt bilgi.
+  const showPublic =
+    !user && (isContentPath || (pathname === "/" && !authLoading));
+  usePageTitle(pathname, isContentPath || showPublic);
 
   useEffect(() => {
     initAds();
@@ -276,6 +292,15 @@ const AppShell = ({ children }) => {
     enabled: showChrome && location.pathname !== "/privacy",
   });
   const bottomOffset = bannerHeight || 0;
+
+  if (showPublic) {
+    return (
+      <>
+        <PublicLayout>{children}</PublicLayout>
+        <ConsentBanner bottomOffset={{ xs: 16, md: 16 }} />
+      </>
+    );
+  }
 
   if (!showChrome) {
     return (

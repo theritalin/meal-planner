@@ -28,6 +28,17 @@ const ExportPage = lazy(() => import("./components/pdf/ExportPage"));
 const UserProfile = lazy(() => import("./components/auth/UserProfile"));
 const PrivacyPolicy = lazy(() => import("./components/legal/PrivacyPolicy"));
 const Login = lazy(() => import("./components/auth/Login"));
+// Herkese açık içerik sayfaları (oturum gerektirmez).
+const PublicHome = lazy(() => import("./components/public/PublicHome"));
+const RecipeListPage = lazy(
+  () => import("./components/public/RecipeListPage"),
+);
+const PublicRecipePage = lazy(
+  () => import("./components/public/PublicRecipePage"),
+);
+const GuideListPage = lazy(() => import("./components/public/GuideListPage"));
+const GuidePage = lazy(() => import("./components/public/GuidePage"));
+const AboutPage = lazy(() => import("./components/public/AboutPage"));
 
 const PageLoader = () => (
   <Box
@@ -56,13 +67,25 @@ const LoginRoute = () => {
   return user ? <Navigate to="/" replace /> : <Login />;
 };
 
+/** "/": oturum açıksa planlayıcı, değilse herkese açık ana sayfa. */
+const HomeRoute = () => {
+  const { user, authLoading } = useMeals();
+  if (authLoading) return <PageLoader />;
+  return user ? <MealPlannerPage /> : <PublicHome />;
+};
+
 const protect = (element) => <ProtectedRoute>{element}</ProtectedRoute>;
 
 const AppContent = () => (
   <AppShell>
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={protect(<MealPlannerPage />)} />
+        <Route path="/" element={<HomeRoute />} />
+        <Route path="/tarifler" element={<RecipeListPage />} />
+        <Route path="/tarifler/:slug" element={<PublicRecipePage />} />
+        <Route path="/rehberler" element={<GuideListPage />} />
+        <Route path="/rehberler/:slug" element={<GuidePage />} />
+        <Route path="/hakkimizda" element={<AboutPage />} />
         <Route path="/recipes" element={protect(<RecipeBookPage />)} />
         <Route
           path="/recipes/:recipeId"

@@ -55,6 +55,77 @@ Evet. Uygulama telefona uyumludur ve tarayıcıdan ana ekrana eklenebilir. Andro
 
 Tarifleriniz ve planlarınız Google hesabınıza bağlı olarak Google Firebase üzerinde saklanır; her cihazdan erişebilirsiniz. Ayrıntılar Gizlilik Politikası sayfasındadır.
 
+<!-- içerik:başla (scripts/prerender.mjs üretir; elle düzenlemeyin) -->
+
+## Tarif koleksiyonu
+
+Malzemeleri, adım adım hazırlanışı, süreleri ve püf noktalarıyla 30 Türkçe ev yemeği tarifi: https://haftalikyemek.space/tarifler
+
+### Çorbalar
+
+- [Mercimek Çorbası](https://haftalikyemek.space/tarifler/mercimek-corbasi): Limon ve pul biberli tereyağıyla servis edilen, kadife kıvamında klasik kırmızı mercimek çorbası.
+- [Ezogelin Çorbası](https://haftalikyemek.space/tarifler/ezogelin-corbasi): Kırmızı mercimek, bulgur ve pirincin naneli tereyağıyla buluştuğu, doyurucu ve hafif ekşimsi Antep usulü ezogelin çorbası.
+- [Yayla Çorbası](https://haftalikyemek.space/tarifler/yayla-corbasi): Yoğurt, pirinç ve naneli tereyağıyla hazırlanan, kesilmeden pişirmenin püf noktalarıyla ipeksi kıvamlı yayla çorbası.
+- [Tarhana Çorbası](https://haftalikyemek.space/tarifler/tarhana-corbasi): Ev yapımı ya da hazır tarhanayla 20 dakikada hazırlanan, salçalı ve naneli, mideyi ısıtan geleneksel tarhana çorbası.
+- [Domates Çorbası](https://haftalikyemek.space/tarifler/domates-corbasi): Taze domates, sütle yumuşatılmış kıvam ve üzerinde eriyen kaşarla, hem yazın hem kışın yapılabilecek kremamsı domates çorbası.
+
+### Ana Yemekler
+
+- [Karnıyarık](https://haftalikyemek.space/tarifler/karniyarik): Kızartılmış patlıcanların kıymalı, domatesli ve biberli harçla doldurulup fırında piştiği, Türk mutfağının klasik yaz yemeği.
+- [Etli Kuru Fasulye](https://haftalikyemek.space/tarifler/kuru-fasulye): Bir gece önceden ıslatılmış fasulye ve kuşbaşı etle, kısık ateşte ağır ağır pişen, salçalı ve tereyağlı ev usulü kuru fasulye.
+- [Etli Nohut](https://haftalikyemek.space/tarifler/etli-nohut): Kuşbaşı etle yumuşacık pişen nohutun salçalı, tereyağlı suyuyla buluştuğu, bulgur pilavının en iyi eşlikçisi etli nohut yemeği.
+- [Fırında Tavuk Patates](https://haftalikyemek.space/tarifler/firinda-tavuk-patates): Salçalı, sarımsaklı ve kekikli sosa bulanan tavuk butları ile patateslerin aynı tepside piştiği, bulaşığı az pratik akşam yemeği.
+- [İzmir Köfte](https://haftalikyemek.space/tarifler/izmir-kofte): Kızarmış köfte ve patateslerin domates, biber ve salçalı sosla fırında buluştuğu, Ege mutfağının sevilen klasiği İzmir köfte.
+- [Tavuk Sote](https://haftalikyemek.space/tarifler/tavuk-sote): Tavuk göğsünün biber, domates ve sarımsakla yüksek ateşte sotelendiği, 30 dakikada hazır, sulu ve renkli tavuk sote.
+
+### Zeytinyağlılar
+
+- [Zeytinyağlı Taze Fasulye](https://haftalikyemek.space/tarifler/zeytinyagli-taze-fasulye): Domates ve soğanla kendi suyunda ağır ağır pişen, soğuk servis edilen klasik zeytinyağlı taze fasulye tarifi.
+- [Zeytinyağlı Yaprak Sarma](https://haftalikyemek.space/tarifler/zeytinyagli-yaprak-sarma): Fıstık, kuş üzümü ve baharatlı pirinç iç harcıyla ince ince sarılan, limonla servis edilen zeytinyağlı asma yaprağı sarması.
+- [İmam Bayıldı](https://haftalikyemek.space/tarifler/imam-bayildi): Bol soğan, sarımsak ve domatesle doldurulup zeytinyağında yumuşacık pişirilen, soğuk servis edilen klasik imam bayıldı.
+- [Zeytinyağlı Enginar](https://haftalikyemek.space/tarifler/zeytinyagli-enginar): Havuç, patates ve bezelyeyle limonlu suda pişirilen, dereotuyla servis edilen ilkbaharın en ferah zeytinyağlısı enginar.
+
+### Sebze Yemekleri
+
+- [Kabak Mücver](https://haftalikyemek.space/tarifler/kabak-mucver): Rendelenmiş kabak, beyaz peynir, dereotu ve taze soğanla hazırlanan, dışı çıtır içi yumuşak kabak mücver; tavada veya fırında.
+- [Pirinçli Ispanak Yemeği](https://haftalikyemek.space/tarifler/ispanak-yemegi): Soğan ve salçayla kavrulup az pirinçle pişirilen, sarımsaklı yoğurtla servis edilen hafif ve pratik zeytinyağlı ıspanak yemeği.
+- [Sebze Türlüsü](https://haftalikyemek.space/tarifler/sebze-turlu): Patlıcan, kabak, patates, fasulye ve biberin domatesle tek tencerede piştiği, yaz sebzelerinin bir arada tadına vardıran türlü.
+
+### Kahvaltılıklar
+
+- [Menemen](https://haftalikyemek.space/tarifler/menemen): Sivri biber, domates ve yumuşacık pişmiş yumurtayla hazırlanan, ekmek banmalık sulu kıvamıyla klasik Türk kahvaltısı menemen.
+- [Çılbır](https://haftalikyemek.space/tarifler/cilbir): Sarımsaklı yoğurt yatağında poşe yumurta ve üzerine gezdirilen pul biberli tereyağıyla Osmanlı'dan bugüne gelen şık kahvaltılık çılbır.
+- [Sucuklu Yumurta](https://haftalikyemek.space/tarifler/sucuklu-yumurta): Sahanda kendi yağında kızaran sucuk dilimleri üzerine kırılan yumurtalarla, 10 dakikada hazır doyurucu bir pazar kahvaltısı klasiği.
+- [Pişi](https://haftalikyemek.space/tarifler/pisi): Mayalı yumuşak hamurun kızgın yağda kabarıp altın rengini aldığı, peynir ve reçelle servis edilen hafta sonu kahvaltısının yıldızı pişi.
+
+### Salatalar
+
+- [Gavurdağı Salatası](https://haftalikyemek.space/tarifler/gavurdagi-salatasi): İnce kıyılmış domates, biber, soğan ve cevizin nar ekşili, sumaklı sosla buluştuğu Gaziantep usulü gavurdağı salatası.
+- [Çoban Salata](https://haftalikyemek.space/tarifler/coban-salata): Domates, salatalık, biber ve soğanın zeytinyağı ve limonla buluştuğu, her yemeğe yakışan en sade ve en klasik Türk salatası.
+
+### Hamur İşleri
+
+- [Ispanaklı Tepsi Böreği](https://haftalikyemek.space/tarifler/ispanakli-borek): Hazır yufka, beyaz peynir ve soğanlı ıspanakla hazırlanan, sütlü sosuyla içi yumuşak üstü çıtır fırın tepsi böreği.
+- [Patatesli Gözleme](https://haftalikyemek.space/tarifler/patatesli-gozleme): Mayasız ince hamurun baharatlı patates harcıyla doldurulup tavada pişirildiği, tereyağı sürülerek sıcak servis edilen ev usulü gözleme.
+
+### Pilav ve Makarnalar
+
+- [Domatesli Bulgur Pilavı](https://haftalikyemek.space/tarifler/bulgur-pilavi): Soğan, biber, domates ve biber salçasıyla pişen, tane tane dökülen, etli yemeklerin en iyi eşlikçisi domatesli bulgur pilavı.
+- [Şehriyeli Pirinç Pilavı](https://haftalikyemek.space/tarifler/sehriyeli-pirinc-pilavi): Tereyağında kavrulmuş tel şehriye ve baldo pirinçle hazırlanan, tane tane dökülen klasik ev usulü şehriyeli pirinç pilavı.
+
+### Tatlılar
+
+- [Fırın Sütlaç](https://haftalikyemek.space/tarifler/firin-sutlac): Pirinçle koyulaşan sütlü muhallebinin fırında üzeri karamelize edildiği, soğuk servis edilen klasik ve hafif fırın sütlaç tarifi.
+- [İrmik Helvası](https://haftalikyemek.space/tarifler/irmik-helvasi): Tereyağında dolmalık fıstıkla kavrulan irmiğin sıcak sütlü şerbetle demlendiği, kokusuyla evi saran geleneksel irmik helvası.
+
+## Rehberler
+
+Yemek planlama ve mutfak rehberleri: https://haftalikyemek.space/rehberler
+
+- [Haftalık Yemek Planı Nasıl Hazırlanır? Adım Adım Rehber](https://haftalikyemek.space/rehberler/haftalik-yemek-plani-nasil-hazirlanir): Haftalık menü hazırlamanın pratik yolu: ihtiyaçları belirleme, dengeli öğün dağılımı, alışveriş listesi ve artan yemekleri değerlendirme.
+
+<!-- içerik:bitir -->
+
 ## Bağlantılar
 
 - [Uygulama / giriş](https://haftalikyemek.space/login): Ücretsiz başlangıç
