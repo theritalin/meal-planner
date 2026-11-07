@@ -1,0 +1,15 @@
+[
+  {
+    "slug": "haftalik-yemek-plani-nasil-hazirlanir",
+    "title": "Haftalık Yemek Planı Nasıl Hazırlanır? Adım Adım Rehber",
+    "description": "Haftalık menü hazırlamanın pratik yolu: ihtiyaçları belirleme, dengeli öğün dağılımı, alışveriş listesi ve artan yemekleri değerlendirme.",
+    "readingMinutes": 6,
+    "updated": "2026-11-07",
+    "blocks": [
+      { "type": "p", "text": "Haftalık yemek planı, her gün 'bugün ne pişirsem?' sorusuyla uğraşmadan..." },
+      { "type": "h2", "text": "1. Haftanın ritmini belirleyin" },
+      { "type": "ul", "items": ["Yoğun günler için 30 dakikanın altındaki tarifleri seçin.", "Hafta sonuna daha uzun tarifleri bırakın."] }
+    ],
+    "relatedRecipes": ["mercimek-corbasi"]
+  }
+]

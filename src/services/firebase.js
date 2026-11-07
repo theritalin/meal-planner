@@ -51,8 +51,20 @@ const ensureUserDoc = (user) => {
 };
 
 // Oturum durumu değişikliklerini dinle
+// Statik index.html'deki reklam betiği, ana sayfada yalnızca oturum açmamış
+// ziyaretçilere AdSense yükler; bunun için oturum durumu işaretlenir.
+const markSignedIn = (signedIn) => {
+  try {
+    if (signedIn) window.localStorage.setItem("mp_signed_in", "1");
+    else window.localStorage.removeItem("mp_signed_in");
+  } catch (e) {
+    /* yoksay */
+  }
+};
+
 export const listenToAuthChanges = (callback) => {
   return onAuthStateChanged(auth, (user) => {
+    markSignedIn(Boolean(user));
     if (user) {
       ensureUserDoc(user).finally(() => callback(user));
     } else {

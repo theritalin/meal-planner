@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "mercimek-corbasi",
+    "name": "Mercimek Çorbası",
+    "category": "corba",
+    "mealType": "lunch",
+    "description": "Limon ve pul biberli tereyağıyla servis edilen, kadife kıvamında klasik kırmızı mercimek çorbası.",
+    "intro": "Türk mutfağının en sevilen çorbalarından biri olan mercimek çorbası, az malzemeyle kısa sürede hazırlanır ve haftalık menüde öğle yemeklerinin vazgeçilmezidir. Havuç ve patates çorbaya doğal bir tatlılık ve kıvam verir; un kavurmak ise kadifemsi dokunun sırrıdır. Servis ederken üzerine gezdirilen pul biberli tereyağı ve bir dilim limon, sade bir çorbayı sofranın yıldızına dönüştürür.",
+    "prepTime": 10,
+    "cookTime": 30,
+    "servings": 4,
+    "difficulty": "easy",
+    "calories": 250,
+    "ingredients": [
+      { "amount": "1", "unit": "su bardağı", "name": "kırmızı mercimek" },
+      { "amount": "1", "unit": "adet", "name": "kuru soğan" },
+      { "amount": "1", "unit": "adet", "name": "havuç" },
+      { "amount": "1", "unit": "adet", "name": "patates" },
+      { "amount": "2", "unit": "yemek kaşığı", "name": "tereyağı" },
+      { "amount": "1", "unit": "yemek kaşığı", "name": "un" },
+      { "amount": "6", "unit": "su bardağı", "name": "sıcak su veya et suyu" },
+      { "amount": "1", "unit": "çay kaşığı", "name": "tuz" },
+      { "amount": "1/2", "unit": "çay kaşığı", "name": "kimyon" },
+      { "amount": "1", "unit": "çay kaşığı", "name": "pul biber" },
+      { "amount": "1", "unit": "adet", "name": "limon (servis için)" }
+    ],
+    "instructions": [
+      "Mercimeği süzgeçte suyu berraklaşana kadar yıkayın.",
+      "Tencerede 1 yemek kaşığı tereyağını eritin, ince doğranmış soğanı pembeleşene kadar kavurun.",
+      "Unu ekleyip kokusu çıkana kadar 1 dakika daha kavurun.",
+      "Küp doğranmış havuç ve patatesi, mercimeği ekleyin; sıcak suyu ilave edip kaynatın.",
+      "Kısık ateşte, ara ara karıştırarak sebzeler yumuşayana kadar yaklaşık 25 dakika pişirin.",
+      "Çorbayı blenderdan geçirin; tuz ve kimyonla tatlandırın, gerekirse biraz sıcak su ekleyin.",
+      "Kalan tereyağını küçük bir tavada eritip pul biberi ekleyin, servis ederken çorbanın üzerine gezdirin."
+    ],
+    "tips": [
+      "Kıvamı koyu gelirse sıcak su ekleyerek açın; soğuk su kesilmeye neden olabilir.",
+      "Ertesi gün ısıtırken birkaç kaşık su ekleyin; mercimek bekledikçe kıvam alır."
+    ],
+    "tags": ["çorba", "vejetaryen", "pratik", "kış"]
+  }
+]
