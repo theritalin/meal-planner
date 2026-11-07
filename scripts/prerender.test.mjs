@@ -1,4 +1,4 @@
-// node --test scripts/
+// node --test scripts/prerender.test.mjs
 // prerender.mjs'i geçici bir build dizininde küçük bir şablonla çalıştırır.
 import test from "node:test";
 import assert from "node:assert/strict";

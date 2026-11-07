@@ -14,6 +14,7 @@ Tüm reklam mantığı `src/services/ads.js` içindedir. Bileşenler:
 - **Web (AdSense):** üretim derlemesinde (Vercel) varsayılan olarak **açık**. Yayıncı kimliği
   `ca-pub-8721131084537312`; AdSense betiği `public/index.html` `<head>` içinde, `public/ads.txt`
   site kökünde. Kapatmak için `REACT_APP_ADS_ENABLED=false`.
+  **Yalnızca içerik sayfalarında yüklenir** (aşağıdaki "Reklamların gösterildiği sayfalar").
 - **Android (AdMob):** `REACT_APP_ADS_ENABLED=true` olmadıkça kapalı (gerçek birim kimlikleri gerekir).
 - Reklam hataları uygulamayı asla çökertmez.
 
@@ -134,9 +135,54 @@ doğal bir duraklamada (PDF hazırlandıktan sonra) gösterin.
 - Tercihleri yeniden açmak: `openConsentPreferences()` (Gizlilik Politikası sayfasında
   "Reklam tercihlerimi değiştir" butonu bunu kullanır).
 
+## Reklamların gösterildiği sayfalar (AdSense politikası)
+
+AdSense, siteyi "Yayıncı içeriği olmayan ekranlarda Google tarafından sunulan reklamlar"
+gerekçesiyle reddetmişti: ziyaretçiler yalnızca giriş sayfasını görüyordu ve betik her
+sayfada (giriş, gizlilik, boş uygulama ekranları) yükleniyordu. Artık AdSense betiği
+**yalnızca** şu sayfalarda yüklenir:
+
+| Sayfa | Reklam |
+| --- | --- |
+| `/` (oturum açmamış ziyaretçi: herkese açık ana sayfa) | evet |
+| `/tarifler`, `/tarifler/<slug>` | evet |
+| `/rehberler`, `/rehberler/<slug>` | evet |
+| `/hakkimizda` | evet |
+| `/login`, `/privacy` | **hayır** |
+| Oturum açılmış uygulama ekranları (planlayıcı, tarif kitabım, PDF, profil…) ve oturum açıkken `/` | **hayır** |
+
+Kural iki yerde uygulanır (ikisi aynı olmalı):
+
+1. `public/index.html` satır içi betiği — ilk sayfa yüklemesinde `location.pathname`'e bakar.
+   `/` için oturum durumunu bilemediğinden `localStorage.mp_signed_in === "1"` işaretine bakar
+   (işareti `src/services/firebase.js` → `listenToAuthChanges` oturum açılınca yazar, kapanınca siler).
+2. `src/services/ads.js` → `isAdEligiblePath()`; `loadAdSense()` uygun olmayan sayfada betik eklemez
+   (`initAds()` ve `<AdBanner>` istemci tarafı gezinmede bunu kullanır). Betik zaten eklenmişse
+   (`script[data-mp-adsense]`) ikinci kez eklenmez.
+
+Sınırlama: SPA içinde içerik sayfasından uygulama ekranına geçildiğinde, yüklenmiş betik
+sayfadan kaldırılamaz; otomatik reklamlar o oturumda görünebilir. Bu nedenle uygulama
+ekranlarında `<AdBanner>` birimi yerleştirmek yerine içerik sayfalarını tercih edin
+(oturum açılmış ekranlardaki `planner`/`export` birimleri artık yüklenmez).
+
+## AdSense'e yeniden inceleme başvurusu
+
+1. Dağıtımdan sonra JavaScript kapalıyken (veya `curl`) şu sayfaların gerçek içerik
+   gösterdiğini doğrulayın: `/`, `/tarifler`, bir tarif, `/rehberler`, bir rehber, `/hakkimizda`
+   (statik HTML `scripts/prerender.mjs` ile üretilir; bkz. `docs/SEO.md`).
+2. `/login` ve `/privacy` kaynak kodunda (`view-source:`) `adsbygoogle.js` isteği **olmadığını**
+   tarayıcı geliştirici araçları → Ağ sekmesinde kontrol edin.
+3. Google Search Console'a güncel `sitemap.xml`'i gönderin; birkaç tarif URL'si için
+   "URL denetimi → Dizine eklenmesini iste" yapın.
+4. AdSense → **Siteler** → `haftalikyemek.space` → "Sorunları düzelttiğimi onaylıyorum"
+   kutusunu işaretleyip **İnceleme iste**. İnceleme birkaç gün ile birkaç hafta sürebilir.
+5. Otomatik reklamlar açıksa AdSense → Reklamlar → Site bazında → **Sayfa hariç tutma** ile
+   `/login`, `/privacy` ve uygulama yollarını ayrıca hariç tutabilirsiniz (isteğe bağlı ek güvence).
+
 ## AdSense site doğrulaması
 
-Yapıldı: `public/index.html` `<head>` içinde AdSense betiği ve
+Yapıldı: `public/index.html` `<head>` içinde AdSense betiği (yalnızca içerik sayfalarında
+eklenir) ve tüm sayfalarda
 `<meta name="google-adsense-account" content="ca-pub-8721131084537312">` var;
 `public/ads.txt`:
 

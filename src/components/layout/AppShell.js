@@ -36,7 +36,7 @@ import UserSearch from "../auth/UserSearch";
 import SignOutButton from "../auth/SignOut";
 import ConsentBanner from "../ads/ConsentBanner";
 import { useNativeBanner } from "../ads/AdBanner";
-import { initAds } from "../../services/ads";
+import { initAds, isAdEligiblePath } from "../../services/ads";
 import { isNativeApp } from "../../services/platform";
 import { useI18n } from "../../i18n";
 import LanguageSwitcher from "../common/LanguageSwitcher";
@@ -263,6 +263,18 @@ const AppShell = ({ children }) => {
   const showPublic =
     !user && (isContentPath || (pathname === "/" && !authLoading));
   usePageTitle(pathname, isContentPath || showPublic);
+
+  // AdSense betiği yalnızca herkese açık içerik sayfalarında olmalı. Betik
+  // yüklendikten sonra SPA içinde içeriksiz bir ekrana (giriş, gizlilik,
+  // uygulama) geçilirse betiği kaldırmanın tek güvenilir yolu sayfayı yeniden
+  // yüklemektir; yeniden yüklenen sayfada betik eklenmez.
+  useEffect(() => {
+    if (authLoading) return;
+    const loaded = document.querySelector("script[data-mp-adsense]");
+    if (loaded && !isAdEligiblePath(location.pathname, Boolean(user))) {
+      window.location.replace(location.pathname + location.search);
+    }
+  }, [authLoading, location.pathname, location.search, user]);
 
   useEffect(() => {
     initAds();
