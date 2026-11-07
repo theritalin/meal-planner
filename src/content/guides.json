@@ -3,13 +3,816 @@
     "slug": "haftalik-yemek-plani-nasil-hazirlanir",
     "title": "Haftalık Yemek Planı Nasıl Hazırlanır? Adım Adım Rehber",
     "description": "Haftalık menü hazırlamanın pratik yolu: ihtiyaçları belirleme, dengeli öğün dağılımı, alışveriş listesi ve artan yemekleri değerlendirme.",
-    "readingMinutes": 6,
+    "readingMinutes": 4,
     "updated": "2026-11-07",
     "blocks": [
-      { "type": "p", "text": "Haftalık yemek planı, her gün 'bugün ne pişirsem?' sorusuyla uğraşmadan..." },
-      { "type": "h2", "text": "1. Haftanın ritmini belirleyin" },
-      { "type": "ul", "items": ["Yoğun günler için 30 dakikanın altındaki tarifleri seçin.", "Hafta sonuna daha uzun tarifleri bırakın."] }
+      {
+        "type": "p",
+        "text": "Haftalık yemek planı, her akşam 'bugün ne pişirsem?' sorusuyla buzdolabının önünde dakikalarca beklemenin en etkili çözümüdür. Planlı bir hafta; daha az market ziyareti, daha az çöpe giden yiyecek ve daha dengeli sofralar demektir. Üstelik plan yapmak sanıldığı kadar zaman almaz. Haftada bir kez ayıracağınız yirmi otuz dakika, hafta boyunca size saatler kazandırır. Bu rehberde, ilk kez plan yapacaklar için de uygulanabilir, esnek ve gerçekçi bir yöntem anlatıyoruz."
+      },
+      {
+        "type": "h2",
+        "text": "1. Haftanın ritmini belirleyin"
+      },
+      {
+        "type": "p",
+        "text": "Plana yemeklerden değil, takviminizden başlayın. Hangi akşamlar geç saate kadar çalışıyorsunuz, hangi gün misafir bekliyorsunuz, çocukların kursu hangi akşam? Bu soruların cevabı, her güne nasıl bir yemek yakıştığını belirler. Yoğun günler için kısa sürede hazırlanan ya da önceden pişirilip ısıtılabilen yemekleri, daha rahat günler için uzun pişen tarifleri seçmek planın tutarlı kalmasını sağlar."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Yoğun günler için 30 dakikanın altındaki tarifleri seçin: tavuk sote, menemen, makarna gibi.",
+          "Hafta sonuna kuru fasulye, etli nohut veya yaprak sarma gibi uzun pişen tarifleri bırakın.",
+          "Haftada bir akşamı 'artanlar günü' olarak işaretleyin; buzdolabındakileri değerlendirin.",
+          "Dışarıda yemek yiyeceğiniz ya da davetli olduğunuz günleri baştan plandan çıkarın."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "2. Elinizdekilerle başlayın"
+      },
+      {
+        "type": "p",
+        "text": "Yeni bir plan yaparken ilk iş buzdolabını, dondurucuyu ve kileri kontrol etmektir. Yarım kalmış bir paket bulgur, sararmaya yüz tutmuş ıspanak ya da dondurucuda unutulmuş kıyma, haftanın ilk yemeklerine ilham olabilir. Çabuk bozulan malzemeleri haftanın ilk günlerine, daha dayanıklı olanları ise sonraki günlere yerleştirin. Bu küçük alışkanlık hem bütçenizi hem de çöp kutunuzu doğrudan etkiler."
+      },
+      {
+        "type": "h2",
+        "text": "3. Öğünleri dengeli dağıtın"
+      },
+      {
+        "type": "p",
+        "text": "Dengeli bir hafta için her gün mükemmel bir tabak kurmanız gerekmez; haftanın bütününe bakmak yeterlidir. Kırmızı et, tavuk, baklagil, sebze yemekleri ve zeytinyağlıları gün gün dağıttığınızda menü kendiliğinden çeşitlenir. Türk mutfağının çorba, ana yemek, pilav ve salatadan oluşan klasik sofra düzeni bu konuda zaten iyi bir şablon sunar."
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Haftada iki gün baklagil (kuru fasulye, nohut, mercimek) planlayın.",
+          "İki gün tavuk veya balık, bir iki gün kırmızı et içeren yemeklere yer verin.",
+          "En az iki akşamı sebze yemeği ya da zeytinyağlıya ayırın.",
+          "Çorbaları hafta başında büyük tencerede pişirip birkaç güne yayın.",
+          "Her öğünün yanına mevsiminde bir salata veya yoğurt ekleyin."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Planınızı yaparken her güne bir 'yedek' tarif not edin. Gün beklediğiniz gibi gitmezse aklınızda daha basit bir alternatif hazır olur ve plan tamamen bozulmaz."
+      },
+      {
+        "type": "h2",
+        "text": "4. Tarifleri tekrar kullanın"
+      },
+      {
+        "type": "p",
+        "text": "Her hafta sıfırdan yeni tarifler aramak yorucudur ve planlamayı bırakmanın en yaygın nedenlerinden biridir. Bunun yerine ailenizin sevdiği on beş yirmi tariften oluşan bir temel liste oluşturun. Her hafta bu listeden beş altı yemek seçip yanına bir yeni tarif eklemek, hem çeşitliliği hem de pratikliği korur. Zamanla hangi tariflerin tuttuğunu, hangilerinin tabakta kaldığını görecek ve listenizi ona göre güncelleyeceksiniz."
+      },
+      {
+        "type": "h2",
+        "text": "5. Planı alışveriş listesine dönüştürün"
+      },
+      {
+        "type": "p",
+        "text": "Plan hazır olduğunda her tarifin malzemelerini tek bir listede toplayın ve elinizde bulunanları çıkarın. Listeyi market reyonlarına göre gruplamak alışverişi hızlandırır: manav, kasap, şarküteri, kuru gıda ve temizlik gibi. Aynı malzemenin birden fazla tarifte geçtiğini fark etmek de önemli bir kazanımdır; örneğin iki tarifte kullanılacak maydanozu tek demet olarak almak hem israfı hem de masrafı azaltır."
+      },
+      {
+        "type": "h2",
+        "text": "6. Hafta sonunda kısa bir değerlendirme yapın"
+      },
+      {
+        "type": "p",
+        "text": "Haftanın sonunda beş dakikanızı ayırıp planı gözden geçirin. Hangi gün planın dışına çıktınız, neden? Hangi yemek çok beğenildi, hangisi fazla geldi? Bu notlar, bir sonraki planı daha gerçekçi yapmanızı sağlar. Unutmayın, iyi bir plan katı kurallar listesi değil, hayatınıza uyum sağlayan bir rehberdir. Bir akşam planı değiştirip yerine başka bir yemek pişirmek başarısızlık değil, planın esnekliğinin bir göstergesidir."
+      },
+      {
+        "type": "h2",
+        "text": "Aileyi sürece dahil edin"
+      },
+      {
+        "type": "p",
+        "text": "Plan yalnızca mutfaktan sorumlu kişinin işi olmak zorunda değil. Hafta başında ev halkına bu hafta ne yemek istediklerini sormak, hem fikir bulmanızı kolaylaştırır hem de sofrada 'yine mi bu?' itirazlarını azaltır. Çocuklara haftada bir akşamın menüsünü seçme hakkı vermek, onların yemeğe ilgisini artırır ve yeni tatları denemeye daha istekli olmalarını sağlar. Plan herkesin görebileceği bir yerde, örneğin buzdolabının kapağında ya da ortak kullanılan bir uygulamada durduğunda, akşam eve ilk gelen kişi hazırlığa başlayabilir. Böylece yemek planı, evin tamamının paylaştığı bir düzene dönüşür ve sorumluluk tek bir kişinin omzunda kalmaz."
+      },
+      {
+        "type": "tip",
+        "text": "Planlarınızı bir uygulamada saklarsanız, birkaç hafta sonra başarılı geçen bir haftayı kopyalayıp tekrar kullanabilirsiniz. Bu, özellikle yoğun dönemlerde plan yapma süresini neredeyse sıfıra indirir."
+      }
     ],
-    "relatedRecipes": ["mercimek-corbasi"]
+    "relatedRecipes": [
+      "mercimek-corbasi",
+      "tavuk-sote",
+      "kuru-fasulye",
+      "zeytinyagli-taze-fasulye",
+      "bulgur-pilavi"
+    ]
+  },
+  {
+    "slug": "butce-dostu-haftalik-menu",
+    "title": "Bütçe Dostu Haftalık Menü: Az Harcayıp İyi Beslenmenin Yolları",
+    "description": "Baklagiller, mevsim sebzeleri ve akıllı alışverişle mutfak masraflarını düşüren, lezzetten ödün vermeyen haftalık menü önerileri.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Gıda fiyatlarının sürekli değiştiği dönemlerde mutfak bütçesini kontrol altında tutmak pek çok ailenin öncelikli konusu haline geldi. İyi haber şu ki Türk ev mutfağı, ekonomik malzemelerle doyurucu ve lezzetli yemekler yapma konusunda zengin bir geleneğe sahip. Mercimek, bulgur, nohut, kuru fasulye ve mevsim sebzeleri; doğru planlandığında hem ucuz hem de besleyici bir haftanın temelini oluşturur. Bu rehberde bütçeyi zorlamadan nasıl iyi bir menü kurabileceğinizi adım adım ele alıyoruz."
+      },
+      {
+        "type": "h2",
+        "text": "Bütçe planlamasına nereden başlamalı?"
+      },
+      {
+        "type": "p",
+        "text": "İlk adım, şu an mutfağa ne kadar harcadığınızı bilmektir. İki hafta boyunca market fişlerini saklayın ve toplamı çıkarın. Bu rakam, kendinize gerçekçi bir haftalık hedef koymanızı sağlar. Ardından harcamaları kalemlere ayırın: et ve tavuk, süt ürünleri, sebze meyve, kuru gıda ve atıştırmalıklar. Çoğu evde bütçenin büyük bölümünü et ürünleri ve hazır atıştırmalıklar oluşturur; tasarrufun en kolay yapılabileceği alanlar da genellikle bunlardır."
+      },
+      {
+        "type": "h2",
+        "text": "Baklagilleri menünün merkezine alın"
+      },
+      {
+        "type": "p",
+        "text": "Kuru baklagiller, protein ve lif açısından zengin olup birim fiyatına göre son derece doyurucudur. Kuru fasulye, nohut ve mercimeği haftada iki üç kez menüye eklemek, et tüketimini azaltırken sofraların dolu kalmasını sağlar. Kuru baklagilleri paketli haşlanmış ürünler yerine kuru olarak alıp evde ıslatmak ve pişirmek maliyeti belirgin şekilde düşürür. Bir kerede büyük miktar haşlayıp porsiyonlar halinde dondurmak da hafta içi zamandan tasarruf ettirir."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Mercimek çorbası ve ezogelin, birkaç kişilik tencereyi çok düşük maliyetle doldurur.",
+          "Kuru fasulyeyi az etle ya da tamamen etsiz pişirip yanına bulgur pilavı ekleyin.",
+          "Etli nohutta et miktarını azaltıp nohut oranını artırarak lezzetten ödün vermeden tasarruf edin.",
+          "Haşlanmış nohudu salatalara ve sebze yemeklerine ekleyerek doyuruculuğu artırın."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Mevsim sebzelerini tercih edin"
+      },
+      {
+        "type": "p",
+        "text": "Mevsiminde yetişen sebze ve meyveler hem daha lezzetli hem de daha ucuzdur. Kışın ıspanak, pırasa, lahana ve karnabahar; yazın ise domates, biber, kabak ve patlıcan bütçe dostu seçeneklerin başında gelir. Semt pazarlarına günün sonuna doğru gitmek, çoğu zaman aynı ürünleri daha uygun fiyata almanızı sağlar. Biraz ezik ya da şekli bozuk sebzeler de çorbalarda, türlüde ve mücverde gönül rahatlığıyla kullanılabilir."
+      },
+      {
+        "type": "h2",
+        "text": "Örnek bütçe dostu hafta"
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Pazartesi: Mercimek çorbası, bulgur pilavı ve çoban salata.",
+          "Salı: Pirinçli ıspanak yemeği ve sarımsaklı yoğurt.",
+          "Çarşamba: Etsiz kuru fasulye, şehriyeli pirinç pilavı ve turşu.",
+          "Perşembe: Kabak mücver, yanında yoğurt ve kalan mercimek çorbası.",
+          "Cuma: Fırında tavuk patates; tavuk butu göğse göre daha ekonomiktir.",
+          "Cumartesi: Patatesli gözleme ve ayran.",
+          "Pazar: Menemenli kahvaltı ve akşam için sebze türlüsü."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Tavuğu bütün alıp evde parçalamak, ayrı ayrı paketlenmiş parçaları almaktan genellikle daha ucuzdur. Kemiklerinden çorbalar ve pilavlar için lezzetli bir tavuk suyu da elde edersiniz."
+      },
+      {
+        "type": "h2",
+        "text": "Alışverişte dikkat edilmesi gerekenler"
+      },
+      {
+        "type": "p",
+        "text": "Markete aç karnına gitmemek, listeye sadık kalmak ve kampanyalı ürünleri gerçekten ihtiyacınız varsa almak temel kurallardır. Raf etiketlerindeki kilogram ya da litre başına fiyatı karşılaştırmak, büyük paketin her zaman daha avantajlı olmadığını gösterebilir. Bulgur, pirinç, un ve baklagiller gibi uzun ömürlü ürünleri indirim dönemlerinde stoklamak mantıklıdır; ancak çabuk bozulan ürünlerde 'üç al iki öde' kampanyaları sıklıkla israfla sonuçlanır."
+      },
+      {
+        "type": "h2",
+        "text": "Lezzet bütçeyle sınırlı değil"
+      },
+      {
+        "type": "h2",
+        "text": "Toplu pişirmenin bütçeye katkısı"
+      },
+      {
+        "type": "p",
+        "text": "Az kişilik porsiyonlar pişirmek, çoğu zaman birim başına daha pahalıya gelir. Bir tencere çorbayı ya da bir tepsi böreği iki kat hazırlayıp yarısını dondurmak, aynı enerjiyle ve aynı ocak süresiyle iki öğün çıkarmak anlamına gelir. Bu yaklaşım hem gaz ve elektrik tüketimini azaltır hem de yorgun akşamlarda dışarıdan yemek siparişi verme ihtimalini düşürür. Dışarıdan sipariş edilen tek bir akşam yemeğinin bedeli, evde pişirilecek birkaç günlük baklagil yemeğinin maliyetini kolayca aşabilir. Bu nedenle dondurucuda her zaman iki üç porsiyonluk hazır yemek bulundurmak, bütçe planının görünmeyen ama en etkili parçalarından biridir."
+      },
+      {
+        "type": "p",
+        "text": "Ekonomik yemeklerin sade olması gerekmez. Kuru nane, pul biber, kimyon, sumak ve iyi bir salça; en basit yemeği bile zenginleştirir. Tereyağında kızdırılmış pul biber bir mercimek çorbasını, birkaç dal taze maydanoz ise bir bulgur pilavını bambaşka kılar. Baharatları açıktan ve küçük miktarlarda almak hem taze kalmalarını sağlar hem de gereksiz harcamayı önler. Bütçe dostu mutfak, kısıtlama değil, malzemeyi tanımak ve akıllıca kullanmaktır."
+      }
+    ],
+    "relatedRecipes": [
+      "mercimek-corbasi",
+      "kuru-fasulye",
+      "bulgur-pilavi",
+      "kabak-mucver",
+      "patatesli-gozleme"
+    ]
+  },
+  {
+    "slug": "alisveris-listesi-ile-israfi-azaltma",
+    "title": "Alışveriş Listesi ile Gıda İsrafını Azaltma Rehberi",
+    "description": "Doğru hazırlanmış bir alışveriş listesi, akıllı saklama yöntemleri ve buzdolabı düzeniyle evde gıda israfını azaltmanın pratik yolları.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Evlerde çöpe giden yiyeceklerin büyük kısmı, aslında hiç kullanılmadan bozulan ürünlerdir: unutulan bir demet maydanoz, son kullanma tarihi geçmiş bir yoğurt ya da fazla alınmış ekmekler. Bu israfın temel nedeni çoğu zaman plansız alışveriştir. İyi hazırlanmış bir alışveriş listesi, hem cebinizi hem de çevreyi korumanın en basit yoludur. Bu rehberde, listeyi nasıl hazırlayacağınızı, markette nasıl uygulayacağınızı ve eve döndükten sonra ürünleri nasıl saklayacağınızı anlatıyoruz."
+      },
+      {
+        "type": "h2",
+        "text": "Liste, plandan doğar"
+      },
+      {
+        "type": "p",
+        "text": "Etkili bir alışveriş listesi, haftalık yemek planından çıkarılır. Önce hangi yemekleri pişireceğinize karar verin, sonra her tarifin malzemelerini yazın. Bu yöntem, 'belki lazım olur' diyerek sepete atılan ürünleri büyük ölçüde ortadan kaldırır. Planınız yoksa bile en azından üç dört akşam yemeğini önceden belirlemek, listeyi belirgin şekilde daha isabetli hale getirir."
+      },
+      {
+        "type": "h2",
+        "text": "Listeyi hazırlarken izlenecek adımlar"
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Buzdolabını, dondurucuyu ve kileri kontrol edin; elinizde olanları not alın.",
+          "Haftalık plandaki tariflerin malzemelerini tek bir listede birleştirin.",
+          "Aynı malzemeyi gerektiren tarifleri fark edin ve miktarları toplayın.",
+          "Evde zaten bulunan ürünleri listeden çıkarın.",
+          "Listeyi market bölümlerine göre gruplayın: manav, kasap, süt ürünleri, kuru gıda, temizlik.",
+          "Miktarları net yazın: 'domates' yerine '1 kg domates' gibi."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Bir malzemenin yalnızca küçük bir kısmını kullanacaksanız, aynı hafta içinde onu değerlendirecek ikinci bir tarif planlayın. Örneğin yarım demet dereotunun kalanı mücverde, yarım kâse yoğurt ise yayla çorbasında kullanılabilir."
+      },
+      {
+        "type": "h2",
+        "text": "Markette listeye sadık kalmak"
+      },
+      {
+        "type": "p",
+        "text": "Liste ne kadar iyi hazırlanırsa hazırlansın, markette dikkat dağıtan pek çok şey vardır. Kasaya yakın raflar, göz hizasındaki ürünler ve büyük indirim etiketleri plansız alımları teşvik eder. Tok karnına alışverişe gitmek, sepet yerine küçük bir file kullanmak ve listede olmayan bir ürünü almadan önce 'bunu bu hafta hangi yemekte kullanacağım?' diye sormak etkili yöntemlerdir. Cevap veremiyorsanız, o ürün büyük ihtimalle buzdolabının arkasında unutulacaktır."
+      },
+      {
+        "type": "h2",
+        "text": "Eve dönünce: doğru saklama"
+      },
+      {
+        "type": "p",
+        "text": "İsrafı önlemenin ikinci yarısı, ürünleri doğru saklamaktır. Yeni alınan ürünleri buzdolabının arkasına, eskileri öne yerleştirmek basit ama etkili bir kuraldır. Böylece önce eski ürünler tüketilir. Yeşillikler ve sebzeler için de birkaç küçük alışkanlık raf ömrünü uzatır."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Maydanoz ve dereotunu yıkamadan, nemli bir kâğıt havluya sarıp kapalı kapta saklayın.",
+          "Domatesleri buzdolabına koymayın; oda sıcaklığında daha lezzetli kalır.",
+          "Patates ve soğanı ayrı yerlerde saklayın; birlikte durduklarında daha çabuk bozulurlar.",
+          "Ekmeği tüketemeyeceğiniz kadarını dilimleyip dondurun, gerektikçe kızartın.",
+          "Muz, elma ve armut gibi meyveleri diğer sebzelerden uzak tutun; saldıkları gaz olgunlaşmayı hızlandırır."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Dondurucuyu stratejik kullanın"
+      },
+      {
+        "type": "p",
+        "text": "Dondurucu, israfa karşı en güçlü müttefikinizdir. Fazla pişen çorbaları porsiyonlara ayırıp dondurabilir, olgunlaşan meyveleri dilimleyip saklayabilir, yarım kalan salçayı buz kalıplarında dondurabilirsiniz. Her paketin üzerine içeriğini ve tarihini yazmak, aylar sonra 'bu neydi?' sorusunu ortadan kaldırır. Dondurucunun içeriğini ayda bir gözden geçirip eski ürünleri haftalık plana eklemek de iyi bir alışkanlıktır."
+      },
+      {
+        "type": "h2",
+        "text": "Son kullanma tarihlerini doğru okuyun"
+      },
+      {
+        "type": "p",
+        "text": "Ambalajlardaki 'son tüketim tarihi' ile 'tavsiye edilen tüketim tarihi' farklı anlamlar taşır. Son tüketim tarihi, özellikle et ve süt ürünleri gibi çabuk bozulan gıdalarda güvenlik açısından önemlidir ve bu tarihten sonra ürün tüketilmemelidir. Tavsiye edilen tüketim tarihi ise ürünün en iyi kalitesini koruduğu süreyi gösterir; bu tarihten sonra makarna, pirinç veya bisküvi gibi kuru ürünlerin tadı ve dokusu değişebilir. Bu ayrımı bilmek, gereksiz yere atılan ürünlerin sayısını azaltır."
+      },
+      {
+        "type": "h2",
+        "text": "Küçük miktarlarda ve sık alışveriş"
+      },
+      {
+        "type": "p",
+        "text": "Haftalık büyük alışveriş pratik olsa da çabuk bozulan ürünlerde her zaman en iyi seçenek değildir. Yeşillik, ekmek ve meyve gibi ürünleri hafta ortasında küçük bir ek alışverişle tamamlamak, bu ürünlerin buzdolabında solmasını önler. Kuru gıdalar, temizlik ürünleri ve dondurulmuş ürünler için ise ayda bir yapılan toplu alışveriş hem zaman hem de para kazandırır. Böylece ana listeniz daha kısa ve odaklı kalır. Ayrıca alışveriş listesini dijital olarak tutmak, evdeki diğer kişilerin de eksilen ürünleri anında eklemesine imkân tanır ve aynı ürünün iki kez alınmasını engeller."
+      },
+      {
+        "type": "tip",
+        "text": "Buzdolabında 'önce bunları tüket' adını verdiğiniz bir raf ya da kutu ayırın. Tarihi yaklaşan ürünleri buraya koyun ve haftalık plan yaparken ilk bu kutuya bakın."
+      }
+    ],
+    "relatedRecipes": [
+      "kabak-mucver",
+      "yayla-corbasi",
+      "sebze-turlu",
+      "ispanak-yemegi"
+    ]
+  },
+  {
+    "slug": "hafta-sonu-toplu-hazirlik-rehberi",
+    "title": "Hafta Sonu Toplu Hazırlık (Meal Prep) Rehberi",
+    "description": "Pazar günü birkaç saat ayırarak hafta içi akşam yemeklerini hızlandıran toplu hazırlık yöntemi: planlama, pişirme sırası ve saklama.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Toplu hazırlık, yani meal prep, hafta sonu birkaç saat mutfakta vakit geçirerek hafta içindeki yemek hazırlama yükünü önemli ölçüde hafifletme yöntemidir. Amaç tüm haftanın yemeklerini tek seferde pişirmek değil; doğrama, haşlama ve temel pişirme gibi zaman alan işleri bir araya toplamaktır. Böylece hafta içi akşamları yemek hazırlamak yirmi dakikaya iner. Bu rehberde, toplu hazırlığı kendi ritminize uygun hale getirmenin yollarını anlatıyoruz."
+      },
+      {
+        "type": "h2",
+        "text": "Toplu hazırlığın iki yolu"
+      },
+      {
+        "type": "p",
+        "text": "İlk yöntem, yemekleri tamamen pişirip porsiyonlara ayırmaktır. Bu yöntem özellikle çorbalar, kuru baklagil yemekleri ve zeytinyağlılar için idealdir, çünkü bu yemekler bekledikçe lezzetlenir. İkinci yöntem ise malzemeleri hazırlamaktır: sebzeleri doğramak, tahılları haşlamak, köfte harcını yoğurup şekillendirmek gibi. Hafta içi yalnızca son pişirme yapılır. Çoğu ev için en iyi sonuç, bu iki yöntemin bir karışımından elde edilir."
+      },
+      {
+        "type": "h2",
+        "text": "Hazırlıktan önce plan yapın"
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Hafta içi hangi akşamlar evde yemek yiyeceğinizi belirleyin.",
+          "Bu akşamlar için üç dört ana yemek seçin; en az biri tamamen hazır, biri yarı hazır olsun.",
+          "Tüm tarifleri tek alışveriş listesinde birleştirin ve cumartesi alışverişinizi yapın.",
+          "Pazar günü için bir pişirme sırası çıkarın: önce uzun pişenler, sonra kısa süreliler.",
+          "Yeterli sayıda saklama kabı olduğundan emin olun."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Örnek bir pazar hazırlığı"
+      },
+      {
+        "type": "p",
+        "text": "Aşağıdaki sıra, yaklaşık üç saatte dört kişilik bir ailenin hafta içi akşam yemeklerinin büyük bölümünü hazır hale getirir. Ocak ve fırını aynı anda kullanmak süreyi kısaltmanın anahtarıdır."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Bir gece önceden ıslattığınız nohudu ilk iş ocağa koyun; etli nohut pişerken diğer işlere geçin.",
+          "Fırında tavuk patates için sosu hazırlayıp tavukları marine edin, buzdolabına kaldırın.",
+          "Büyük bir tencere mercimek çorbası pişirin; iki akşamlık porsiyon ayırıp kalanını dondurun.",
+          "Bulgur pilavını pişirin; buzdolabında üç güne kadar saklanabilir.",
+          "Salatalar için marul, roka ve maydanozu yıkayıp iyice kurulayın ve kâğıt havlulu kaplara koyun.",
+          "İzmir köfte harcını yoğurup köfteleri şekillendirin; yarısını dondurucuya kaldırın.",
+          "Kahvaltılar için birkaç yumurta haşlayıp kabuklarıyla saklayın."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Hazırlık gününü bulaşık yığınıyla bitirmemek için her tarif arasında birkaç dakika durup kullandığınız kapları yıkayın. Başlarken bulaşık makinesini boşaltmak da işinizi kolaylaştırır."
+      },
+      {
+        "type": "h2",
+        "text": "Saklama süreleri ve güvenlik"
+      },
+      {
+        "type": "p",
+        "text": "Pişmiş yemekleri ocaktan aldıktan sonra uzun süre tezgâhta bekletmeden, ılındığında kapaklı kaplara alıp buzdolabına kaldırmak önemlidir. Genel bir kural olarak pişmiş yemekler buzdolabında üç dört gün güvenle saklanabilir. Daha uzun süre saklayacağınız yemekleri dondurmalısınız. Dondurulmuş yemekleri bir gece önceden buzdolabının alt rafına alarak yavaş yavaş çözdürmek, hem lezzeti hem de gıda güvenliğini korur."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Çorbalar, kuru fasulye ve etli nohut dondurmaya çok uygundur.",
+          "Pirinç ve bulgur pilavı donar, ancak ısıtırken birkaç kaşık su eklemek gerekir.",
+          "Çiğ salata, haşlanmış patates ve yoğurtlu yemekler dondurulduğunda dokuları bozulur.",
+          "Kızartmaları önceden hazırlamak yerine hafta içi taze yapmak daha iyi sonuç verir."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Sıkılmadan sürdürmenin sırrı"
+      },
+      {
+        "type": "p",
+        "text": "Toplu hazırlığın en büyük riski, aynı yemeği üst üste yemekten sıkılmaktır. Bunu önlemek için temel bileşenleri farklı şekillerde kullanın. Haşlanmış nohut bir gün yemekte, ertesi gün salatada; marine edilmiş tavuk bir gün fırında, bir gün sote olarak değerlendirilebilir. Soslar ve yanında servis edilen yoğurt, turşu ya da salata da aynı ana yemeği farklı hissettirir. Ayrıca her haftayı mükemmel geçirmek zorunda değilsiniz; sadece iki akşamlık hazırlık bile hafta içi stresinizi belirgin şekilde azaltır."
+      },
+      {
+        "type": "h2",
+        "text": "Doğru saklama kapları"
+      },
+      {
+        "type": "p",
+        "text": "Toplu hazırlığın verimli olması için iyi bir kap düzeni şarttır. Farklı boylarda, üst üste dizilebilen ve sızdırmaz kapaklı kaplar buzdolabında yer kazandırır. Cam kaplar hem koku tutmaz hem de doğrudan ısıtmaya uygundur; plastik kaplar ise hafif olduğu için iş yerine yemek götürürken pratiktir. Dondurucu için düz yatırılabilen kilitli poşetler, çorba ve sosları ince bir tabaka halinde dondurup hem yerden tasarruf etmenizi hem de daha hızlı çözdürmenizi sağlar. Her kabın üzerine içeriğini ve hazırlama tarihini yazmayı unutmayın; hafta ortasında neyin önce tüketilmesi gerektiğini bir bakışta görürsünüz. Kahvaltı ve ara öğünleri de hazırlığa dahil etmek, sabah telaşını azaltır. Haşlanmış yumurtalar, doğranmış meyveler ve önceden porsiyonlanmış yoğurtlar hafta içi sabahlarında birkaç dakika kazandırır."
+      },
+      {
+        "type": "tip",
+        "text": "İlk denemenizde büyük hedefler koymayın. Bir çorba ve bir ana yemek hazırlayarak başlayın, sistem oturdukça hazırlık listenizi genişletin."
+      }
+    ],
+    "relatedRecipes": [
+      "etli-nohut",
+      "firinda-tavuk-patates",
+      "mercimek-corbasi",
+      "bulgur-pilavi",
+      "izmir-kofte"
+    ]
+  },
+  {
+    "slug": "mevsimine-gore-sebze-meyve-takvimi",
+    "title": "Mevsimine Göre Sebze ve Meyve Takvimi (Türkiye)",
+    "description": "Türkiye'de hangi sebze ve meyvenin hangi mevsimde en lezzetli ve uygun fiyatlı olduğunu gösteren, menü planlamaya yardımcı takvim.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Seralar ve ithalat sayesinde bugün pek çok sebze ve meyveyi yılın her döneminde bulmak mümkün. Ancak mevsiminde, açık havada yetişmiş ürünlerle sera ürünleri arasındaki lezzet farkı, olgun bir temmuz domatesini kışın aldığınız domatesle karşılaştırdığınızda hemen anlaşılır. Mevsimine göre alışveriş yapmak hem daha lezzetli yemekler hem de daha uygun fiyatlar demektir. Bu takvim, Türkiye'nin genel iklim koşullarına göre hazırlanmıştır; bölgeden bölgeye birkaç haftalık farklar olabileceğini unutmayın."
+      },
+      {
+        "type": "h2",
+        "text": "Kış (Aralık, Ocak, Şubat)"
+      },
+      {
+        "type": "p",
+        "text": "Kış ayları yeşil yapraklı sebzelerin ve turunçgillerin mevsimidir. Pazarlar ıspanak, pırasa ve lahanayla dolar; portakal ve mandalina ise en tatlı halini alır. Bu dönem, sıcak çorbalar, zeytinyağlı pırasa ve fırın yemekleri için idealdir."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Sebzeler: ıspanak, pırasa, beyaz ve kara lahana, karnabahar, brokoli, kereviz, havuç, turp, pazı, Brüksel lahanası.",
+          "Meyveler: portakal, mandalina, greyfurt, limon, kivi, elma, armut, ayva.",
+          "Menü önerisi: pirinçli ıspanak yemeği, mercimek ve tarhana çorbası, zeytinyağlı pırasa, havuçlu salatalar."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "İlkbahar (Mart, Nisan, Mayıs)"
+      },
+      {
+        "type": "p",
+        "text": "İlkbahar, hafif ve taze lezzetlerin geri döndüğü dönemdir. Enginar, bakla ve taze bezelye Ege ve Marmara mutfaklarının bahar sofralarını süsler. Mayıs ayıyla birlikte çilek ve can eriği tezgâhlarda yerini alır, yeşil salatalar ise en çıtır halindedir."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Sebzeler: enginar, taze bakla, taze bezelye, kuşkonmaz, taze soğan, marul, roka, tere, dereotu, taze sarımsak, ıspanağın son ürünleri.",
+          "Meyveler: çilek, can eriği, yeşil erik, çağla badem, mevsimin son portakalları.",
+          "Menü önerisi: zeytinyağlı enginar, zeytinyağlı bakla, bezelyeli yemekler, bol yeşillikli salatalar."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Yaz (Haziran, Temmuz, Ağustos)"
+      },
+      {
+        "type": "p",
+        "text": "Yaz, Türk mutfağının en bereketli mevsimidir. Domates, biber, patlıcan ve kabak bolluğu karnıyarıktan imam bayıldıya, türlüden mücvere kadar sayısız yemeğe ilham verir. Meyve tarafında kiraz, kayısı, şeftali, karpuz ve kavun sofraları renklendirir. Bu dönem aynı zamanda kışlık hazırlıkların, salça ve tarhana yapımının da zamanıdır."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Sebzeler: domates, biber, patlıcan, kabak, salatalık, taze fasulye, bamya, börülce, mısır, semizotu.",
+          "Meyveler: kiraz, vişne, kayısı, şeftali, nektarin, dut, karpuz, kavun, ağustosla birlikte incir ve üzüm.",
+          "Menü önerisi: karnıyarık, imam bayıldı, zeytinyağlı taze fasulye, kabak mücver, sebze türlüsü, çoban salata."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Yaz sonunda domates ve biber bolken ucuza alıp rendeleyerek ya da közleyerek porsiyonlar halinde dondurun. Kış aylarında çorba ve yemeklerde taze lezzete yakın bir sonuç alırsınız."
+      },
+      {
+        "type": "h2",
+        "text": "Sonbahar (Eylül, Ekim, Kasım)"
+      },
+      {
+        "type": "p",
+        "text": "Sonbahar, yazın son ürünleriyle kışın ilk sebzelerinin buluştuğu bir geçiş dönemidir. Eylülde hâlâ domates ve biber bulunurken ekim ve kasımla birlikte balkabağı, kereviz ve pırasa tezgâhlara gelir. Nar, ayva ve Trabzon hurması bu mevsimin karakteristik meyveleridir; mandalina da kasım ayıyla birlikte görünmeye başlar."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Sebzeler: balkabağı, mantar, kereviz, havuç, pırasa, lahana, karnabahar, ıspanak, tatlı patates, eylül ayında son domates ve biberler.",
+          "Meyveler: nar, ayva, elma, armut, üzüm, incir, Trabzon hurması, kestane, kasımdan itibaren mandalina.",
+          "Menü önerisi: kabak tatlısı, zeytinyağlı kereviz, mantarlı tavuk sote, nar ekşili gavurdağı salatası."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Takvimi menü planına nasıl yansıtırsınız?"
+      },
+      {
+        "type": "p",
+        "text": "Haftalık plan yaparken önce bu takvime göz atın ve o hafta pazarda bol bulunacak iki üç sebzeyi seçin. Ardından bu sebzelerin yer aldığı tarifleri plana ekleyin. Böylece hem daha lezzetli hem de daha ekonomik bir hafta geçirirsiniz. Ayrıca mevsim geçişlerinde, örneğin mayıs sonunda son enginarları ya da eylül sonunda son patlıcanları kaçırmamak için o sebzelere plan içinde öncelik verebilirsiniz."
+      },
+      {
+        "type": "h2",
+        "text": "Mevsim ürünlerini uzun süre saklamak"
+      },
+      {
+        "type": "p",
+        "text": "Mevsiminde bol ve ucuz bulunan ürünleri farklı yöntemlerle saklamak, o lezzeti yılın geri kalanına taşımanın geleneksel yoludur. Yazın domates salçası, biber salçası ve tarhana yapılır; patlıcan ve biber kurutulur, fasulye ve bezelye haşlanıp dondurulur. Sonbaharda ayva ve vişne reçele, nar ise nar ekşisine dönüşür. Kışın ise turşular kurulur. Bu yöntemlerin hepsini uygulamak zorunda değilsiniz; ancak yalnızca dondurucuyu kullanarak bile mevsimin en iyi ürünlerinden birkaç porsiyonu ileriki aylar için ayırabilirsiniz. Bu küçük hazırlıklar, kış menülerine yazın tazeliğini ve rengini katar."
+      },
+      {
+        "type": "p",
+        "text": "Pazar esnafıyla sohbet etmek de takvimi öğrenmenin en keyifli yoludur. Hangi ürünün yeni geldiğini, hangisinin sonuna yaklaşıldığını en iyi onlar bilir. Zamanla bu ritim size de doğal gelmeye başlayacak ve mutfağınız mevsimlerle birlikte değişecektir."
+      }
+    ],
+    "relatedRecipes": [
+      "zeytinyagli-enginar",
+      "karniyarik",
+      "ispanak-yemegi",
+      "sebze-turlu",
+      "gavurdagi-salatasi"
+    ]
+  },
+  {
+    "slug": "dengeli-tabak-nasil-kurulur",
+    "title": "Dengeli Bir Tabak Nasıl Kurulur? Günlük Sofralar İçin Basit İlkeler",
+    "description": "Sebze, protein, tahıl ve sağlıklı yağları bir araya getiren dengeli tabak modelini Türk mutfağının günlük yemekleriyle uygulamanın yolları.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Dengeli beslenme denildiğinde çoğu kişinin aklına karmaşık hesaplar, kalori tabloları ya da katı diyet listeleri gelir. Oysa günlük hayatta işe yarayan yaklaşım çok daha basittir: tabağınızı göz kararı bölümlere ayırmak. Bu rehberde, genel kabul görmüş dengeli tabak modelini Türk ev mutfağının alışılmış yemekleriyle nasıl uygulayabileceğinizi anlatıyoruz. Bu yazı genel bilgilendirme amaçlıdır; özel bir sağlık durumunuz, alerjiniz ya da beslenme hedefiniz varsa bir diyetisyen veya hekimden kişisel destek almanızı öneririz."
+      },
+      {
+        "type": "h2",
+        "text": "Tabak modelinin temel mantığı"
+      },
+      {
+        "type": "p",
+        "text": "Dengeli tabak modeli, standart bir yemek tabağını dört bölüme ayırarak düşünmeyi önerir. Tabağın yaklaşık yarısı sebze ve meyveye, dörtte biri protein kaynaklarına, kalan dörtte biri ise tahıl ve nişastalı yiyeceklere ayrılır. Yanında az miktarda sağlıklı yağ, bir porsiyon süt ürünü ve bol su bu tabloyu tamamlar. Bu oranlar kesin ölçüler değil, her öğünde aynı tabağı kurmanız da gerekmez; amaç gün ve hafta genelinde bu dengeyi yakalamaktır."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Tabağın yarısı: pişmiş sebze yemekleri, zeytinyağlılar ve salatalar.",
+          "Tabağın dörtte biri: et, tavuk, balık, yumurta veya baklagiller.",
+          "Tabağın dörtte biri: bulgur, pirinç, makarna, ekmek veya patates.",
+          "Yanında: yoğurt, ayran ya da cacık gibi bir süt ürünü ve su."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Türk mutfağı bu modele zaten çok yakın"
+      },
+      {
+        "type": "p",
+        "text": "Geleneksel Türk sofrası, sebzeyi merkeze alan yapısıyla bu modele şaşırtıcı derecede uygundur. Zeytinyağlı taze fasulye, ıspanak yemeği ya da türlü gibi sebze ağırlıklı yemekler, yanında bulgur pilavı, bir kâse yoğurt ve salatayla birleştiğinde tabak kendiliğinden dengelenir. Dengeyi bozan genellikle porsiyon boyutlarıdır: pilavın ana yemekten fazla yer kaplaması ya da salatanın sofradan eksik kalması gibi."
+      },
+      {
+        "type": "h2",
+        "text": "Örnek dengeli tabaklar"
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Kuru fasulye (protein ve lif), bir kepçe şehriyeli pilav, bol çoban salata ve turşu.",
+          "Fırında tavuk butu, yanında patatesten çok fırınlanmış sebze, bir kâse cacık.",
+          "İzmir köfte, yarım porsiyon bulgur pilavı ve gavurdağı salatası.",
+          "Pirinçli ıspanak yemeği, üzerine yoğurt, bir dilim tam buğday ekmeği ve haşlanmış yumurta.",
+          "Mercimek çorbası, zeytinyağlı enginar ve bir dilim ekmek ile hafif bir akşam yemeği."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Sofraya oturmadan önce tabağınızın yarısını salata ve sebze yemeğiyle doldurun, ardından diğer yemeklere geçin. Bu basit sıra değişikliği, oranları kendiliğinden düzeltir."
+      },
+      {
+        "type": "h2",
+        "text": "Protein çeşitliliği"
+      },
+      {
+        "type": "p",
+        "text": "Protein denince yalnızca et düşünülmemeli. Mercimek, nohut ve kuru fasulye gibi baklagiller, yumurta ve süt ürünleri de değerli protein kaynaklarıdır. Haftalık menüde kırmızı et, tavuk, balık, yumurta ve baklagilleri dönüşümlü kullanmak hem çeşitlilik hem de bütçe açısından avantaj sağlar. Baklagilleri bulgur veya pirinçle birlikte tüketmek, Türk mutfağında yüzyıllardır uygulanan pratik bir eşleştirmedir."
+      },
+      {
+        "type": "h2",
+        "text": "Tahıl seçimi ve porsiyonlar"
+      },
+      {
+        "type": "p",
+        "text": "Bulgur, Anadolu mutfağının en değerli tahıllarından biridir; lif açısından zengindir ve doyurucudur. Pirinç pilavını tamamen bırakmak yerine haftada birkaç kez bulgurla dönüşümlü kullanmak iyi bir başlangıçtır. Ekmekte ise tam buğday veya çavdar seçenekleri değerlendirilebilir. Porsiyon konusunda pratik bir ölçü: pilav ya da makarna, tabakta yumruğunuz büyüklüğünde bir alanı geçmemeli."
+      },
+      {
+        "type": "h2",
+        "text": "Yağ, tuz ve şeker"
+      },
+      {
+        "type": "p",
+        "text": "Zeytinyağı, Türk mutfağının temel yağlarından biridir ve özellikle soğuk servis edilen yemeklerde ve salatalarda tercih edilir. Tereyağı ise az miktarda kullanıldığında yemeklere eşsiz bir lezzet katar. Tuzu azaltmak için yemeklere limon, sumak, nane, kekik ve pul biber gibi aroma vericiler eklemek işe yarar. Tatlıları tamamen yasaklamak yerine porsiyonu küçük tutmak ve sütlaç gibi daha hafif seçenekleri tercih etmek sürdürülebilir bir yaklaşımdır."
+      },
+      {
+        "type": "h2",
+        "text": "Mükemmeliyet değil, süreklilik"
+      },
+      {
+        "type": "h2",
+        "text": "İçecekler ve ara öğünler"
+      },
+      {
+        "type": "p",
+        "text": "Tabak modeli yalnızca ana öğünlerle sınırlı değildir. Gün boyunca yeterli su içmek, şekerli içecekler yerine ayran, maden suyu veya sade çay gibi seçenekleri tercih etmek genel dengeyi destekler. Ara öğünlerde paketli atıştırmalıklar yerine bir avuç kuruyemiş, mevsim meyvesi ya da bir kâse yoğurt gibi basit seçenekler bulundurmak, ana öğünlerde aşırı acıkmanın ve porsiyonların büyümesinin önüne geçer. Ara öğünleri de haftalık planın bir parçası olarak düşünmek, alışveriş listesine doğru ürünlerin girmesini ve evde sağlıklı alternatiflerin her zaman hazır bulunmasını sağlar."
+      },
+      {
+        "type": "p",
+        "text": "Dengeli beslenme bir öğünle ya da bir günle değil, alışkanlıklarla şekillenir. Bir akşam pilavın fazla gelmesi ya da tatlının bir dilim daha olması sorun değildir. Önemli olan haftanın genelinde sebzenin sofradaki payını artırmak, protein kaynaklarını çeşitlendirmek ve porsiyonlara dikkat etmektir. Haftalık yemek planı yapmak, bu dengeyi kurmanın en kolay yoludur; çünkü planlarken tüm haftayı bir arada görürsünüz."
+      }
+    ],
+    "relatedRecipes": [
+      "zeytinyagli-taze-fasulye",
+      "kuru-fasulye",
+      "bulgur-pilavi",
+      "coban-salata",
+      "ispanak-yemegi"
+    ]
+  },
+  {
+    "slug": "tarif-defteri-tutmak-ve-pdf-tarif-kitabi",
+    "title": "Tarif Defteri Tutmak ve Tariflerinizi PDF Kitaba Dönüştürmek",
+    "description": "Aile tariflerini kaybetmeden saklamak, düzenli bir tarif defteri oluşturmak ve tariflerinizi yazdırılabilir bir PDF kitaba dönüştürmek için öneriler.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Pek çok evde annelerden, anneannelerden kalan, kenarları yağ lekeli, sayfaları sararmış tarif defterleri vardır. Bu defterler yalnızca yemek tarifi değil, bir ailenin hafızasıdır. Ne yazık ki kâğıt defterler kaybolabilir, yıpranabilir ya da içindeki 'bir tutam', 'göz kararı' gibi ifadeler yıllar sonra anlaşılmaz hale gelebilir. Bu rehberde, tariflerinizi düzenli bir şekilde kayıt altına almanın, sonradan kolayca bulabilmenin ve isterseniz şık bir PDF tarif kitabına dönüştürmenin yollarını ele alıyoruz."
+      },
+      {
+        "type": "h2",
+        "text": "Neden tarif defteri tutmalı?"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Aile tariflerini gelecek nesillere aktarmak için kalıcı bir kayıt oluşturursunuz.",
+          "Başarılı bulduğunuz bir denemeyi aylar sonra aynı şekilde tekrarlayabilirsiniz.",
+          "Haftalık yemek planı yaparken seçenekleriniz hep elinizin altında olur.",
+          "İnternette bulduğunuz ve kendi damak tadınıza göre değiştirdiğiniz tarifleri kaybetmezsiniz."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "İyi bir tarif kaydında neler olmalı?"
+      },
+      {
+        "type": "p",
+        "text": "Bir tarifi yazarken, onu hiç denememiş birinin de uygulayabileceği kadar açık olmasına dikkat edin. Annenizden tarif alırken 'göz kararı' dediği miktarları birlikte ölçmek, bu bilgiyi kalıcı hale getirmenin en iyi yoludur. Aşağıdaki bilgileri her tarifte standart olarak tutmak, defterinizi çok daha kullanışlı kılar."
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Tarifin adı ve varsa kimden öğrenildiği.",
+          "Kaç kişilik olduğu, hazırlık ve pişirme süreleri.",
+          "Malzemeler ve ölçüleri; su bardağı, yemek kaşığı ya da gram gibi net birimlerle.",
+          "Adım adım yapılışı; her adım tek bir işi anlatacak şekilde.",
+          "Püf noktaları ve denerken aldığınız notlar.",
+          "Kategori ve etiketler: çorba, ana yemek, vejetaryen, misafir için gibi."
+        ]
+      },
+      {
+        "type": "tip",
+        "text": "Bir tarifi her denediğinizde küçük bir not ekleyin: 'tuzu biraz fazla geldi', 'patlıcanları fırında közledim, daha hafif oldu' gibi. Bu notlar zamanla tarifin size özel versiyonunu oluşturur."
+      },
+      {
+        "type": "h2",
+        "text": "Kâğıt mı, dijital mi?"
+      },
+      {
+        "type": "p",
+        "text": "Kâğıt defterin dokunsal bir sıcaklığı vardır ve mutfakta telefon kullanmak istemeyenler için hâlâ çok pratiktir. Dijital kaydın ise arama yapabilme, kategorilere ayırma, porsiyonu ölçeklendirme ve yedekleme gibi güçlü avantajları vardır. İki yöntemi birleştirmek de mümkündür: tarifleri dijital olarak saklayıp en sevdiklerinizi yazdırarak mutfakta kullanabilirsiniz. Eski kâğıt defterlerin sayfalarını fotoğraflayıp dijital tariflere eklemek de anne el yazısını korumanın güzel bir yoludur."
+      },
+      {
+        "type": "h2",
+        "text": "Tarifleri düzenlemek"
+      },
+      {
+        "type": "p",
+        "text": "Tarif sayısı arttıkça düzen önem kazanır. Çorbalar, ana yemekler, zeytinyağlılar, kahvaltılıklar, hamur işleri ve tatlılar gibi temel kategoriler çoğu ev için yeterlidir. Bunun yanında 'hızlı', 'misafir', 'çocuklar sever' ya da 'dondurulabilir' gibi etiketler, haftalık plan yaparken doğru tarifi bulmanızı hızlandırır. Tarif Kitabım gibi bir uygulamada tariflerinizi bu şekilde etiketleyip doğrudan haftalık planınıza ekleyebilir, planınızdan alışveriş listesi çıkarabilirsiniz."
+      },
+      {
+        "type": "h2",
+        "text": "Tariflerinizi bir PDF kitaba dönüştürmek"
+      },
+      {
+        "type": "p",
+        "text": "Yıllar içinde biriktirdiğiniz tarifleri bir kitap haline getirmek hem kişisel bir arşiv hem de anlamlı bir hediye olabilir. Bir aile büyüğünün tariflerini toplayıp yeni evlenen bir yakınınıza ya da üniversiteye başlayan bir gence vermek, kuşaktan kuşağa aktarılan bir mirastır. Dijital olarak sakladığınız tarifleri seçip kapaklı, içindekiler sayfası olan bir PDF'e dönüştürdüğünüzde, bu kitabı ister yazdırıp ciltletebilir ister dijital olarak paylaşabilirsiniz."
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Kitaba bir ad ve kapak verin: 'Anneannemin Mutfağı' ya da 'Bizim Evin Tarifleri' gibi.",
+          "Tarifleri kategorilere göre sıralayın; içindekiler sayfası aramayı kolaylaştırır.",
+          "Her tarifin tek sayfaya sığmasına dikkat edin; mutfakta sayfa çevirmek zahmetlidir.",
+          "Yazdırmadan önce bir kez baştan sona okuyun ve ölçüleri kontrol edin."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Ölçüleri standartlaştırmak"
+      },
+      {
+        "type": "p",
+        "text": "Eski tarif defterlerinin en büyük sorunu ölçü birliğinin olmamasıdır. Bir tarifte 'bir kase un' yazarken diğerinde 'iki çay bardağı' yazabilir. Kendi defterinizde su bardağı, yemek kaşığı, tatlı kaşığı, çay kaşığı ve gram gibi standart ölçüleri kullanmaya özen gösterin. Mutfağınızdaki su bardağının yaklaşık kaç mililitre olduğunu bir kez ölçüp defterin ilk sayfasına not etmek, tariflerinizi başkalarıyla paylaştığınızda karışıklığı önler. Fırın sıcaklıklarını, kalıp ölçülerini ve pişirme sürelerini de mümkün olduğunca net yazın; 'kızarana kadar' gibi ifadelerin yanına yaklaşık bir süre eklemek tarifi denemek isteyen herkesin işini kolaylaştırır."
+      },
+      {
+        "type": "p",
+        "text": "Tarif Kitabım, kaydettiğiniz tariflerden seçtiklerinizi kapaklı ve içindekiler sayfalı bir PDF tarif kitabına dönüştürmenize olanak tanır. Böylece dijital düzenin pratikliğiyle basılı bir kitabın kalıcılığını bir arada yaşayabilirsiniz. Hangi yöntemi seçerseniz seçin, önemli olan başlamaktır: bu hafta en sevdiğiniz üç tarifi yazıya geçirmek, kalıcı bir tarif arşivinin ilk adımı olabilir."
+      }
+    ],
+    "relatedRecipes": [
+      "zeytinyagli-yaprak-sarma",
+      "ispanakli-borek",
+      "irmik-helvasi",
+      "firin-sutlac"
+    ]
+  },
+  {
+    "slug": "artan-yemekleri-degerlendirme-fikirleri",
+    "title": "Artan Yemekleri Değerlendirme Fikirleri: İsrafsız Mutfak İçin Pratik Öneriler",
+    "description": "Artan pilav, ekmek, sebze ve et yemeklerini yeni tariflere dönüştürmenin, güvenle saklamanın ve haftalık plana dahil etmenin yolları.",
+    "readingMinutes": 4,
+    "updated": "2026-11-07",
+    "blocks": [
+      {
+        "type": "p",
+        "text": "Ne kadar dikkatli planlarsanız planlayın, bazı akşamlar tencerede yemek artar. Artan yemekler aslında bir sorun değil, ertesi gün için hazır bir fırsattır. Doğru saklandığında ve biraz yaratıcılıkla değerlendirildiğinde, dünün yemeği bugünün yepyeni bir tabağına dönüşebilir. Türk mutfağı bu konuda zengin bir geleneğe sahiptir; bayat ekmekten yapılan tatlılar, artan pilavdan yapılan köfteler bunun en güzel örnekleridir. Bu rehberde, mutfağınızda en sık artan yiyecekleri nasıl değerlendirebileceğinizi anlatıyoruz."
+      },
+      {
+        "type": "h2",
+        "text": "Önce güvenlik: doğru saklama"
+      },
+      {
+        "type": "p",
+        "text": "Artan yemekleri değerlendirmenin ilk kuralı, onları güvenli şekilde saklamaktır. Pişmiş yemekleri ocakta ya da tezgâhta saatlerce bekletmek yerine, ılındıktan sonra kapaklı kaplara alıp buzdolabına kaldırın. Büyük tencereleri küçük kaplara bölmek yemeğin daha hızlı soğumasını sağlar. Buzdolabındaki pişmiş yemekleri genellikle üç dört gün içinde tüketmek, daha uzun saklayacaklarınızı ise dondurmak gerekir. Isıtırken yemeğin her yerinin iyice ısındığından emin olun ve aynı yemeği birden fazla kez ısıtıp soğutmaktan kaçının."
+      },
+      {
+        "type": "h2",
+        "text": "Artan pilav"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Pirinç pilavını yumurta, rendelenmiş havuç ve bezelyeyle tavada çevirerek sebzeli kızarmış pilav yapın.",
+          "Bulgur pilavını soğan, maydanoz ve biraz salçayla yoğurarak pratik bir bulgur köftesi hazırlayın.",
+          "Pilavı biber veya domatesin içine doldurup fırında pişirerek kısa yoldan dolma yapın.",
+          "Az miktarda kalan pilavı çorbalara ekleyerek kıvam ve doyuruculuk kazandırın."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Bayat ekmek"
+      },
+      {
+        "type": "p",
+        "text": "Ekmek, evlerde en çok israf edilen yiyeceklerin başında gelir. Oysa bayat ekmek pek çok tarifin vazgeçilmez malzemesidir. Küp küp doğrayıp fırında kurutarak çorbalar için kıtır ekmek yapabilir, rondodan geçirerek galeta unu hazırlayabilirsiniz. Köfte harcında ıslatılmış bayat ekmek içi kullanmak, köftelerin yumuşak olmasını sağlar. Yumurta ve sütle ıslatılıp tavada kızartılan ekmek dilimleri ise çocukların sevdiği bir kahvaltılıktır."
+      },
+      {
+        "type": "tip",
+        "text": "Ekmeği tüketemeyeceğinizi fark ettiğiniz anda dilimleyip dondurun. Dondurulmuş dilimleri doğrudan kızartma makinesinde ya da tavada ısıtarak neredeyse taze bir lezzet elde edebilirsiniz."
+      },
+      {
+        "type": "h2",
+        "text": "Artan sebze yemekleri ve sebzeler"
+      },
+      {
+        "type": "p",
+        "text": "Az miktarda kalan türlü, ıspanak ya da taze fasulye, üzerine yumurta kırılıp sahanda pişirildiğinde menemen benzeri doyurucu bir kahvaltıya dönüşür. Buzdolabında yumuşamaya başlayan kabak, havuç veya patates gibi sebzeler ise mücver ya da sebze çorbası için idealdir. Birkaç farklı sebzeyi bir araya getirip blenderdan geçirerek kremalı bir çorba yapmak, haftanın sonunda buzdolabını temizlemenin en lezzetli yoludur."
+      },
+      {
+        "type": "h2",
+        "text": "Artan et ve tavuk"
+      },
+      {
+        "type": "ol",
+        "items": [
+          "Fırında tavuktan kalan etleri didikleyip tavuklu pilav, tavuk salatası veya dürüm içi olarak kullanın.",
+          "Artan köfteleri domates sosunda pişirip makarnayla servis edin.",
+          "Kuşbaşı et yemeklerinden kalanları patatesle birlikte fırınlayarak yeni bir ana yemek oluşturun.",
+          "Az miktarda kalan kıymalı harcı börek veya gözleme içi olarak değerlendirin."
+        ]
+      },
+      {
+        "type": "h2",
+        "text": "Yoğurt, peynir ve diğerleri"
+      },
+      {
+        "type": "p",
+        "text": "Tarihi yaklaşan yoğurt, yayla çorbası, cacık ya da kek hamurunda kullanılabilir. Ufalanmış beyaz peynir artıkları börek, mücver ve omletlere eklenir. Yarım kalmış domates salçası buz kalıplarında dondurulup gerektiğinde tek tek kullanılabilir. Olgunlaşmış muz ve elma ise kek, smoothie ya da komposto için birebirdir."
+      },
+      {
+        "type": "h2",
+        "text": "Artanları plana dahil edin"
+      },
+      {
+        "type": "p",
+        "text": "Artan yemekleri tesadüfe bırakmak yerine haftalık planınıza bilinçli olarak dahil edin. Örneğin pazar günü fazladan pişirdiğiniz fırında tavuk, salı günü tavuk sote ya da tavuklu pilav için planlanabilir. Haftada bir akşamı 'buzdolabı akşamı' olarak ayırmak ise artanların unutulmasını engeller. Bu yaklaşım hem zaman hem de para kazandırır, mutfakta çöpe giden yiyecek miktarını gözle görülür şekilde azaltır."
+      },
+      {
+        "type": "h2",
+        "text": "Fazla pişirmeyi önlemek"
+      },
+      {
+        "type": "p",
+        "text": "Artan yemekleri değerlendirmek kadar, gereğinden fazla pişirmemek de önemlidir. Tarifteki kişi sayısını kendi ailenize göre ayarlamak, pilav ve makarna gibi yan yemeklerde kişi başı ölçüleri bilmek bu konuda yardımcı olur. Örneğin bir kişilik pilav için genellikle yarım su bardağı pirinç yeterlidir. Ailenizin hangi yemekleri severek bitirdiğini, hangilerinin tencerede kaldığını birkaç hafta boyunca not etmek de miktarları doğru ayarlamanızı sağlar. Bilinçli olarak fazla pişirdiğiniz yemekler ise artık 'artan' değil, önceden planlanmış hazır öğünlerdir; bu bakış açısı israfı fırsata dönüştürür. Kalan çorbaları da unutmayın: biraz su ve baharatla açılan bir mercimek çorbası, ertesi günün öğle yemeği için dakikalar içinde hazır olur."
+      },
+      {
+        "type": "tip",
+        "text": "Buzdolabındaki artan yemekleri şeffaf kaplarda saklayın ve kapağına tarih yazın. Gözünüzün önünde duran yemek, unutulup bozulma ihtimali en düşük olan yemektir."
+      }
+    ],
+    "relatedRecipes": [
+      "sehriyeli-pirinc-pilavi",
+      "firinda-tavuk-patates",
+      "menemen",
+      "kabak-mucver",
+      "izmir-kofte"
+    ]
   }
 ]
